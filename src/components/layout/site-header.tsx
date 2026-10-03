@@ -26,13 +26,13 @@ export function SiteHeader() {
     <header className="header-band pb-6 md:pb-8">
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-ink focus:shadow-md"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-ink focus:shadow-md focus:outline-ink"
       >
         Перейти к содержимому
       </a>
       <TopBar />
       <Container className="flex flex-wrap items-center gap-x-4 gap-y-3 py-3 md:h-[84px] md:flex-nowrap md:gap-x-5 md:py-0 lg:gap-x-6">
-        <Link href="/" className="shrink-0 rounded-[12px] bg-white px-3 py-2">
+        <Link href="/" className="shrink-0 rounded-[12px] bg-white px-3 py-2 focus-visible:outline-ink">
           <Image
             src="/images/brand/logo.svg"
             alt="ProStyle — бизнес-подарки"
@@ -45,7 +45,7 @@ export function SiteHeader() {
         </Link>
         <Link
           href="/catalog"
-          className="ml-auto inline-flex h-12 shrink-0 items-center gap-2 rounded-[12px] bg-white px-3 text-[15px] font-medium text-ink hover:bg-white/90 md:ml-0 md:px-5"
+          className="ml-auto inline-flex h-12 shrink-0 items-center gap-2 rounded-[12px] bg-white px-3 text-[15px] font-medium text-ink hover:bg-white/90 focus-visible:outline-ink md:ml-0 md:px-5"
         >
           <LayoutGrid size={20} aria-hidden />
           <span className="sr-only md:not-sr-only">Каталог</span>
@@ -53,7 +53,7 @@ export function SiteHeader() {
         <form
           action="/search"
           role="search"
-          className="order-last flex h-12 min-w-0 w-full items-center rounded-[12px] bg-white pl-4 pr-1 md:order-none md:flex-1 focus-within:ring-2 focus-within:ring-white/60"
+          className="order-last flex h-12 min-w-0 w-full items-center rounded-[12px] bg-white pl-4 pr-1 md:order-none md:flex-1 focus-within:ring-2 focus-within:ring-ink/50"
         >
           <input
             type="search"
@@ -65,7 +65,7 @@ export function SiteHeader() {
           <button
             type="submit"
             aria-label="Найти"
-            className="grid size-10 place-items-center rounded-[10px] bg-brand text-white hover:bg-brand-hover"
+            className="grid size-10 place-items-center rounded-[10px] bg-brand text-white hover:bg-brand-hover focus-visible:outline-ink focus-visible:outline-offset-0"
           >
             <Search size={18} aria-hidden />
           </button>
@@ -87,7 +87,7 @@ export function SiteHeader() {
               <Link
                 href={href}
                 aria-label={label}
-                className="flex flex-col items-center gap-1 text-white hover:text-white/80"
+                className="flex flex-col items-center gap-1 text-white hover:underline underline-offset-4"
               >
                 <Icon size={24} strokeWidth={1.6} aria-hidden />
                 <span className="hidden text-[11px] text-white lg:block">{label}</span>

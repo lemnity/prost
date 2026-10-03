@@ -7,7 +7,6 @@
   --color-muted: #636564;
   --color-faint: #a9aaab;
   --color-surface: #f5f5f4;
-  --color-topbar: #f5f3f3;
   --color-line: #ececec;
   --color-case: #1f6fa8;
   --color-work: #f3f1f0;
@@ -43,7 +42,7 @@
     var(--color-band-3) 80%,
     var(--color-band-4) 100%
   );
-  & :focus-visible {
+  & :where(:focus-visible) {
     outline-color: #fff;
   }
 }
