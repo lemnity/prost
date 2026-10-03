@@ -3,6 +3,8 @@ import Link from "next/link";
 import { Container } from "@/components/ui/container";
 import { SectionHeader } from "@/components/ui/section-header";
 import { getPopularCategories } from "@/lib/catalog";
+import { HolidayStatus } from "./holiday-status";
+import { NewYearCountdown } from "./new-year-countdown";
 
 type Cat = Awaited<ReturnType<typeof getPopularCategories>>[number];
 
@@ -23,6 +25,8 @@ function Tile({ cat, small }: { cat: Cat; small?: boolean }) {
           className="object-contain mix-blend-multiply transition-transform duration-200 group-hover:scale-[1.03]"
         />
       </div>
+      {cat.id === "novyy-god" && <NewYearCountdown />}
+      {cat.id === "suveniry-k-prazdnikam" && <HolidayStatus />}
       <span
         className={`absolute inset-x-0 bottom-0 line-clamp-2 text-balance p-3.5 font-semibold leading-tight ${
           small ? "text-[13px] lg:text-xs" : "text-[13px]"
