@@ -56,6 +56,10 @@ export function BannerSliderControls({ count }: { count: number }) {
     if (!t || !slider) return;
 
     // Infinite loop: clone last before first and first after last.
+    // Safe because the track is server-rendered and this island never re-renders
+    // its children (React does not manage them), and the clones are removed in
+    // the effect cleanup. Constraint: the parent must not re-render/reconcile the
+    // track children in place, or the clones would be dropped or duplicated.
     const slides = Array.from(t.children) as HTMLElement[];
     const makeClone = (el: HTMLElement, eager: boolean) => {
       const c = el.cloneNode(true) as HTMLElement;
@@ -172,7 +176,7 @@ export function BannerSliderControls({ count }: { count: number }) {
   }, [track, scrollToRaw, count]);
 
   const arrow =
-    "absolute top-1/2 z-10 hidden size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-ink shadow-md transition-opacity hover:bg-white md:flex md:opacity-0 md:group-hover/slider:opacity-100 focus-visible:opacity-100 group-focus-within/slider:opacity-100";
+    "absolute top-1/2 z-10 hidden size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-ink shadow-md transition-opacity hover:bg-white md:flex [@media(hover:hover)]:md:opacity-0 [@media(hover:hover)]:md:group-hover/slider:opacity-100 focus-visible:opacity-100 group-focus-within/slider:opacity-100";
 
   return (
     <div ref={rootRef}>
@@ -192,7 +196,7 @@ export function BannerSliderControls({ count }: { count: number }) {
       >
         <ChevronRight size={22} aria-hidden="true" />
       </button>
-      <div className="absolute inset-x-0 bottom-0 z-10 flex justify-center md:bottom-1">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex justify-center md:bottom-1">
         {Array.from({ length: count }, (_, i) => (
           <button
             key={i}
@@ -200,7 +204,7 @@ export function BannerSliderControls({ count }: { count: number }) {
             aria-label={`Перейти к слайду ${i + 1}`}
             aria-current={i === active ? "true" : undefined}
             onClick={() => manual(i + 1)}
-            className="group/dot flex h-6 min-w-6 items-center justify-center"
+            className="group/dot pointer-events-auto flex h-6 min-w-6 items-center justify-center"
           >
             <span
               className={`block h-2 rounded-full shadow-[0_0_2px_rgba(0,0,0,0.45)] transition-all ${

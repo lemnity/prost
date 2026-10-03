@@ -23,17 +23,11 @@ export function HolidayStatus({ initial }: { initial: Holiday }) {
   }, []);
 
   return (
-    <div className="pointer-events-none absolute left-2 top-2 z-10 max-w-[calc(100%-1rem)] rounded-[8px] bg-white/95 px-2 py-1 text-ink shadow-sm sm:px-2.5 sm:py-1.5">
+    <div className="pointer-events-none absolute left-2 top-2 z-10 max-w-[calc(100%-1rem)] rounded-[8px] bg-white/95 px-2 py-1 text-ink shadow-sm sm:px-2.5 sm:py-1.5 lg:px-1.5 xl:px-2">
       <div className="whitespace-nowrap text-[11px] leading-tight text-muted">
-        <span className="lg:hidden">Впереди · </span>
-        <span className="hidden lg:inline">До </span>
-        {holiday.label}
+        До {holiday.label}
       </div>
-      <div
-        title={holiday.title}
-        className="line-clamp-2 text-xs font-semibold leading-tight sm:text-[13px] lg:line-clamp-1 lg:text-[11px] xl:text-xs"
-       
-      >
+      <div className="line-clamp-2 text-xs font-semibold leading-tight sm:text-[13px] md:line-clamp-3 md:text-xs lg:text-[10px] xl:line-clamp-2 xl:text-[10.5px]">
         {holiday.title}
       </div>
     </div>

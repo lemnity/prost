@@ -8,9 +8,14 @@ import { Reviews } from "@/components/home/reviews";
 import { Clients } from "@/components/home/clients";
 import { ConsultationCta } from "@/components/home/consultation-cta";
 
+export const revalidate = 3600;
+
 export default function Home() {
   return (
-    <main>
+    <main id="main">
+      <h1 className="sr-only">
+        Корпоративные подарки и сувениры с логотипом в Тюмени
+      </h1>
       <BannerSlider />
       <PopularCategories />
       <NewProducts />

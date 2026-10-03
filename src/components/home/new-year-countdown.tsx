@@ -45,12 +45,12 @@ export function NewYearCountdown({ initial }: { initial: Countdown }) {
     <div
       role="group"
       aria-label={`До Нового года ${word("d", c.days)} ${word("h", c.hours)} ${word("m", c.minutes)}`}
-      className="pointer-events-none absolute left-2 top-2 z-10 rounded-[8px] bg-brand px-2.5 py-1.5 text-white"
+      className="pointer-events-none absolute left-2 top-2 z-10 max-w-[calc(100%-1rem)] rounded-[8px] bg-brand px-2 py-1.5 text-white sm:px-2.5"
     >
       <div aria-hidden="true">
         <div className="text-[11px] leading-tight">До Нового года</div>
         <div
-          className="whitespace-nowrap text-sm font-bold leading-tight tabular-nums"
+          className="whitespace-nowrap text-sm font-bold lg:text-[13px] xl:text-sm leading-tight tabular-nums"
         >
           {`${c.days} д ${c.hours} ч ${c.minutes} мин`}
         </div>

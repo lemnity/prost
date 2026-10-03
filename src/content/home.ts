@@ -6,14 +6,14 @@ export type Work = { id: string; client: string; text: string; image: string; hr
 export type Review = { id: string; name: string; date: string; text: string };
 export type Client = { id: string; name: string; logo: string };
 
-export type Banner = { id: string; image: string; width: number; height: number; alt: string };
+export type Banner = { id: string; image: string; alt: string };
 
 export const banners: Banner[] = [
-  { id: "vacation", image: "/images/banners/01.webp", width: 1280, height: 341, alt: "В отпуск с комфортом — полезные мелочи для комфортной дороги" },
-  { id: "knitwear", image: "/images/banners/02.webp", width: 2276, height: 610, alt: "Это вам не конь в пальто! Тепло и уют в каждом стежке — вязаные шапки, шарфы и варежки с логотипом" },
-  { id: "welcome-pack", image: "/images/banners/03.webp", width: 2400, height: 644, alt: "Welcome Pack — поможет новичкам влиться в команду" },
-  { id: "trends", image: "/images/banners/04.webp", width: 2400, height: 643, alt: "Свежие тренды в сувенирах — сделай маркетинг оригинальным" },
-  { id: "vip", image: "/images/banners/05.webp", width: 2400, height: 644, alt: "VIP-подарки — бизнес-партнеры теперь друзья" },
+  { id: "vacation", image: "/images/banners/01.webp", alt: "В отпуск с комфортом — полезные мелочи для комфортной дороги" },
+  { id: "knitwear", image: "/images/banners/02.webp", alt: "Это вам не конь в пальто! Тепло и уют в каждом стежке — вязаные шапки, шарфы и варежки с логотипом" },
+  { id: "welcome-pack", image: "/images/banners/03.webp", alt: "Welcome Pack — поможет новичкам влиться в команду" },
+  { id: "trends", image: "/images/banners/04.webp", alt: "Свежие тренды в сувенирах — сделай маркетинг оригинальным" },
+  { id: "vip", image: "/images/banners/05.webp", alt: "VIP-подарки — бизнес-партнеры теперь друзья" },
 ];
 
 export const steps = {

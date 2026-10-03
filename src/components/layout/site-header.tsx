@@ -25,6 +25,12 @@ const actions = [
 export function SiteHeader() {
   return (
     <header>
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-ink focus:shadow-md"
+      >
+        Перейти к содержимому
+      </a>
       <TopBar />
       <Container className="flex flex-wrap items-center gap-x-4 gap-y-3 py-3 md:h-[84px] md:flex-nowrap md:gap-x-5 md:py-0 lg:gap-x-6">
         <Link href="/" className="shrink-0">
@@ -33,7 +39,8 @@ export function SiteHeader() {
             alt="ProStyle — бизнес-подарки"
             width={170}
             height={41}
-            priority
+            loading="eager"
+            fetchPriority="low"
             className="h-auto w-[130px] md:w-[170px]"
           />
         </Link>
@@ -54,7 +61,7 @@ export function SiteHeader() {
             type="search"
             name="q"
             aria-label="Поиск по товарам"
-            placeholder="Поиск по товарам, категориям и артикулам..."
+            placeholder="Поиск по товарам и артикулам"
             className="h-full min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-faint"
           />
           <button
@@ -65,7 +72,7 @@ export function SiteHeader() {
             <Search size={20} aria-hidden />
           </button>
         </form>
-        <div className="hidden shrink-0 items-center gap-3 lg:flex">
+        <div className="hidden shrink-0 items-center gap-3 xl:flex">
           <Phone size={22} className="text-brand" aria-hidden />
           <div className="leading-tight">
             <a href={site.phone.href} className="block text-sm font-semibold hover:text-brand">

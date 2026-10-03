@@ -11,7 +11,7 @@ export function TopBar() {
           <MapPin size={14} className="text-brand" aria-hidden />
           {site.address}
         </p>
-        <ul className="hidden items-center gap-3 lg:flex">
+        <ul className="hidden items-center gap-3 xl:flex">
           <li>{site.topbar.center[0]}</li>
           <li aria-hidden className="size-1 rounded-full bg-brand" />
           <li>{site.topbar.center[1]}</li>

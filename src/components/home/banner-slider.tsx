@@ -12,9 +12,6 @@ export function BannerSlider() {
       className="pt-4"
     >
       <Container>
-        <h1 className="sr-only">
-          Корпоративные подарки и сувениры с логотипом в Тюмени
-        </h1>
         <div
           data-banner-slider
           className="group/slider relative aspect-[2400/644] overflow-hidden rounded-[10px] bg-surface"

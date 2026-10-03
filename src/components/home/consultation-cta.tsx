@@ -7,7 +7,7 @@ export function ConsultationCta() {
     <section aria-labelledby="cta-title" className="relative mt-4 overflow-hidden bg-cta">
       <div aria-hidden="true" className="absolute inset-y-0 right-0 hidden w-[40%] lg:block">
         <Image
-          src="/images/hero/cta.webp"
+          src="/images/cta/cta.webp"
           alt=""
           fill
           sizes="(min-width:1280px) 45vw, 40vw"
