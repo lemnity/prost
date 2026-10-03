@@ -1,9 +1,11 @@
-import { Container } from "@/components/ui/container";
+import { Hero } from "@/components/home/hero";
+import { PopularCategories } from "@/components/home/popular-categories";
 
 export default function Home() {
   return (
     <main>
-      <Container />
+      <Hero />
+      <PopularCategories />
     </main>
   );
 }
