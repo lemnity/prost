@@ -2,17 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getNewYearCountdown } from "@/lib/holidays";
-
-const rules = new Intl.PluralRules("ru");
-const FORMS: Record<"d" | "h" | "m", Record<string, string>> = {
-  d: { one: "день", few: "дня", many: "дней", other: "дня" },
-  h: { one: "час", few: "часа", many: "часов", other: "часа" },
-  m: { one: "минута", few: "минуты", many: "минут", other: "минуты" },
-};
-
-function plural(unit: keyof typeof FORMS, n: number): string {
-  return FORMS[unit][rules.select(n)] ?? FORMS[unit].other;
-}
+import { plural } from "@/lib/plural";
 
 type Countdown = ReturnType<typeof getNewYearCountdown>;
 

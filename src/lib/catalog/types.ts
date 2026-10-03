@@ -3,6 +3,8 @@ export type Product = {
   title: string;
   sku: string;
   priceFrom: number;
+  /** Реальная цена до скидки (распродажа). */
+  oldPrice?: number;
   currency: "RUB";
   image: string;
   url: string;

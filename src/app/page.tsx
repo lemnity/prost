@@ -1,6 +1,7 @@
 import { BannerSlider } from "@/components/home/banner-slider";
 import { PopularCategories } from "@/components/home/popular-categories";
 import { NewProducts } from "@/components/home/new-products";
+import { WeeklySale } from "@/components/home/weekly-sale";
 import { HowWeWork } from "@/components/home/how-we-work";
 import { ApplicationTypes } from "@/components/home/application-types";
 import { OurWorks } from "@/components/home/our-works";
@@ -19,6 +20,7 @@ export default function Home() {
       <BannerSlider />
       <PopularCategories />
       <NewProducts />
+      <WeeklySale />
       <HowWeWork />
       <ApplicationTypes />
       <OurWorks />
