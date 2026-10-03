@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { Container } from "@/components/ui/container";
 import { site, type SocialKey } from "@/content/site";
 
-const socialIcons: Record<SocialKey, ReactNode> = {
+export const socialIcons: Record<SocialKey, ReactNode> = {
   telegram: <Send size={16} />,
   whatsapp: <MessageCircle size={16} />,
   vk: <span className="text-[11px] font-bold leading-none">VK</span>,

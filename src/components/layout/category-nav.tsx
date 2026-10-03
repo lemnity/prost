@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Zap } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { site } from "@/content/site";
 
@@ -6,10 +7,13 @@ export function CategoryNav() {
   return (
     <nav aria-label="Категории">
       <Container>
-        <ul className="no-scrollbar flex h-11 items-center gap-6 overflow-x-auto text-sm font-semibold text-white xl:justify-between xl:gap-0 xl:overflow-visible">
+        <ul className="no-scrollbar -mx-4 flex h-12 items-center gap-5 overflow-x-auto px-4 text-sm text-ink md:-mx-8 md:px-8 xl:mx-0 xl:justify-center xl:gap-3 xl:overflow-visible xl:px-0">
+          <li aria-hidden className="shrink-0 text-brand">
+            <Zap size={16} fill="currentColor" />
+          </li>
           {site.nav.map((item) => (
             <li key={item.href} className="shrink-0">
-              <Link href={item.href} className="whitespace-nowrap hover:underline underline-offset-4">
+              <Link href={item.href} className="whitespace-nowrap hover:text-brand">
                 {item.label}
               </Link>
             </li>

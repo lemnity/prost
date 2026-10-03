@@ -10,7 +10,7 @@ export async function WeeklySale() {
   const products = await getWeeklySale(6);
   const initial = getSaleRemaining(new Date());
   return (
-    <section aria-labelledby="weekly-sale-title" className="py-5 md:py-6">
+    <section id="weekly-sale" aria-labelledby="weekly-sale-title" className="scroll-mt-4 py-5 md:py-6">
       <Container>
         <div className="mb-5 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 md:mb-6">
           <h2 id="weekly-sale-title" className="text-[22px] font-bold md:text-[26px]">

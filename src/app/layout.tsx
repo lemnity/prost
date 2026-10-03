@@ -20,10 +20,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="ru" className={inter.variable}>
       <body className="min-h-screen font-sans">
         <SiteHeader />
-        {/* White sheet overlapping the header band; wraps every page. */}
-        <div className="relative -mt-4 rounded-t-[16px] bg-white md:-mt-6 md:rounded-t-[24px]">
-          {children}
-        </div>
+        {children}
         <SiteFooter />
       </body>
     </html>
