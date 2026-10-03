@@ -48,7 +48,7 @@ export function SiteHeader() {
         <form
           action="/search"
           role="search"
-          className="order-last flex h-11 min-w-0 w-full items-center rounded-[10px] bg-surface pl-4 pr-1 md:order-none md:max-w-[460px] md:flex-1"
+          className="order-last flex h-11 min-w-0 w-full items-center rounded-[10px] bg-surface pl-4 pr-1 md:order-none md:max-w-[460px] md:flex-1 focus-within:ring-2 focus-within:ring-brand/40"
         >
           <input
             type="search"
