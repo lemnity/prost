@@ -10,14 +10,14 @@ type SectionHeaderProps = {
 
 export function SectionHeader({ id, title, link, note }: SectionHeaderProps) {
   return (
-    <div className="mb-5 flex items-center justify-between gap-4 md:mb-6">
+    <div className="mb-5 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 md:mb-6">
       <h2 id={id} className="text-[22px] font-bold md:text-[26px]">
         {title}
       </h2>
       {link ? (
         <Link
           href={link.href}
-          className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-brand hover:text-brand-hover md:text-[13px]"
+          className="inline-flex items-center md:shrink-0 gap-1 text-xs font-medium text-brand hover:text-brand-hover md:text-[13px]"
         >
           {link.label}
           <ArrowRight size={14} aria-hidden="true" />
