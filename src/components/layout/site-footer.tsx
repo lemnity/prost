@@ -16,7 +16,7 @@ export function SiteFooter() {
   const year = new Date().getFullYear();
   return (
     <footer className="border-t border-line py-10">
-      <Container className="grid gap-8 sm:grid-cols-2 lg:grid-cols-[1.9fr_0.8fr_0.8fr_1.3fr_auto] lg:gap-10">
+      <Container className="grid gap-8 sm:grid-cols-2 lg:grid-cols-[1.6fr_0.8fr_0.8fr_auto_auto] lg:gap-10">
         <div className="sm:col-span-2 lg:col-span-1">
           <Link href="/" className="inline-block">
             <Image
@@ -44,7 +44,7 @@ export function SiteFooter() {
             ))}
           </ul>
         ))}
-        <ul className="flex flex-col gap-2.5 text-[13px] sm:col-span-2 lg:col-span-1 lg:border-l lg:border-line lg:pl-10">
+        <ul className="flex flex-col gap-2.5 text-[13px] whitespace-nowrap sm:col-span-2 lg:col-span-1 lg:border-l lg:border-line lg:pl-10">
           <li className="flex items-start gap-2 text-muted">
             <MapPin size={14} className="mt-0.5 shrink-0 text-brand" aria-hidden />
             {site.address}
