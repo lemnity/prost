@@ -24,20 +24,20 @@ export function ApplicationTypes() {
             <Link
               key={a.id}
               href={a.href}
-              className="group relative block h-[170px] shrink-0 basis-[82%] snap-start overflow-hidden rounded-[10px] bg-surface shadow-[0_2px_8px_rgba(0,0,0,0.06)] focus-visible:outline-offset-[-2px] md:h-[190px] md:basis-[calc((100%-16px)/2)] lg:basis-[calc((100%-32px)/3)] xl:basis-[calc((100%-48px)/4)]"
+              className="group relative block h-[180px] shrink-0 basis-[85%] snap-start overflow-hidden rounded-[10px] bg-surface p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.05)] transition-shadow hover:shadow-[0_2px_4px_rgba(0,0,0,0.06),0_8px_20px_rgba(0,0,0,0.09)] focus-visible:outline-offset-[-2px] md:h-[200px] md:basis-[calc((100%-16px)/2)] md:p-6 lg:basis-[calc((100%-32px)/3)] xl:h-[210px] xl:basis-[calc((100%-48px)/4)]"
             >
               <Image
                 src={a.image}
                 alt=""
                 width={640}
                 height={640}
-                sizes="(min-width:1280px) 12vw, (min-width:1024px) 18vw, (min-width:768px) 25vw, 40vw"
-                className="absolute inset-y-3 right-3 h-[calc(100%-1.5rem)] w-[48%] object-contain transition-transform duration-300 group-hover:scale-[1.03] motion-reduce:transition-none"
+                sizes="(min-width:1280px) 12vw, (min-width:1024px) 18vw, (min-width:768px) 25vw, 45vw"
+                className="absolute inset-y-0 right-0 h-full w-1/2 scale-[1.12] origin-bottom-right object-contain object-right-bottom p-1 drop-shadow-[0_8px_12px_rgba(0,0,0,0.12)] motion-safe:transition-transform motion-safe:duration-200 motion-safe:group-hover:scale-[1.16]"
               />
-              <h3 className="relative z-10 max-w-[62%] p-5 pr-0 text-[22px] font-semibold leading-tight xl:text-xl text-ink">
+              <h3 className="relative z-10 max-w-[52%] text-[22px] font-semibold leading-tight text-balance text-ink">
                 {a.title}
               </h3>
-              <span className="absolute bottom-5 left-5 inline-flex h-10 items-center rounded-[8px] bg-brand px-5 text-[15px] font-semibold text-white group-hover:bg-brand-hover">
+              <span className="absolute bottom-5 left-5 inline-flex h-10 items-center rounded-[8px] bg-brand px-5 text-[14px] font-semibold text-white group-hover:bg-brand-hover md:bottom-6 md:left-6">
                 Подробнее
               </span>
             </Link>

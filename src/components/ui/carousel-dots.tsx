@@ -45,7 +45,7 @@ export function CarouselDots({ trackId, count }: CarouselDotsProps) {
   };
 
   return (
-    <div className="mt-3 flex flex-wrap justify-center">
+    <div className="mt-4 flex flex-wrap justify-center">
       {Array.from({ length: count }, (_, i) => (
         <button
           key={i}
@@ -53,11 +53,10 @@ export function CarouselDots({ trackId, count }: CarouselDotsProps) {
           onClick={() => go(i)}
           aria-label={`Перейти к карточке ${i + 1}`}
           aria-current={i === active ? "true" : undefined}
-          className="flex size-6 items-center justify-center"
+          className="flex h-6 min-w-6 items-center justify-center px-[2px]"
         >
           <span
-            className="size-2 rounded-full"
-            style={{ backgroundColor: i === active ? "#555" : "#C9C9C9" }}
+            className={`h-1.5 rounded-full motion-safe:transition-all motion-safe:duration-200 ${i === active ? "w-[18px] bg-[#4A4A4A]" : "w-1.5 bg-[#D0D0D0]"}`}
           />
         </button>
       ))}
