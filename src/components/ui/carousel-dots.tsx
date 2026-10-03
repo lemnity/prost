@@ -1,11 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 type CarouselDotsProps = { trackId: string; count: number };
 
 export function CarouselDots({ trackId, count }: CarouselDotsProps) {
   const [active, setActive] = useState(0);
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
   useEffect(() => {
     const track = document.getElementById(trackId);
@@ -45,18 +50,19 @@ export function CarouselDots({ trackId, count }: CarouselDotsProps) {
   };
 
   return (
-    <div className="mt-4 flex flex-wrap justify-center">
+    <div className={`mt-4 flex flex-wrap justify-center ${mounted ? "" : "invisible"}`} aria-hidden={mounted ? undefined : true}>
       {Array.from({ length: count }, (_, i) => (
         <button
           key={i}
           type="button"
+          tabIndex={mounted ? undefined : -1}
           onClick={() => go(i)}
           aria-label={`Перейти к карточке ${i + 1}`}
           aria-current={i === active ? "true" : undefined}
           className="flex h-6 min-w-6 items-center justify-center px-[2px]"
         >
           <span
-            className={`h-1.5 rounded-full motion-safe:transition-all motion-safe:duration-200 ${i === active ? "w-[18px] bg-[#4A4A4A]" : "w-1.5 bg-[#D0D0D0]"}`}
+            className={`h-1.5 rounded-full motion-safe:transition-all motion-safe:duration-200 ${i === active ? "w-[18px] bg-dot" : "w-1.5 bg-dot-idle"}`}
           />
         </button>
       ))}
