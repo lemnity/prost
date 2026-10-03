@@ -17,7 +17,7 @@ export function SectionHeader({ id, title, link, note }: SectionHeaderProps) {
       {link ? (
         <Link
           href={link.href}
-          className="inline-flex items-center md:shrink-0 gap-1 text-xs font-medium text-brand hover:text-brand-hover md:text-[13px]"
+          className="inline-flex items-center gap-1 text-xs font-medium text-brand hover:text-brand-hover md:shrink-0 md:text-[13px]"
         >
           {link.label}
           <ArrowRight size={14} aria-hidden="true" />
