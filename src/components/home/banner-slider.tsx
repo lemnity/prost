@@ -14,7 +14,7 @@ export function BannerSlider() {
       <Container>
         <div
           data-banner-slider
-          className="group/slider relative aspect-[2400/644] overflow-hidden rounded-[10px] bg-surface"
+          className="group/slider relative isolate aspect-[2400/644] transform-gpu overflow-hidden rounded-[10px] bg-surface"
         >
           <div
             data-banner-track
@@ -26,7 +26,7 @@ export function BannerSlider() {
                 role="group"
                 aria-roledescription="slide"
                 aria-label={`${i + 1} из ${total}`}
-                className="relative h-full w-full shrink-0 snap-start"
+                className="relative h-full w-full min-w-full shrink-0 basis-full snap-start snap-always"
               >
                 <Image
                   src={b.image}

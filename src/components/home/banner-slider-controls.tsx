@@ -26,6 +26,13 @@ export function BannerSliderControls({ count }: { count: number }) {
     [],
   );
 
+  // Slide width derived from the whole track so fractional (zoomed) widths
+  // never drift: every slide is scrollWidth / (count + 2).
+  const slideW = useCallback(
+    (t: HTMLElement) => t.scrollWidth / (count + 2),
+    [count],
+  );
+
   const scrollToRaw = useCallback(
     (raw: number, smooth: boolean) => {
       const t = track();
@@ -35,11 +42,11 @@ export function BannerSliderControls({ count }: { count: number }) {
       ).matches;
       targetRef.current = raw;
       t.scrollTo({
-        left: raw * t.clientWidth,
+        left: Math.round(raw * slideW(t)),
         behavior: smooth && !reduce ? "smooth" : "auto",
       });
     },
-    [track],
+    [track, slideW],
   );
 
   const manual = useCallback(
@@ -80,26 +87,32 @@ export function BannerSliderControls({ count }: { count: number }) {
     t.insertBefore(last, slides[0]);
     t.appendChild(first);
     // Instant jump regardless of CSS scroll-behavior.
-    t.scrollTo({ left: t.clientWidth, behavior: "instant" });
+    t.scrollTo({ left: Math.round(slideW(t)), behavior: "instant" });
 
     let touching = false;
     let timeout = 0;
     const jump = (raw: number) => {
       rawRef.current = raw;
       targetRef.current = raw;
-      t.scrollTo({ left: raw * t.clientWidth, behavior: "instant" });
+      t.scrollTo({ left: Math.round(raw * slideW(t)), behavior: "instant" });
     };
     const settle = () => {
       if (touching) return;
-      const w = t.clientWidth;
+      const w = slideW(t);
       if (!w) return;
       const raw = Math.round(t.scrollLeft / w);
       if (raw === 0) jump(count);
       else if (raw === count + 1) jump(1);
-      else targetRef.current = raw;
+      else {
+        targetRef.current = raw;
+        rawRef.current = raw;
+        const exact = Math.round(raw * w);
+        if (Math.abs(t.scrollLeft - exact) >= 1)
+          t.scrollTo({ left: exact, behavior: "instant" });
+      }
     };
     const onScroll = () => {
-      const w = t.clientWidth;
+      const w = slideW(t);
       if (!w) return;
       const raw = Math.round(t.scrollLeft / w);
       rawRef.current = raw;
@@ -123,7 +136,8 @@ export function BannerSliderControls({ count }: { count: number }) {
     t.addEventListener("touchstart", onTouchStart, { passive: true });
     t.addEventListener("touchend", onTouchEnd, { passive: true });
     t.addEventListener("touchcancel", onTouchEnd, { passive: true });
-    window.addEventListener("resize", onResize);
+    const ro = new ResizeObserver(onResize);
+    ro.observe(t);
 
     const enter = (e: PointerEvent) => {
       if (e.pointerType === "mouse") hoverPaused.current = true;
@@ -165,7 +179,7 @@ export function BannerSliderControls({ count }: { count: number }) {
       t.removeEventListener("touchstart", onTouchStart);
       t.removeEventListener("touchend", onTouchEnd);
       t.removeEventListener("touchcancel", onTouchEnd);
-      window.removeEventListener("resize", onResize);
+      ro.disconnect();
       slider.removeEventListener("pointerenter", enter);
       slider.removeEventListener("pointerleave", leave);
       slider.removeEventListener("focusin", focusIn);
@@ -173,7 +187,7 @@ export function BannerSliderControls({ count }: { count: number }) {
       first.remove();
       last.remove();
     };
-  }, [track, scrollToRaw, count]);
+  }, [track, scrollToRaw, slideW, count]);
 
   const arrow =
     "absolute top-1/2 z-10 hidden size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-ink shadow-md transition-opacity hover:bg-white md:flex [@media(hover:hover)]:md:opacity-0 [@media(hover:hover)]:md:group-hover/slider:opacity-100 focus-visible:opacity-100 group-focus-within/slider:opacity-100";
