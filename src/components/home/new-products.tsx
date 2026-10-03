@@ -6,7 +6,7 @@ import { getNewProducts } from "@/lib/catalog";
 export async function NewProducts() {
   const products = await getNewProducts(6);
   return (
-    <section aria-labelledby="new-products-title" className="py-6 md:py-8">
+    <section aria-labelledby="new-products-title" className="py-5 md:py-6">
       <Container>
         <SectionHeader
           id="new-products-title"

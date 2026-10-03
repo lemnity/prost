@@ -7,7 +7,7 @@ const icons = { basket: ShoppingBasket, file: FileImage, pen: PencilLine, truck:
 
 export function HowWeWork() {
   return (
-    <section aria-labelledby="how-we-work-title" className="py-6 md:py-8">
+    <section aria-labelledby="how-we-work-title" className="py-5 md:py-6">
       <Container>
         <SectionHeader id="how-we-work-title" title={steps.title} note={steps.note} />
         <ol className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">

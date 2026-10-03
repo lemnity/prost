@@ -6,7 +6,7 @@ import { applications } from "@/content/home";
 
 export function ApplicationTypes() {
   return (
-    <section aria-labelledby="application-types-title" className="py-6 md:py-8">
+    <section aria-labelledby="application-types-title" className="py-5 md:py-6">
       <Container>
         <SectionHeader
           id="application-types-title"
@@ -15,7 +15,7 @@ export function ApplicationTypes() {
         />
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {applications.items.map((a) => (
-            <Link key={a.id} href={a.href} className="block overflow-hidden rounded-[10px] bg-surface">
+            <Link key={a.id} href={a.href} className="block overflow-hidden rounded-[10px] bg-surface focus-visible:outline-offset-[-2px]">
               <div className="relative aspect-[360/189]">
                 <Image
                   src={a.image}
@@ -26,7 +26,7 @@ export function ApplicationTypes() {
                 />
               </div>
               <div className="p-4">
-                <h3 className="text-sm font-bold">{a.title}</h3>
+                <h3 className="text-sm font-bold text-balance">{a.title}</h3>
                 <p className="mt-1.5 line-clamp-3 text-[12.5px] text-muted">{a.text}</p>
               </div>
             </Link>

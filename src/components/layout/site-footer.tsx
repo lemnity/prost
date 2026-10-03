@@ -16,8 +16,8 @@ export function SiteFooter() {
   const year = new Date().getFullYear();
   return (
     <footer className="border-t border-line py-10">
-      <Container className="grid gap-8 sm:grid-cols-2 lg:grid-cols-[1.6fr_0.8fr_0.8fr_auto_auto] lg:gap-10">
-        <div className="sm:col-span-2 lg:col-span-1">
+      <Container className="grid gap-8 sm:grid-cols-2 xl:grid-cols-[2.1fr_0.8fr_0.8fr_auto_auto] xl:gap-8">
+        <div className="sm:col-span-2 xl:col-span-1">
           <Link href="/" className="inline-block">
             <Image
               src="/images/brand/logo.svg"
@@ -30,7 +30,7 @@ export function SiteFooter() {
           <p className="mt-7 text-xs leading-5 text-muted">
             © {year} ProStyle. Все права защищены.
             <br />
-            Корпоративные подарки и сувенирная продукция в Тюмени.
+            <span className="sm:whitespace-nowrap">Корпоративные подарки и сувенирная продукция в Тюмени.</span>
           </p>
         </div>
         {site.footerLinks.map((col, i) => (
@@ -44,7 +44,7 @@ export function SiteFooter() {
             ))}
           </ul>
         ))}
-        <ul className="flex flex-col gap-2.5 text-[13px] whitespace-nowrap sm:col-span-2 lg:col-span-1 lg:border-l lg:border-line lg:pl-10">
+        <ul className="flex flex-col gap-2.5 text-[13px] whitespace-nowrap sm:col-span-2 xl:col-span-1 xl:border-l xl:border-line xl:pl-10">
           <li className="flex items-start gap-2 text-muted">
             <MapPin size={14} className="mt-0.5 shrink-0 text-brand" aria-hidden />
             {site.address}
@@ -61,7 +61,7 @@ export function SiteFooter() {
             </a>
           </li>
         </ul>
-        <ul className="flex items-start gap-3 sm:col-span-2 lg:col-span-1">
+        <ul className="flex items-start gap-3 sm:col-span-2 xl:col-span-1">
           {site.socials.map((s) => {
             const cls =
               "grid size-8 place-items-center rounded-full bg-[#5F6368] text-white";

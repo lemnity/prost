@@ -1,36 +1,24 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ProStyle — каталог корпоративных подарков
 
-## Getting Started
+Главная страница каталога сувенирной продукции (Next.js 16 App Router, Tailwind CSS v4, TypeScript). Все компоненты серверные, главная страница статическая.
 
-First, run the development server:
+## Запуск
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm i
+npm run dev      # http://localhost:3000
+npm run build && npm start   # продакшен-сборка
+npm run lint
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Где что лежит
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `src/content/` — тексты и контент главной (`home.ts`), контакты, меню, футер (`site.ts`).
+- `src/lib/catalog` — данные каталога. Это место для провайдеров складов: сейчас отдаются статические данные, позже сюда подключаются реальные источники (категории, новинки, остатки).
+- `src/components/layout`, `src/components/home`, `src/components/catalog`, `src/components/ui` — компоненты.
+- `src/app/globals.css` — дизайн-токены (цвета, шрифт) в `@theme`.
+- `docs/design/` — макет-референс и вырезки секций.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Временные изображения
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Картинки hero, категорий, видов нанесения, кейсов («Наши работы») и логотипы клиентов вырезаны из макета и являются временными — их нужно заменить на оригиналы (`public/images/*`). Логотип сайта (`public/images/brand/logo.svg`) — оригинальный, не менять.

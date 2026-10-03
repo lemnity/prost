@@ -9,10 +9,10 @@ function formatDate(iso: string) {
 
 export function Reviews() {
   return (
-    <section aria-labelledby="reviews-title" className="py-6 md:py-8">
+    <section aria-labelledby="reviews-title" className="py-5 md:py-6">
       <Container>
         <SectionHeader id="reviews-title" title={reviews.title} link={reviews.link} />
-        <ul className="no-scrollbar -mx-4 flex snap-x gap-3 overflow-x-auto px-4 md:-mx-8 md:px-8 lg:mx-0 lg:grid lg:grid-cols-3 lg:overflow-visible lg:px-0">
+        <ul className="no-scrollbar -mx-4 flex scroll-px-4 snap-x gap-3 md:scroll-px-8 lg:scroll-px-0 overflow-x-auto px-4 md:-mx-8 md:px-8 lg:mx-0 lg:grid lg:grid-cols-3 lg:overflow-visible lg:px-0">
           {reviews.items.map((r) => (
             <li key={r.id} className="w-[300px] shrink-0 snap-start lg:w-auto">
               <figure className="h-full rounded-[10px] bg-surface p-5">

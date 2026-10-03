@@ -16,12 +16,13 @@ const logoWidth: Record<string, number> = {
 
 export function Clients() {
   return (
-    <section aria-labelledby="clients-title" className="py-8">
-      <Container className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
-        <h2 id="clients-title" className="order-[-2] shrink-0 text-sm lg:order-none font-bold">
+    <section aria-labelledby="clients-title" className="py-5 md:py-6">
+      <Container className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between xl:gap-6">
+        <h2 id="clients-title" className="shrink-0 text-sm font-bold">
           {clients.title}
         </h2>
-        <ul className="no-scrollbar -mx-4 flex items-center gap-6 overflow-x-auto px-4 md:-mx-8 md:px-8 lg:mx-0 lg:min-w-0 lg:flex-1 lg:justify-around lg:gap-4 lg:overflow-visible lg:px-0">
+        <p className="shrink-0 text-[13px] text-muted xl:order-last">{clients.note}</p>
+        <ul className="no-scrollbar xl:order-none -mx-4 flex items-center gap-6 overflow-x-auto px-4 md:-mx-8 md:px-8 xl:mx-0 xl:min-w-0 xl:flex-1 xl:justify-around xl:gap-4 xl:overflow-visible xl:px-0">
           {clients.items.map((c) => (
             <li key={c.id} className="shrink-0">
               <Image
@@ -29,13 +30,12 @@ export function Clients() {
                 alt={c.name}
                 width={logoWidth[c.id] ?? 132}
                 height={84}
-                sizes="95px"
-                className="h-[38px] w-auto grayscale opacity-80"
+                sizes="(min-width: 1024px) 130px, 100px"
+                className="h-[38px] w-auto mix-blend-multiply grayscale contrast-125"
               />
             </li>
           ))}
         </ul>
-        <p className="order-[-1] shrink-0 text-[13px] text-muted lg:order-none">{clients.note}</p>
       </Container>
     </section>
   );

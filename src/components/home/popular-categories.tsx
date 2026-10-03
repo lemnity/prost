@@ -10,7 +10,7 @@ function Tile({ cat, small }: { cat: Cat; small?: boolean }) {
   return (
     <Link
       href={cat.href}
-      className={`group relative block h-[150px] overflow-hidden rounded-[10px] bg-surface ${
+      className={`group relative block h-[150px] overflow-hidden rounded-[10px] bg-surface focus-visible:outline-offset-[-2px] ${
         small ? "lg:h-[158px]" : "lg:h-[182px]"
       }`}
     >
@@ -24,7 +24,7 @@ function Tile({ cat, small }: { cat: Cat; small?: boolean }) {
         />
       </div>
       <span
-        className={`absolute inset-x-0 bottom-0 line-clamp-2 p-3.5 font-semibold leading-tight ${
+        className={`absolute inset-x-0 bottom-0 line-clamp-2 text-balance p-3.5 font-semibold leading-tight ${
           small ? "text-[13px] lg:text-xs" : "text-[13px]"
         }`}
       >
@@ -39,7 +39,7 @@ export async function PopularCategories() {
   const first = cats.slice(0, 12);
   const rest = cats.slice(12);
   return (
-    <section aria-labelledby="popular-categories-title" className="py-6 md:py-8">
+    <section aria-labelledby="popular-categories-title" className="py-5 md:py-6">
       <Container>
         <SectionHeader
           id="popular-categories-title"
