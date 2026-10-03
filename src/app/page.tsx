@@ -1,4 +1,4 @@
-import { Hero } from "@/components/home/hero";
+import { BannerSlider } from "@/components/home/banner-slider";
 import { PopularCategories } from "@/components/home/popular-categories";
 import { NewProducts } from "@/components/home/new-products";
 import { HowWeWork } from "@/components/home/how-we-work";
@@ -11,7 +11,7 @@ import { ConsultationCta } from "@/components/home/consultation-cta";
 export default function Home() {
   return (
     <main>
-      <Hero />
+      <BannerSlider />
       <PopularCategories />
       <NewProducts />
       <HowWeWork />

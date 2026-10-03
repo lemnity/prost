@@ -1,4 +1,3 @@
-export type HeroStatIcon = "gem" | "package" | "pen";
 export type StepIcon = "basket" | "file" | "pen" | "truck";
 
 export type Step = { number: string; icon: StepIcon; title: string; text: string };
@@ -7,18 +6,15 @@ export type Work = { id: string; client: string; text: string; image: string; hr
 export type Review = { id: string; name: string; date: string; text: string };
 export type Client = { id: string; name: string; logo: string };
 
-export const hero = {
-  title: { line1: "Корпоративные подарки", line2: "и мерч с", accent: "вашим логотипом" },
-  text: "Помогаем бизнесу, государственным и частным организациям создавать запоминающиеся подарки, которые работают на ваш бренд.",
-  stats: [
-    { icon: "gem", bold: "15+ лет", caption: "на рынке" },
-    { icon: "package", bold: "от 10 000 ₽", caption: "минимальный заказ" },
-    { icon: "pen", bold: "Нанесение логотипа", caption: "любым способом" },
-  ] satisfies { icon: HeroStatIcon; bold: string; caption: string }[],
-  primaryCta: { label: "Подобрать сувениры", href: "/catalog" },
-  secondaryCta: { label: "Смотреть каталог", href: "/catalog" },
-  image: "/images/hero/hero.webp",
-} as const;
+export type Banner = { id: string; image: string; width: number; height: number; alt: string };
+
+export const banners: Banner[] = [
+  { id: "vacation", image: "/images/banners/01.webp", width: 1280, height: 341, alt: "В отпуск с комфортом — полезные мелочи для комфортной дороги" },
+  { id: "knitwear", image: "/images/banners/02.webp", width: 2276, height: 610, alt: "Это вам не конь в пальто! Тепло и уют в каждом стежке — вязаные шапки, шарфы и варежки с логотипом" },
+  { id: "welcome-pack", image: "/images/banners/03.webp", width: 2400, height: 644, alt: "Welcome Pack — поможет новичкам влиться в команду" },
+  { id: "trends", image: "/images/banners/04.webp", width: 2400, height: 643, alt: "Свежие тренды в сувенирах — сделай маркетинг оригинальным" },
+  { id: "vip", image: "/images/banners/05.webp", width: 2400, height: 644, alt: "VIP-подарки — бизнес-партнеры теперь друзья" },
+];
 
 export const steps = {
   title: "Как мы работаем",
