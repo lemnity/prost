@@ -74,7 +74,7 @@ function Tile({
         small ? "lg:h-[182px] xl:h-[158px]" : "lg:h-[182px]"
       } ${className}`}
     >
-      <div className="absolute inset-x-1 top-1 bottom-[22%]">
+      <div className={`absolute inset-x-1 top-1 bottom-[56px] ${small ? "xl:bottom-[46px]" : ""}`}>
         <Image
           src={cat.image}
           alt=""
@@ -102,10 +102,7 @@ export async function PopularCategories() {
   const first = cats.slice(0, 11);
   const rest = cats.slice(11);
   return (
-    <section
-      aria-labelledby="popular-categories-title"
-      className="py-5 md:py-6"
-    >
+    <section aria-labelledby="popular-categories-title" className="py-5 md:py-6">
       <Container>
         <SectionHeader
           id="popular-categories-title"

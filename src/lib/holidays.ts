@@ -20,10 +20,7 @@ export function getNewYearCountdown(now: Date): {
 } {
   const year = toLocal(now).getUTCFullYear();
   const target = localMidnight(year + 1, 0, 1);
-  const total = Math.max(
-    0,
-    Math.floor((target.getTime() - now.getTime()) / MIN),
-  );
+  const total = Math.max(0, Math.floor((target.getTime() - now.getTime()) / MIN));
   return {
     days: Math.floor(total / 1440),
     hours: Math.floor((total % 1440) / 60),
@@ -32,22 +29,22 @@ export function getNewYearCountdown(now: Date): {
 }
 
 type Rule =
-  | { title: string; month: number; day: number }
-  | { title: string; month: number; sunday: number };
+  | { title: string; short: string; month: number; day: number }
+  | { title: string; short: string; month: number; sunday: number };
 
 // month: 0-11. Порядок — по году.
 const HOLIDAYS: Rule[] = [
-  { title: "День святого Валентина", month: 1, day: 14 },
-  { title: "День защитника Отечества", month: 1, day: 23 },
-  { title: "Международный женский день", month: 2, day: 8 },
-  { title: "Праздник весны и труда", month: 4, day: 1 },
-  { title: "День Победы", month: 4, day: 9 },
-  { title: "День России", month: 5, day: 12 },
-  { title: "День медицинского работника", month: 5, sunday: 3 },
-  { title: "День строителя", month: 7, sunday: 2 },
-  { title: "День знаний", month: 8, day: 1 },
-  { title: "Хэллоуин", month: 9, day: 31 },
-  { title: "День народного единства", month: 10, day: 4 },
+  { title: "День святого Валентина", short: "День Валентина", month: 1, day: 14 },
+  { title: "День защитника Отечества", short: "День защитника", month: 1, day: 23 },
+  { title: "Международный женский день", short: "8 Марта", month: 2, day: 8 },
+  { title: "Праздник весны и труда", short: "Праздник труда", month: 4, day: 1 },
+  { title: "День Победы", short: "День Победы", month: 4, day: 9 },
+  { title: "День России", short: "День России", month: 5, day: 12 },
+  { title: "День медицинского работника", short: "День медика", month: 5, sunday: 3 },
+  { title: "День строителя", short: "День строителя", month: 7, sunday: 2 },
+  { title: "День знаний", short: "День знаний", month: 8, day: 1 },
+  { title: "Хэллоуин", short: "Хэллоуин", month: 9, day: 31 },
+  { title: "День народного единства", short: "День единства", month: 10, day: 4 },
 ];
 
 function resolveDay(rule: Rule, year: number): number {
@@ -63,7 +60,7 @@ const shortFmt = new Intl.DateTimeFormat("ru-RU", {
   timeZone: TZ,
 });
 
-export type UpcomingHoliday = { title: string; date: string };
+export type UpcomingHoliday = { title: string; short: string; date: string };
 
 /** Ближайшие `count` праздников по календарю; date — короткая дата («31 окт»). */
 export function getUpcomingHolidays(
@@ -73,7 +70,7 @@ export function getUpcomingHolidays(
   const local = toLocal(now);
   const year = local.getUTCFullYear();
   const today = Date.UTC(year, local.getUTCMonth(), local.getUTCDate());
-  const found: { title: string; at: number; date: Date }[] = [];
+  const found: { title: string; short: string; at: number; date: Date }[] = [];
   for (const y of [year, year + 1]) {
     for (const rule of HOLIDAYS) {
       const day = resolveDay(rule, y);
@@ -81,14 +78,16 @@ export function getUpcomingHolidays(
       if (at < today) continue;
       found.push({
         title: rule.title,
+        short: rule.short,
         at,
         date: localMidnight(y, rule.month, day),
       });
     }
   }
   found.sort((a, b) => a.at - b.at);
-  return found.slice(0, count).map(({ title, date }) => ({
+  return found.slice(0, count).map(({ title, short, date }) => ({
     title,
+    short,
     date: shortFmt.format(date).replace(/\.$/, ""),
   }));
 }

@@ -31,7 +31,7 @@ export function HolidayStatus({ initial }: { initial: UpcomingHoliday[] }) {
             className={`mt-0.5 gap-1 text-xs leading-tight ${i === 0 ? "flex" : "hidden @[185px]:flex"}`}
           >
             <span className="shrink-0 font-bold">{h.date}</span>
-            <span className="line-clamp-1">{h.title}</span>
+            <span className="whitespace-nowrap">{h.short}</span>
           </div>
         ))}
       </div>

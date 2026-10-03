@@ -3,15 +3,15 @@
 import { useEffect, useState } from "react";
 import { getNewYearCountdown } from "@/lib/holidays";
 
-const plural = new Intl.PluralRules("ru");
+const rules = new Intl.PluralRules("ru");
 const FORMS: Record<"d" | "h" | "m", Record<string, string>> = {
   d: { one: "день", few: "дня", many: "дней", other: "дня" },
   h: { one: "час", few: "часа", many: "часов", other: "часа" },
   m: { one: "минута", few: "минуты", many: "минут", other: "минуты" },
 };
 
-function word(kind: keyof typeof FORMS, n: number) {
-  return `${n} ${FORMS[kind][plural.select(n)] ?? FORMS[kind].other}`;
+function plural(unit: keyof typeof FORMS, n: number): string {
+  return FORMS[unit][rules.select(n)] ?? FORMS[unit].other;
 }
 
 type Countdown = ReturnType<typeof getNewYearCountdown>;
@@ -42,21 +42,21 @@ export function NewYearCountdown({ initial }: { initial: Countdown }) {
   }, []);
 
   const cells = [
-    { n: String(c.days), label: word("d", c.days).split(" ")[1] },
+    { n: String(c.days), label: plural("d", c.days) },
     {
       n: String(c.hours).padStart(2, "0"),
-      label: word("h", c.hours).split(" ")[1],
+      label: plural("h", c.hours),
     },
     {
       n: String(c.minutes).padStart(2, "0"),
-      label: word("m", c.minutes).split(" ")[1],
+      label: plural("m", c.minutes),
     },
   ];
 
   return (
     <div
       role="group"
-      aria-label={`До Нового года ${word("d", c.days)} ${word("h", c.hours)} ${word("m", c.minutes)}`}
+      aria-label={`До Нового года ${c.days} ${plural("d", c.days)} ${c.hours} ${plural("h", c.hours)} ${c.minutes} ${plural("m", c.minutes)}`}
     >
       <div aria-hidden="true">
         <div className="text-xs leading-tight text-muted">
