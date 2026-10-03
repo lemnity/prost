@@ -10,13 +10,13 @@ export function Hero() {
   return (
     <section
       aria-labelledby="hero-title"
-      className="relative overflow-hidden bg-gradient-to-b from-white to-[#F3F2F0] lg:h-[460px]"
+      className="relative overflow-hidden bg-gradient-to-b from-white to-hero lg:h-[460px]"
     >
       <Container className="relative z-10 flex flex-col justify-center py-8 lg:h-full lg:py-0">
         <div className="max-w-[560px]">
           <h1
             id="hero-title"
-            className="text-[30px] font-bold leading-[1.12] tracking-tight sm:text-4xl lg:whitespace-nowrap lg:text-[44px]"
+            className="text-[30px] font-bold leading-[1.12] tracking-tight sm:text-4xl lg:whitespace-nowrap lg:text-[clamp(36px,1.5625vw+20px,44px)]"
           >
             {hero.title.line1}
             <br />
@@ -57,21 +57,21 @@ export function Hero() {
           </div>
         </div>
       </Container>
-      <div className="relative aspect-[1398/855] w-full lg:absolute lg:inset-y-0 lg:right-0 lg:aspect-auto lg:h-full lg:w-[58%]">
+      <div className="relative aspect-[1398/855] w-full lg:absolute lg:inset-y-0 lg:right-0 lg:aspect-auto lg:h-full lg:w-[46%] xl:w-[58%]">
         <Image
           src={hero.image}
           alt=""
           fill
           preload
-          sizes="(min-width:1024px) 58vw, 100vw"
-          className="object-cover object-left"
+          sizes="(min-width:1280px) 58vw, (min-width:1024px) 46vw, 100vw"
+          className="object-cover lg:object-right"
         />
         <div
           aria-hidden="true"
-          className="absolute inset-y-0 left-0 hidden w-[30%] bg-gradient-to-b from-white to-[#F3F2F0] lg:block"
+          className="absolute inset-y-0 left-0 hidden w-16 bg-gradient-to-b from-white to-hero lg:block"
           style={{
-            maskImage: "linear-gradient(to right, #000, rgba(0,0,0,0.7) 40%, transparent)",
-            WebkitMaskImage: "linear-gradient(to right, #000, rgba(0,0,0,0.7) 40%, transparent)",
+            maskImage: "linear-gradient(to right, #000, transparent)",
+            WebkitMaskImage: "linear-gradient(to right, #000, transparent)",
           }}
         />
       </div>

@@ -14,13 +14,13 @@ function Tile({ cat, small }: { cat: Cat; small?: boolean }) {
         small ? "lg:h-[158px]" : "lg:h-[182px]"
       }`}
     >
-      <div className="absolute inset-x-2 top-2 bottom-[25%]">
+      <div className="absolute inset-x-1 top-1 bottom-[22%]">
         <Image
           src={cat.image}
           alt=""
           fill
           sizes="(min-width:1024px) 200px, 45vw"
-          className="object-contain transition-transform duration-200 group-hover:scale-[1.03]"
+          className="object-contain mix-blend-multiply transition-transform duration-200 group-hover:scale-[1.03]"
         />
       </div>
       <span
