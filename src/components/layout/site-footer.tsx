@@ -1,16 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
-import { MapPin, MessageCircle, Send, SquarePlay } from "lucide-react";
-import type { ReactNode } from "react";
+import { MapPin } from "lucide-react";
 import { Container } from "@/components/ui/container";
-import { site, type SocialKey } from "@/content/site";
-
-export const socialIcons: Record<SocialKey, ReactNode> = {
-  telegram: <Send size={16} />,
-  whatsapp: <MessageCircle size={16} />,
-  vk: <span className="text-[11px] font-bold leading-none">VK</span>,
-  youtube: <SquarePlay size={16} />,
-};
+import { site } from "@/content/site";
+import { socialIcons } from "./social-icons";
 
 export function SiteFooter() {
   const year = new Date().getFullYear();

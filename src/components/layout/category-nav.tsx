@@ -7,10 +7,9 @@ export function CategoryNav() {
   return (
     <nav aria-label="Категории">
       <Container>
-        <ul className="no-scrollbar -mx-4 flex h-12 items-center gap-5 overflow-x-auto px-4 text-sm text-ink md:-mx-8 md:px-8 xl:mx-0 xl:justify-center xl:gap-3 xl:overflow-visible xl:px-0">
-          <li aria-hidden className="shrink-0 text-brand">
-            <Zap size={16} fill="currentColor" />
-          </li>
+        <div className="no-scrollbar -mx-4 flex h-12 items-center gap-5 overflow-x-auto px-4 text-sm text-ink md:-mx-8 md:px-8 xl:mx-0 xl:justify-center xl:gap-3 xl:overflow-visible xl:px-0">
+          <Zap size={16} fill="currentColor" aria-hidden className="shrink-0 text-brand" />
+          <ul className="flex items-center gap-5 xl:gap-3">
           {site.nav.map((item) => (
             <li key={item.href} className="shrink-0">
               <Link href={item.href} className="whitespace-nowrap hover:text-brand">
@@ -18,7 +17,8 @@ export function CategoryNav() {
               </Link>
             </li>
           ))}
-        </ul>
+          </ul>
+        </div>
       </Container>
     </nav>
   );

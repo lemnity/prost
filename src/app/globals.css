@@ -17,6 +17,8 @@
   --color-dot: #4a4a4a;
   --color-dot-idle: #8f8f8f;
   --color-navy: #25234f;
+  --color-field: #f1f1f4;
+  --color-field-hover: #e6e6ea;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 

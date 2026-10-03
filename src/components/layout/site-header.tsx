@@ -26,7 +26,7 @@ const actions = [
 
 const menu = [
   ...site.topbar.links,
-  { label: "Распродажа недели", href: "#weekly-sale" },
+  { label: "Распродажа недели", href: "/#weekly-sale" },
 ];
 
 export function SiteHeader() {
@@ -112,7 +112,7 @@ export function SiteHeader() {
             <button
               type="submit"
               aria-label="Найти"
-              className="grid size-12 shrink-0 place-items-center rounded-r-[10px] bg-[#F1F1F4] text-ink hover:bg-[#E6E6EA] focus-visible:outline-ink focus-visible:-outline-offset-2"
+              className="grid size-12 shrink-0 place-items-center rounded-r-[10px] bg-field text-ink hover:bg-field-hover focus-visible:outline-ink focus-visible:-outline-offset-2"
             >
               <Search size={20} aria-hidden />
             </button>
