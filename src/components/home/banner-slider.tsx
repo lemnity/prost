@@ -12,13 +12,16 @@ export function BannerSlider() {
       className="pt-4"
     >
       <Container>
+        <h1 className="sr-only">
+          Корпоративные подарки и сувениры с логотипом в Тюмени
+        </h1>
         <div
           data-banner-slider
           className="group/slider relative aspect-[2400/644] overflow-hidden rounded-[10px] bg-surface"
         >
           <div
             data-banner-track
-            className="no-scrollbar flex h-full snap-x snap-mandatory overflow-x-auto scroll-smooth"
+            className="no-scrollbar flex h-full snap-x snap-mandatory overflow-x-auto motion-safe:scroll-smooth"
           >
             {banners.map((b, i) => (
               <div

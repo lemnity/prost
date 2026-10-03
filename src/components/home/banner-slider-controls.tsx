@@ -1,17 +1,22 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 
 const INTERVAL = 6000;
 
 export function BannerSliderControls({ count }: { count: number }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
+  const [userPaused, setUserPaused] = useState(false);
   // Position in the track including the two clones: 0 = clone of last,
   // 1..count = real slides, count + 1 = clone of first.
   const rawRef = useRef(1);
-  const paused = useRef(false);
+  // Target of the in-flight navigation (for rapid clicks).
+  const targetRef = useRef(1);
+  const hoverPaused = useRef(false);
+  const userPausedRef = useRef(false);
+  const restartTimer = useRef<() => void>(() => {});
 
   const track = useCallback(
     () =>
@@ -25,21 +30,24 @@ export function BannerSliderControls({ count }: { count: number }) {
     (raw: number, smooth: boolean) => {
       const t = track();
       if (!t) return;
+      const reduce = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      targetRef.current = raw;
       t.scrollTo({
         left: raw * t.clientWidth,
-        behavior: smooth ? "smooth" : "instant",
+        behavior: smooth && !reduce ? "smooth" : "auto",
       });
     },
     [track],
   );
 
-  const goTo = useCallback(
-    (i: number) => scrollToRaw(i + 1, true),
-    [scrollToRaw],
-  );
-  const step = useCallback(
-    (d: number) => scrollToRaw(rawRef.current + d, true),
-    [scrollToRaw],
+  const manual = useCallback(
+    (raw: number) => {
+      scrollToRaw(Math.max(0, Math.min(count + 1, raw)), true);
+      restartTimer.current();
+    },
+    [scrollToRaw, count],
   );
 
   useEffect(() => {
@@ -49,7 +57,7 @@ export function BannerSliderControls({ count }: { count: number }) {
 
     // Infinite loop: clone last before first and first after last.
     const slides = Array.from(t.children) as HTMLElement[];
-    const makeClone = (el: HTMLElement) => {
+    const makeClone = (el: HTMLElement, eager: boolean) => {
       const c = el.cloneNode(true) as HTMLElement;
       c.removeAttribute("role");
       c.removeAttribute("aria-roledescription");
@@ -58,29 +66,33 @@ export function BannerSliderControls({ count }: { count: number }) {
       c.dataset.bannerClone = "";
       c.querySelectorAll("img").forEach((img) => {
         img.alt = "";
-        img.loading = "lazy";
+        img.loading = eager ? "eager" : "lazy";
         img.removeAttribute("fetchpriority");
       });
       return c;
     };
-    const first = makeClone(slides[0]);
-    const last = makeClone(slides[slides.length - 1]);
+    const first = makeClone(slides[0], false);
+    const last = makeClone(slides[slides.length - 1], true);
     t.insertBefore(last, slides[0]);
     t.appendChild(first);
-    scrollToRaw(1, false);
+    // Instant jump regardless of CSS scroll-behavior.
+    t.scrollTo({ left: t.clientWidth, behavior: "instant" });
 
+    let touching = false;
     let timeout = 0;
+    const jump = (raw: number) => {
+      rawRef.current = raw;
+      targetRef.current = raw;
+      t.scrollTo({ left: raw * t.clientWidth, behavior: "instant" });
+    };
     const settle = () => {
+      if (touching) return;
       const w = t.clientWidth;
       if (!w) return;
       const raw = Math.round(t.scrollLeft / w);
-      if (raw === 0) {
-        rawRef.current = count;
-        scrollToRaw(count, false);
-      } else if (raw === count + 1) {
-        rawRef.current = 1;
-        scrollToRaw(1, false);
-      }
+      if (raw === 0) jump(count);
+      else if (raw === count + 1) jump(1);
+      else targetRef.current = raw;
     };
     const onScroll = () => {
       const w = t.clientWidth;
@@ -91,34 +103,69 @@ export function BannerSliderControls({ count }: { count: number }) {
       window.clearTimeout(timeout);
       timeout = window.setTimeout(settle, 150);
     };
-    const onResize = () => scrollToRaw(rawRef.current, false);
+    const onTouchStart = () => {
+      touching = true;
+      restartTimer.current();
+    };
+    const onTouchEnd = () => {
+      touching = false;
+      window.clearTimeout(timeout);
+      timeout = window.setTimeout(settle, 150);
+      restartTimer.current();
+    };
+    const onResize = () => jump(rawRef.current);
     t.addEventListener("scroll", onScroll, { passive: true });
     t.addEventListener("scrollend", settle);
+    t.addEventListener("touchstart", onTouchStart, { passive: true });
+    t.addEventListener("touchend", onTouchEnd, { passive: true });
+    t.addEventListener("touchcancel", onTouchEnd, { passive: true });
     window.addEventListener("resize", onResize);
 
-    const pause = () => (paused.current = true);
-    const resume = () => (paused.current = false);
-    slider.addEventListener("mouseenter", pause);
-    slider.addEventListener("mouseleave", resume);
-    slider.addEventListener("focusin", pause);
-    slider.addEventListener("focusout", resume);
+    const enter = (e: PointerEvent) => {
+      if (e.pointerType === "mouse") hoverPaused.current = true;
+    };
+    const leave = (e: PointerEvent) => {
+      if (e.pointerType === "mouse") hoverPaused.current = false;
+    };
+    const focusIn = () => (hoverPaused.current = true);
+    const focusOut = () => (hoverPaused.current = false);
+    slider.addEventListener("pointerenter", enter);
+    slider.addEventListener("pointerleave", leave);
+    slider.addEventListener("focusin", focusIn);
+    slider.addEventListener("focusout", focusOut);
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const timer = window.setInterval(() => {
-      if (reduce.matches || paused.current || document.hidden) return;
-      scrollToRaw(rawRef.current + 1, true);
-    }, INTERVAL);
+    let timer = 0;
+    const start = () => {
+      window.clearInterval(timer);
+      timer = window.setInterval(() => {
+        if (
+          reduce.matches ||
+          userPausedRef.current ||
+          hoverPaused.current ||
+          touching ||
+          document.hidden
+        )
+          return;
+        scrollToRaw(targetRef.current + 1, true);
+      }, INTERVAL);
+    };
+    restartTimer.current = start;
+    start();
 
     return () => {
       window.clearTimeout(timeout);
+      window.clearInterval(timer);
       t.removeEventListener("scroll", onScroll);
       t.removeEventListener("scrollend", settle);
+      t.removeEventListener("touchstart", onTouchStart);
+      t.removeEventListener("touchend", onTouchEnd);
+      t.removeEventListener("touchcancel", onTouchEnd);
       window.removeEventListener("resize", onResize);
-      slider.removeEventListener("mouseenter", pause);
-      slider.removeEventListener("mouseleave", resume);
-      slider.removeEventListener("focusin", pause);
-      slider.removeEventListener("focusout", resume);
-      window.clearInterval(timer);
+      slider.removeEventListener("pointerenter", enter);
+      slider.removeEventListener("pointerleave", leave);
+      slider.removeEventListener("focusin", focusIn);
+      slider.removeEventListener("focusout", focusOut);
       first.remove();
       last.remove();
     };
@@ -132,7 +179,7 @@ export function BannerSliderControls({ count }: { count: number }) {
       <button
         type="button"
         aria-label="Предыдущий слайд"
-        onClick={() => step(-1)}
+        onClick={() => manual(targetRef.current - 1)}
         className={`${arrow} left-3`}
       >
         <ChevronLeft size={22} aria-hidden="true" />
@@ -140,25 +187,45 @@ export function BannerSliderControls({ count }: { count: number }) {
       <button
         type="button"
         aria-label="Следующий слайд"
-        onClick={() => step(1)}
+        onClick={() => manual(targetRef.current + 1)}
         className={`${arrow} right-3`}
       >
         <ChevronRight size={22} aria-hidden="true" />
       </button>
-      <div className="absolute inset-x-0 bottom-2 z-10 flex justify-center gap-1.5 md:bottom-3">
+      <div className="absolute inset-x-0 bottom-0 z-10 flex justify-center md:bottom-1">
         {Array.from({ length: count }, (_, i) => (
           <button
             key={i}
             type="button"
             aria-label={`Перейти к слайду ${i + 1}`}
             aria-current={i === active ? "true" : undefined}
-            onClick={() => goTo(i)}
-            className={`h-2 rounded-full transition-all ${
-              i === active ? "w-6 bg-brand" : "w-2 bg-white/70"
-            }`}
-          />
+            onClick={() => manual(i + 1)}
+            className="group/dot flex h-6 min-w-6 items-center justify-center"
+          >
+            <span
+              className={`block h-2 rounded-full shadow-[0_0_2px_rgba(0,0,0,0.45)] transition-all ${
+                i === active ? "w-6 bg-brand" : "w-2 bg-white/80"
+              }`}
+            />
+          </button>
         ))}
       </div>
+      <button
+        type="button"
+        aria-label={userPaused ? "Запустить прокрутку" : "Остановить прокрутку"}
+        onClick={() => {
+          userPausedRef.current = !userPaused;
+          setUserPaused(!userPaused);
+          restartTimer.current();
+        }}
+        className="absolute right-2 bottom-2 z-10 flex size-8 items-center justify-center rounded-full bg-white/90 text-ink shadow-md hover:bg-white md:right-3 md:bottom-3"
+      >
+        {userPaused ? (
+          <Play size={16} aria-hidden="true" />
+        ) : (
+          <Pause size={16} aria-hidden="true" />
+        )}
+      </button>
     </div>
   );
 }
