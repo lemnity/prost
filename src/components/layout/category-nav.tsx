@@ -6,10 +6,10 @@ export function CategoryNav() {
   return (
     <nav aria-label="Категории">
       <Container>
-        <ul className="no-scrollbar flex h-11 items-center gap-6 overflow-x-auto text-[13px] font-semibold text-ink xl:justify-between xl:gap-0 xl:overflow-visible">
+        <ul className="no-scrollbar flex h-11 items-center gap-6 overflow-x-auto text-sm font-semibold text-white xl:justify-between xl:gap-0 xl:overflow-visible">
           {site.nav.map((item) => (
             <li key={item.href} className="shrink-0">
-              <Link href={item.href} className="whitespace-nowrap hover:text-brand">
+              <Link href={item.href} className="whitespace-nowrap hover:underline underline-offset-4">
                 {item.label}
               </Link>
             </li>

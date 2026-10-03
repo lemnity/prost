@@ -17,6 +17,10 @@
   --color-glow: #fbede8;
   --color-dot: #4a4a4a;
   --color-dot-idle: #8f8f8f;
+  --color-band-1: #d02e31;
+  --color-band-2: #c42e5a;
+  --color-band-3: #8e46b8;
+  --color-band-4: #5b6fd1;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -28,6 +32,19 @@
   :focus-visible {
     outline: 2px solid var(--color-brand);
     outline-offset: 2px;
+  }
+}
+
+@utility header-band {
+  background-image: linear-gradient(
+    90deg,
+    var(--color-band-1) 0%,
+    var(--color-band-2) 50%,
+    var(--color-band-3) 80%,
+    var(--color-band-4) 100%
+  );
+  & :focus-visible {
+    outline-color: #fff;
   }
 }
 

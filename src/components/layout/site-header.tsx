@@ -1,10 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
-  AlignJustify,
   FileText,
   Heart,
-  Menu,
+  LayoutGrid,
   Phone,
   Search,
   ShoppingCart,
@@ -24,7 +23,7 @@ const actions = [
 
 export function SiteHeader() {
   return (
-    <header>
+    <header className="header-band pb-6 md:pb-8">
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-ink focus:shadow-md"
@@ -33,7 +32,7 @@ export function SiteHeader() {
       </a>
       <TopBar />
       <Container className="flex flex-wrap items-center gap-x-4 gap-y-3 py-3 md:h-[84px] md:flex-nowrap md:gap-x-5 md:py-0 lg:gap-x-6">
-        <Link href="/" className="shrink-0">
+        <Link href="/" className="shrink-0 rounded-[12px] bg-white px-3 py-2">
           <Image
             src="/images/brand/logo.svg"
             alt="ProStyle — бизнес-подарки"
@@ -41,21 +40,20 @@ export function SiteHeader() {
             height={41}
             loading="eager"
             fetchPriority="low"
-            className="h-auto w-[130px] md:w-[170px]"
+            className="h-auto w-[110px] md:w-[150px]"
           />
         </Link>
         <Link
           href="/catalog"
-          className="ml-auto inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-brand px-3 text-sm font-semibold text-white hover:bg-brand-hover md:ml-0 md:px-5"
+          className="ml-auto inline-flex h-12 shrink-0 items-center gap-2 rounded-[12px] bg-white px-3 text-[15px] font-medium text-ink hover:bg-white/90 md:ml-0 md:px-5"
         >
-          <Menu size={16} aria-hidden />
+          <LayoutGrid size={20} aria-hidden />
           <span className="sr-only md:not-sr-only">Каталог</span>
-          <AlignJustify size={16} aria-hidden className="hidden md:block" />
         </Link>
         <form
           action="/search"
           role="search"
-          className="order-last flex h-11 min-w-0 w-full items-center rounded-[10px] bg-surface pl-4 pr-1 md:order-none md:max-w-[460px] md:flex-1 focus-within:ring-2 focus-within:ring-brand/40"
+          className="order-last flex h-12 min-w-0 w-full items-center rounded-[12px] bg-white pl-4 pr-1 md:order-none md:flex-1 focus-within:ring-2 focus-within:ring-white/60"
         >
           <input
             type="search"
@@ -67,18 +65,18 @@ export function SiteHeader() {
           <button
             type="submit"
             aria-label="Найти"
-            className="grid size-10 place-items-center text-ink hover:text-brand"
+            className="grid size-10 place-items-center rounded-[10px] bg-brand text-white hover:bg-brand-hover"
           >
-            <Search size={20} aria-hidden />
+            <Search size={18} aria-hidden />
           </button>
         </form>
         <div className="hidden shrink-0 items-center gap-3 xl:flex">
-          <Phone size={22} className="text-brand" aria-hidden />
+          <Phone size={22} className="text-white" aria-hidden />
           <div className="leading-tight">
-            <a href={site.phone.href} className="block text-sm font-semibold hover:text-brand">
+            <a href={site.phone.href} className="block text-sm font-semibold text-white hover:underline">
               {site.phone.label}
             </a>
-            <Link href="/contact-us#callback" className="text-xs text-brand hover:underline">
+            <Link href="/contact-us#callback" className="text-xs text-white hover:underline">
               Заказать звонок
             </Link>
           </div>
@@ -89,10 +87,10 @@ export function SiteHeader() {
               <Link
                 href={href}
                 aria-label={label}
-                className="flex flex-col items-center gap-1 text-ink hover:text-brand"
+                className="flex flex-col items-center gap-1 text-white hover:text-white/80"
               >
-                <Icon size={22} strokeWidth={1.6} aria-hidden />
-                <span className="hidden text-[11px] text-muted lg:block">{label}</span>
+                <Icon size={24} strokeWidth={1.6} aria-hidden />
+                <span className="hidden text-[11px] text-white lg:block">{label}</span>
               </Link>
             </li>
           ))}
