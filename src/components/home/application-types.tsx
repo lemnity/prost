@@ -1,9 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Clock, Layers } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { SectionHeader } from "@/components/ui/section-header";
+import { CarouselDots } from "@/components/ui/carousel-dots";
 import { applications } from "@/content/home";
+
+const TRACK_ID = "application-types-track";
 
 export function ApplicationTypes() {
   return (
@@ -14,37 +16,34 @@ export function ApplicationTypes() {
           title={applications.title}
           link={applications.link}
         />
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-6">
+        <div
+          id={TRACK_ID}
+          className="no-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto pb-1 motion-safe:scroll-smooth"
+        >
           {applications.items.map((a) => (
             <Link
               key={a.id}
               href={a.href}
-              className="flex flex-col overflow-hidden rounded-[10px] bg-surface focus-visible:outline-offset-[-2px]"
+              className="group relative block h-[170px] shrink-0 basis-[82%] snap-start overflow-hidden rounded-[10px] bg-surface shadow-[0_2px_8px_rgba(0,0,0,0.06)] focus-visible:outline-offset-[-2px] md:h-[190px] md:basis-[calc((100%-16px)/2)] lg:basis-[calc((100%-32px)/3)] xl:basis-[calc((100%-48px)/4)]"
             >
-              <div className="relative aspect-[4/3]">
-                <Image
-                  src={a.image}
-                  alt=""
-                  fill
-                  sizes="(min-width:1280px) 16vw, (min-width:768px) 25vw, 50vw"
-                  className="object-cover"
-                />
-              </div>
-              <div className="flex flex-1 flex-col p-3">
-                <h3 className="text-sm font-bold text-balance">{a.title}</h3>
-                <p className="mt-1.5 flex items-start gap-1.5 text-xs text-muted">
-                  <Clock aria-hidden size={13} className="mt-px shrink-0" />
-                  <span>{a.term}</span>
-                </p>
-                <p className="mt-1 flex items-start gap-1.5 text-xs text-muted">
-                  <Layers aria-hidden size={13} className="mt-px shrink-0" />
-                  <span>{a.run}</span>
-                </p>
-                <p className="mt-2 hidden line-clamp-3 text-[12.5px] text-muted md:block">{a.text}</p>
-              </div>
+              <Image
+                src={a.image}
+                alt=""
+                width={640}
+                height={640}
+                sizes="(min-width:1280px) 12vw, (min-width:1024px) 18vw, (min-width:768px) 25vw, 40vw"
+                className="absolute inset-y-3 right-3 h-[calc(100%-1.5rem)] w-[48%] object-contain transition-transform duration-300 group-hover:scale-[1.03] motion-reduce:transition-none"
+              />
+              <h3 className="relative z-10 max-w-[62%] p-5 pr-0 text-[22px] font-semibold leading-tight xl:text-xl text-ink">
+                {a.title}
+              </h3>
+              <span className="absolute bottom-5 left-5 inline-flex h-10 items-center rounded-[8px] bg-brand px-5 text-[15px] font-semibold text-white group-hover:bg-brand-hover">
+                Подробнее
+              </span>
             </Link>
           ))}
         </div>
+        <CarouselDots trackId={TRACK_ID} count={applications.items.length} />
       </Container>
     </section>
   );
