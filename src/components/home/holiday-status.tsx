@@ -5,12 +5,12 @@ import { getUpcomingHoliday } from "@/lib/holidays";
 
 function current() {
   const h = getUpcomingHoliday(new Date());
-  return `${h.title}, ${h.label}`;
+  return { title: h.title, label: h.label };
 }
 
 export function HolidayStatus() {
   // До гидрации — значение, посчитанное при сборке; пересчёт при монтировании и раз в час.
-  const [text, setText] = useState(current);
+  const [h, setText] = useState(current);
 
   useEffect(() => {
     const tick = () => setText(current());
@@ -20,13 +20,18 @@ export function HolidayStatus() {
   }, []);
 
   return (
-    <div className="pointer-events-none absolute left-2 top-2 z-10 max-w-[calc(100%-1rem)] rounded-[8px] bg-white/95 px-2.5 py-1.5 text-ink shadow-sm">
-      <div className="text-[11px] leading-tight text-muted">Впереди</div>
+    <div className="pointer-events-none absolute left-2 top-2 z-10 max-w-[calc(100%-1rem)] rounded-[8px] bg-white/95 px-2 py-1 text-ink shadow-sm sm:px-2.5 sm:py-1.5">
+      <div className="whitespace-nowrap text-[11px] leading-tight text-muted" suppressHydrationWarning>
+        <span className="lg:hidden">Впереди · </span>
+        <span className="hidden lg:inline">До </span>
+        {h.label}
+      </div>
       <div
-        className="text-xs font-semibold leading-tight sm:text-[13px] lg:text-xs"
+        title={h.title}
+        className="line-clamp-2 text-xs font-semibold leading-tight sm:text-[13px] lg:line-clamp-1 lg:text-[11px] xl:text-xs"
         suppressHydrationWarning
       >
-        {text}
+        {h.title}
       </div>
     </div>
   );

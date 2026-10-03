@@ -43,7 +43,6 @@ const HOLIDAYS: Rule[] = [
   { title: "День медицинского работника", month: 5, sunday: 3 },
   { title: "День строителя", month: 7, sunday: 2 },
   { title: "День знаний", month: 8, day: 1 },
-  { title: "День учителя", month: 9, day: 5 },
   { title: "Хэллоуин", month: 9, day: 31 },
   { title: "День народного единства", month: 10, day: 4 },
 ];
