@@ -2,6 +2,7 @@ import type { Category, Product } from "./types";
 
 export const popularCategories: Category[] = [
   { id: "novyy-god", title: "Новогодние подарки", href: "/catalog/novyy-god", image: "/images/categories/novyy-god.webp" },
+  { id: "suveniry-k-prazdnikam", title: "Сувениры к праздникам", href: "/catalog/suveniry-k-prazdnikam", image: "/images/categories/prazdniki.webp" },
   { id: "promo-odezhda", title: "Одежда", href: "/catalog/promo-odezhda", image: "/images/categories/odezhda.webp" },
   { id: "podarochnye-nabory", title: "Подарочные наборы", href: "/catalog/podarochnye-nabory", image: "/images/categories/nabory.webp" },
   { id: "ejednevniki", title: "Ежедневники и блокноты", href: "/catalog/ejednevniki", image: "/images/categories/ezhednevniki.webp" },
@@ -16,7 +17,6 @@ export const popularCategories: Category[] = [
   { id: "dom", title: "Дом", href: "/catalog/dom", image: "/images/categories/dom.webp" },
   { id: "puteshestvie-i-otdy-x", title: "Путешествие и отдых", href: "/catalog/puteshestvie-i-otdy-x", image: "/images/categories/otdyh.webp" },
   { id: "vip", title: "Элитные подарки", href: "/catalog/vip", image: "/images/categories/elitnye.webp" },
-  { id: "suveniry-k-prazdnikam", title: "Сувениры к праздникам", href: "/catalog/suveniry-k-prazdnikam", image: "/images/categories/prazdniki.webp" },
   { id: "chasy", title: "Часы и метеостанции", href: "/catalog/chasy", image: "/images/categories/chasy.webp" },
   { id: "promo", title: "Промо-сувениры", href: "/catalog/promo", image: "/images/categories/promo.webp" },
   { id: "uhod-i-zdorovie", title: "Уход и здоровье", href: "/catalog/uhod-i-zdorovie", image: "/images/categories/zdorovie.webp" },

@@ -41,18 +41,38 @@ export function NewYearCountdown({ initial }: { initial: Countdown }) {
     };
   }, []);
 
+  const cells = [
+    { n: String(c.days), label: word("d", c.days).split(" ")[1] },
+    {
+      n: String(c.hours).padStart(2, "0"),
+      label: word("h", c.hours).split(" ")[1],
+    },
+    {
+      n: String(c.minutes).padStart(2, "0"),
+      label: word("m", c.minutes).split(" ")[1],
+    },
+  ];
+
   return (
     <div
       role="group"
       aria-label={`До Нового года ${word("d", c.days)} ${word("h", c.hours)} ${word("m", c.minutes)}`}
-      className="pointer-events-none absolute left-2 top-2 z-10 max-w-[calc(100%-1rem)] rounded-[8px] bg-brand px-2 py-1.5 text-white sm:px-2.5"
     >
       <div aria-hidden="true">
-        <div className="text-[11px] leading-tight">До Нового года</div>
-        <div
-          className="whitespace-nowrap text-sm font-bold lg:text-[13px] xl:text-sm leading-tight tabular-nums"
-        >
-          {`${c.days} д ${c.hours} ч ${c.minutes} мин`}
+        <div className="text-xs leading-tight text-muted">
+          До Нового года осталось
+        </div>
+        <div className="mt-1.5 flex gap-2 xl:mt-2">
+          {cells.map((x, i) => (
+            <div key={i} className="flex flex-col items-center gap-0.5">
+              <div className="min-w-[46px] rounded-[10px] bg-white px-1.5 py-1.5 text-center text-[22px] font-bold leading-none tabular-nums text-brand xl:min-w-[56px] xl:px-3 xl:py-2 xl:text-[28px]">
+                {x.n}
+              </div>
+              <div className="text-[11px] leading-tight text-muted">
+                {x.label}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

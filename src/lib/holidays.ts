@@ -20,7 +20,10 @@ export function getNewYearCountdown(now: Date): {
 } {
   const year = toLocal(now).getUTCFullYear();
   const target = localMidnight(year + 1, 0, 1);
-  const total = Math.max(0, Math.floor((target.getTime() - now.getTime()) / MIN));
+  const total = Math.max(
+    0,
+    Math.floor((target.getTime() - now.getTime()) / MIN),
+  );
   return {
     days: Math.floor(total / 1440),
     hours: Math.floor((total % 1440) / 60),
@@ -54,31 +57,38 @@ function resolveDay(rule: Rule, year: number): number {
   return firstSunday + (rule.sunday - 1) * 7;
 }
 
-const labelFmt = new Intl.DateTimeFormat("ru-RU", {
+const shortFmt = new Intl.DateTimeFormat("ru-RU", {
   day: "numeric",
-  month: "long",
+  month: "short",
   timeZone: TZ,
 });
 
-export function getUpcomingHoliday(now: Date): {
-  title: string;
-  date: Date;
-  label: string;
-} {
+export type UpcomingHoliday = { title: string; date: string };
+
+/** Ближайшие `count` праздников по календарю; date — короткая дата («31 окт»). */
+export function getUpcomingHolidays(
+  now: Date,
+  count: number,
+): UpcomingHoliday[] {
   const local = toLocal(now);
   const year = local.getUTCFullYear();
   const today = Date.UTC(year, local.getUTCMonth(), local.getUTCDate());
-  let best: { title: string; date: Date } | null = null;
+  const found: { title: string; at: number; date: Date }[] = [];
   for (const y of [year, year + 1]) {
     for (const rule of HOLIDAYS) {
       const day = resolveDay(rule, y);
-      if (Date.UTC(y, rule.month, day) < today) continue;
-      const date = localMidnight(y, rule.month, day);
-      if (!best || date < best.date) best = { title: rule.title, date };
+      const at = Date.UTC(y, rule.month, day);
+      if (at < today) continue;
+      found.push({
+        title: rule.title,
+        at,
+        date: localMidnight(y, rule.month, day),
+      });
     }
-    if (best) break;
   }
-  // best всегда найден (список покрывает любой год)
-  const { title, date } = best!;
-  return { title, date, label: labelFmt.format(date) };
+  found.sort((a, b) => a.at - b.at);
+  return found.slice(0, count).map(({ title, date }) => ({
+    title,
+    date: shortFmt.format(date).replace(/\.$/, ""),
+  }));
 }
