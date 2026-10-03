@@ -19,7 +19,7 @@ function Tile({ cat, small }: { cat: Cat; small?: boolean }) {
           src={cat.image}
           alt=""
           fill
-          sizes="(min-width:1024px) 200px, 45vw"
+          sizes="(min-width:1280px) 16vw, (min-width:1024px) 200px, 45vw"
           className="object-contain mix-blend-multiply transition-transform duration-200 group-hover:scale-[1.03]"
         />
       </div>

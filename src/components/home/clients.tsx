@@ -30,7 +30,7 @@ export function Clients() {
                 alt={c.name}
                 width={logoWidth[c.id] ?? 132}
                 height={84}
-                sizes="(min-width: 1024px) 130px, 100px"
+                sizes="(min-width: 1280px) 10vw, (min-width: 1024px) 130px, 100px"
                 className="h-[38px] w-auto mix-blend-multiply grayscale contrast-125"
               />
             </li>

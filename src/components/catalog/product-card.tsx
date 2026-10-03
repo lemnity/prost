@@ -14,7 +14,7 @@ export function ProductCard({ product }: { product: Product }) {
             src={product.image}
             alt={product.title}
             fill
-            sizes="(min-width:1024px) 190px, 220px"
+            sizes="(min-width:1280px) 15vw, (min-width:1024px) 190px, 220px"
             className="object-contain"
           />
         </Link>

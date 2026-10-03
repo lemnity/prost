@@ -10,7 +10,7 @@ export function ConsultationCta() {
           src="/images/hero/cta.webp"
           alt=""
           fill
-          sizes="40vw"
+          sizes="(min-width:1280px) 45vw, 40vw"
           className="object-cover object-right"
         />
         <div className="absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-cta to-transparent" />

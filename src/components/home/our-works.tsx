@@ -21,7 +21,7 @@ export function OurWorks() {
                     src={w.image}
                     alt=""
                     fill
-                    sizes="(min-width: 1280px) 185px, (min-width: 1024px) 14vw, (min-width: 640px) 30vw, 55vw"
+                    sizes="(min-width: 1280px) 15vw, (min-width: 1024px) 14vw, (min-width: 640px) 30vw, 55vw"
                     className="object-cover"
                   />
                   <div

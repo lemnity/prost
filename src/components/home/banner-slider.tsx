@@ -35,7 +35,7 @@ export function BannerSlider() {
                   src={b.image}
                   alt={b.alt}
                   fill
-                  sizes="(min-width:1280px) 1216px, 100vw"
+                  sizes="100vw"
                   preload={i === 0}
                   className="object-cover"
                 />

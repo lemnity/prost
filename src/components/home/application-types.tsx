@@ -21,7 +21,7 @@ export function ApplicationTypes() {
                   src={a.image}
                   alt=""
                   fill
-                  sizes="(min-width:1024px) 200px, 45vw"
+                  sizes="(min-width:1280px) 16vw, (min-width:1024px) 200px, 45vw"
                   className="object-cover"
                 />
               </div>

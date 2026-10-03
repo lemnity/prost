@@ -12,7 +12,7 @@ export function Container({
   as: Tag = "div",
 }: ContainerProps) {
   return (
-    <Tag className={`mx-auto w-full max-w-[1280px] px-4 md:px-8 ${className}`.trim()}>
+    <Tag className={`mx-auto w-full px-4 md:px-8 ${className}`.trim()}>
       {children}
     </Tag>
   );
