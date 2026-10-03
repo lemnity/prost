@@ -14,9 +14,12 @@ function word(kind: keyof typeof FORMS, n: number) {
   return `${n} ${FORMS[kind][plural.select(n)] ?? FORMS[kind].other}`;
 }
 
-export function NewYearCountdown() {
-  // До гидрации — значение, посчитанное при сборке; после монтирования обновляется.
-  const [c, setC] = useState(() => getNewYearCountdown(new Date()));
+type Countdown = ReturnType<typeof getNewYearCountdown>;
+
+export function NewYearCountdown({ initial }: { initial: Countdown }) {
+  // Первый клиентский рендер == серверный (initial посчитан при сборке);
+  // реальное значение ставится в useEffect, чтобы React обновил DOM.
+  const [c, setC] = useState<Countdown>(initial);
 
   useEffect(() => {
     const tick = () => setC(getNewYearCountdown(new Date()));
@@ -42,16 +45,14 @@ export function NewYearCountdown() {
     <div
       role="group"
       aria-label={`До Нового года ${word("d", c.days)} ${word("h", c.hours)} ${word("m", c.minutes)}`}
-      suppressHydrationWarning
       className="pointer-events-none absolute left-2 top-2 z-10 rounded-[8px] bg-brand px-2.5 py-1.5 text-white"
     >
       <div aria-hidden="true">
         <div className="text-[11px] leading-tight">До Нового года</div>
         <div
           className="whitespace-nowrap text-sm font-bold leading-tight tabular-nums"
-          suppressHydrationWarning
         >
-          {c.days} д {c.hours} ч {c.minutes} мин
+          {`${c.days} д ${c.hours} ч ${c.minutes} мин`}
         </div>
       </div>
     </div>
