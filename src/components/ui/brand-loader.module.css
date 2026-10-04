@@ -1,0 +1,61 @@
+.dash {
+  stroke-dasharray: 30 70;
+  stroke-dashoffset: 0;
+  animation: brand-dash 1.5s linear infinite;
+}
+
+.pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: brand-pulse 1.5s ease-in-out infinite;
+}
+
+.label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes brand-dash {
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+
+@keyframes brand-pulse {
+  0%,
+  100% {
+    transform: scale(0.85);
+  }
+  50% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dash,
+  .pulse {
+    animation: none;
+  }
+
+  .dash {
+    stroke-dasharray: none;
+  }
+
+  .label {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    font-size: 11px;
+    color: #6b6b78;
+  }
+}
