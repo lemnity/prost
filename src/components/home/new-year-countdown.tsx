@@ -53,15 +53,15 @@ export function NewYearCountdown({ initial }: { initial: Countdown }) {
   return (
     <div role="group" aria-label={label}>
       <div aria-hidden="true">
-        <div className="text-[12px] font-semibold leading-tight text-brand xl:text-[13px]">
+        <div className="whitespace-nowrap text-[12px] font-semibold leading-tight text-brand min-[400px]:text-[13px]">
           Поторопитесь! До Нового года осталось
         </div>
-        <div className="mt-1.5 flex gap-1 xl:mt-2 xl:gap-1.5">
+        <div className="mt-1.5 flex flex-nowrap gap-1.5 xl:mt-2">
           {cells.map((x, i) => (
             <div key={i} className="flex flex-col items-center gap-0.5">
               <div
                 key={x.tick ? x.n : undefined}
-                className={`min-w-[38px] rounded-[10px] bg-white px-1 py-1.5 text-center text-[22px] font-bold leading-none tabular-nums text-brand ring-1 ring-[#CFE3F2] xl:min-w-[50px] xl:px-2 xl:py-2 xl:text-[28px] ${x.tick ? "ny-tick" : ""}`}
+                className={`min-w-[52px] rounded-[10px] bg-white px-1 py-1.5 text-center text-[22px] font-bold leading-none tabular-nums text-brand ring-1 ring-[#CFE3F2] xl:py-2 xl:text-[28px] ${x.tick ? "ny-tick" : ""}`}
               >
                 {x.n}
               </div>

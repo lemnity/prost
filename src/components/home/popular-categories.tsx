@@ -15,9 +15,9 @@ const buildNow = new Date();
 const initialCountdown = getNewYearCountdown(buildNow);
 const initialHolidays = getUpcomingHolidays(buildNow, 2);
 
-const FLAKES = Array.from({ length: 16 }, (_, i) => ({
+const FLAKES = Array.from({ length: 20 }, (_, i) => ({
   left: (i * 37 + 11) % 97,
-  size: 3 + ((i * 5) % 5),
+  size: 3 + ((i * 3) % 5),
   dur: 6 + ((i * 7) % 9),
   delay: -((i * 3) % 11),
   drift: ((i % 2 ? 1 : -1) * (6 + ((i * 4) % 12))),
@@ -31,7 +31,7 @@ function WideTile({ cat, className = "" }: { cat: Cat; className?: string }) {
         backgroundImage:
           "radial-gradient(circle at 0% 0%, #fff 0, transparent 35%), radial-gradient(circle at 100% 0%, #fff 0, transparent 30%), linear-gradient(160deg, var(--color-snow-1), var(--color-snow-2) 55%, var(--color-snow-3))",
       }}
-      className={`group relative block h-[150px] overflow-hidden rounded-[10px] bg-snow-2 focus-visible:outline-offset-[-2px] lg:h-[182px] ${className}`}
+      className={`group relative block h-[150px] overflow-hidden rounded-[10px] bg-snow-2 shadow-[0_1px_2px_rgba(16,24,40,0.06),0_8px_24px_rgba(16,24,40,0.08)] ring-1 ring-[#DCEAF5] transition-shadow duration-200 hover:shadow-[0_2px_4px_rgba(16,24,40,0.08),0_12px_32px_rgba(16,24,40,0.12)] focus-visible:outline-offset-[-2px] lg:h-[182px] ${className}`}
     >
       <div
         aria-hidden="true"
@@ -43,7 +43,7 @@ function WideTile({ cat, className = "" }: { cat: Cat; className?: string }) {
         className="pointer-events-none absolute -bottom-5 left-[30%] h-9 w-[80%] rounded-[50%] bg-white"
       />
       <div
-        className="ny-globe absolute -bottom-[6%] right-0 top-0 w-[40%] xl:w-[45%]"
+        className="ny-globe absolute -bottom-[6%] right-0 top-0 w-[36%] xl:w-[38%]"
         style={{
           WebkitMaskImage:
             "radial-gradient(closest-side, #000 72%, transparent)",
@@ -60,7 +60,7 @@ function WideTile({ cat, className = "" }: { cat: Cat; className?: string }) {
       </div>
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 overflow-hidden"
+        className="pointer-events-none absolute inset-0 z-10 overflow-hidden"
       >
         {FLAKES.map((f, i) => (
           <span
@@ -71,7 +71,7 @@ function WideTile({ cat, className = "" }: { cat: Cat; className?: string }) {
                 left: `${f.left}%`,
                 width: f.size,
                 height: f.size,
-                boxShadow: "0 0 0 1px #BFD9EE, 0 1px 3px rgba(120,160,200,.5)",
+                boxShadow: "0 0 0 1px #A9CBE6, 0 1px 4px rgba(90,140,190,.55)",
                 "--dur": `${f.dur}s`,
                 "--delay": `${f.delay}s`,
                 "--drift": `${f.drift}px`,
@@ -80,7 +80,7 @@ function WideTile({ cat, className = "" }: { cat: Cat; className?: string }) {
           />
         ))}
       </div>
-      <div className="relative flex h-full w-[60%] flex-col justify-between p-3 xl:p-4">
+      <div className="relative flex h-full w-full flex-col justify-between p-3 xl:p-4">
         <div>
           <span className="block whitespace-nowrap text-base font-semibold leading-tight xl:text-xl">
             {cat.title}
@@ -89,7 +89,7 @@ function WideTile({ cat, className = "" }: { cat: Cat; className?: string }) {
             <NewYearCountdown initial={initialCountdown} />
           </div>
         </div>
-        <span className="flex items-center gap-1 text-[13px] font-semibold leading-none text-brand">
+        <span className="flex items-center gap-1 self-start text-[13px] font-semibold leading-none text-brand">
           Выбрать подарки{" "}
           <ArrowRight size={14} aria-hidden="true" className="ny-arrow" />
         </span>
