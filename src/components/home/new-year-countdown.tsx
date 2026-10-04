@@ -53,7 +53,7 @@ export function NewYearCountdown({ initial }: { initial: Countdown }) {
   return (
     <div role="group" aria-label={label}>
       <div aria-hidden="true">
-        <div className="whitespace-nowrap text-[12px] font-semibold leading-tight text-brand min-[400px]:text-[13px]">
+        <div className="whitespace-nowrap text-[11px] font-semibold md:text-[12px] leading-tight text-brand">
           Поторопитесь! До Нового года осталось
         </div>
         <div className="mt-1.5 flex flex-nowrap gap-1.5 xl:mt-2">

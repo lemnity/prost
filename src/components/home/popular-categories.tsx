@@ -53,36 +53,43 @@ function WideTile({
         aria-hidden="true"
         className="pointer-events-none absolute -bottom-5 left-[30%] h-9 w-[80%] rounded-[50%] bg-white"
       />
+      {/* Анимация (opacity/transform) вешается на сам <img>, а не на обёртку:
+          обёртка создала бы stacking context и заблокировала mix-blend-multiply. */}
       <ul
         aria-label="Подборка новогодних подарков"
-        className="absolute inset-y-0 right-0 m-0 w-[36%] list-none p-0 xl:w-[38%]"
+        className="absolute inset-y-0 right-0 m-0 w-[32%] list-none p-0"
       >
-        {picks.map((p, i) => (
-          <li
-            key={p.id}
-            className={`ny-slide absolute inset-0 flex flex-col items-center px-2 pb-2 pt-2 ${
-              i === 0 ? "opacity-100" : "opacity-0"
-            }`}
-            style={{ "--i": i } as React.CSSProperties}
-          >
-            <div className="relative min-h-0 w-full flex-1">
-              <Image
-                src={asset(p.image)}
-                alt={p.title}
-                fill
-                sizes="(min-width:1280px) 160px, (min-width:768px) 30vw, 40vw"
-                loading={i === 0 ? "eager" : "lazy"}
-                className="object-contain mix-blend-multiply"
-              />
-            </div>
-            <span className="relative z-10 mt-1 block w-full truncate text-center text-[11px] leading-tight text-ink">
-              {p.title}
-            </span>
-            <span className="relative z-10 block w-full text-center text-[11px] font-bold leading-tight text-brand">
-              от {formatPriceValue(p.priceFrom)}
-            </span>
-          </li>
-        ))}
+        {picks.map((p, i) => {
+          const anim = `ny-slide ${i === 0 ? "opacity-100" : "opacity-0"}`;
+          const vars = { "--i": i } as React.CSSProperties;
+          return (
+            <li
+              key={p.id}
+              className="absolute inset-0 flex flex-col items-center px-2 pb-2 pt-2"
+            >
+              <div className="relative min-h-0 w-full flex-1">
+                <Image
+                  src={asset(p.image)}
+                  alt={p.title}
+                  fill
+                  sizes="(min-width:1280px) 130px, (min-width:768px) 25vw, 35vw"
+                  loading={i === 0 ? "eager" : "lazy"}
+                  style={vars}
+                  className={`${anim} object-contain mix-blend-multiply`}
+                />
+              </div>
+              <div
+                style={vars}
+                className={`${anim} mt-1 w-full text-center text-[11px] leading-tight`}
+              >
+                <span className="line-clamp-2 text-ink">{p.title}</span>
+                <span className="block font-bold text-brand">
+                  от {formatPriceValue(p.priceFrom)}
+                </span>
+              </div>
+            </li>
+          );
+        })}
       </ul>
       <div
         aria-hidden="true"
@@ -106,7 +113,7 @@ function WideTile({
           />
         ))}
       </div>
-      <div className="relative z-10 flex h-full w-full flex-col justify-between p-3 xl:p-4">
+      <div className="relative z-10 flex h-full w-[68%] min-w-0 flex-col justify-between p-3 xl:p-4">
         <div>
           <span className="block whitespace-nowrap text-base font-semibold leading-tight xl:text-xl">
             {cat.title}
