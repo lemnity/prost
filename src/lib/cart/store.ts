@@ -70,16 +70,33 @@ function commit(next: readonly CartItem[]) {
   emit();
 }
 
+export const PROMO_KEY = "prostyle-promo-v1";
+let promo = "";
+
+function readPromo(): string {
+  try {
+    const v = localStorage.getItem(PROMO_KEY) ?? "";
+    return /^[A-Z0-9-]{1,32}$/.test(v) ? v : "";
+  } catch {
+    return "";
+  }
+}
+
 function ensure() {
   if (!loaded && typeof window !== "undefined") {
     loaded = true;
     items = read();
+    promo = readPromo();
   }
 }
 
 function onStorage(e: StorageEvent) {
   if (e.key === CART_KEY || e.key === null) {
     items = read();
+    emit();
+  }
+  if (e.key === PROMO_KEY || e.key === null) {
+    promo = readPromo();
     emit();
   }
 }
@@ -123,7 +140,24 @@ export function removeFromCart(id: string) {
 
 export function clearCart() {
   ensure();
+  setPromo("");
   commit([]);
+}
+
+export function getPromoSnapshot(): string {
+  ensure();
+  return promo;
+}
+export const getPromoServerSnapshot = () => "";
+
+export function setPromo(code: string) {
+  ensure();
+  promo = code;
+  try {
+    if (code) localStorage.setItem(PROMO_KEY, code);
+    else localStorage.removeItem(PROMO_KEY);
+  } catch {}
+  emit();
 }
 
 export const cartCount = (list: readonly CartItem[]) => list.reduce((s, i) => s + i.qty, 0);

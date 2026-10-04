@@ -3,13 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRef, useState, type FormEvent, type ReactNode } from "react";
-import { ShoppingCart } from "lucide-react";
+import { Gift, ShoppingCart, X } from "lucide-react";
+import { PhoneInput, isPhoneComplete } from "@/components/ui/phone-input";
 import { Container } from "@/components/ui/container";
 import { asset } from "@/lib/asset";
 import { formatPriceValue } from "@/lib/format";
 import { site } from "@/content/site";
-import { MIN_ORDER, cartCount, cartTotal, clearCart, type CartItem } from "@/lib/cart/store";
-import { useCart, useHydrated } from "@/lib/cart/use-cart";
+import { MIN_ORDER, cartCount, cartTotal, clearCart, setPromo, type CartItem } from "@/lib/cart/store";
+import { useCart, useHydrated, usePromo } from "@/lib/cart/use-cart";
 import {
   buildOrder,
   deliveryLabel,
@@ -40,7 +41,8 @@ const INITIAL: OrderData = {
 function validate(d: OrderData, consent: boolean): Errors {
   const e: Errors = {};
   if (!d.name.trim()) e.name = "Укажите имя";
-  if (d.phone.replace(/\D/g, "").length < 10) e.phone = "Укажите телефон, не меньше 10 цифр";
+  if (!d.phone.trim()) e.phone = "Укажите телефон";
+  else if (!isPhoneComplete(d.phone)) e.phone = "Введите номер полностью";
   if (d.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) e.email = "Проверьте адрес электронной почты";
   if (d.payment === "invoice" && !d.company.trim()) e.company = "Для безналичного расчёта укажите компанию";
   if (d.inn ? !/^(\d{10}|\d{12})$/.test(d.inn) : d.payment === "invoice") {
@@ -152,6 +154,58 @@ function OrderLines({ items }: { items: readonly CartItem[] }) {
   );
 }
 
+function PromoBox() {
+  const promo = usePromo();
+  const [val, setVal] = useState("");
+  const [err, setErr] = useState("");
+  function apply() {
+    const code = val.trim().toUpperCase();
+    if (!code) return setErr("Введите промокод");
+    if (code.length > 32 || !/^[A-Z0-9-]+$/.test(code))
+      return setErr("Промокод: латинские буквы, цифры и дефис, до 32 символов");
+    setErr("");
+    setVal("");
+    setPromo(code);
+  }
+  return (
+    <div className="mt-5 border-t border-line pt-4">
+      {promo ? (
+        <p role="status" className="flex items-start justify-between gap-2 text-[13px] text-new-text">
+          <span>Промокод {promo} будет учтён менеджером при подтверждении заказа</span>
+          <button
+            type="button"
+            aria-label="Убрать промокод"
+            onClick={() => setPromo("")}
+            className="grid size-6 shrink-0 place-items-center rounded text-muted hover:text-brand"
+          >
+            <X size={14} aria-hidden="true" />
+          </button>
+        </p>
+      ) : (
+        <>
+          <label htmlFor="f-promo" className="text-sm font-medium text-ink">Промокод</label>
+          <div className="mt-1.5 flex gap-2">
+            <input
+              id="f-promo"
+              type="text"
+              maxLength={32}
+              autoComplete="off"
+              value={val}
+              aria-invalid={!!err}
+              aria-describedby={err ? "f-promo-err" : undefined}
+              onChange={(e) => { setVal(e.target.value); setErr(""); }}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); apply(); } }}
+              className="block h-11 min-w-0 flex-1 rounded-lg border border-line bg-white px-3.5 text-[15px] uppercase text-ink placeholder:normal-case placeholder:text-faint focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand aria-[invalid=true]:border-brand"
+            />
+            <button type="button" onClick={apply} className={`${btnOutline} h-11 px-4 text-[14px]`}>Применить</button>
+          </div>
+          {err ? <p id="f-promo-err" className="mt-1.5 text-[13px] text-brand">{err}</p> : null}
+        </>
+      )}
+    </div>
+  );
+}
+
 function CopyBlock({ text }: { text: string }) {
   const [state, setState] = useState<"" | "ok" | "fail">("");
   const area = useRef<HTMLTextAreaElement>(null);
@@ -181,6 +235,7 @@ type Done = { number: string; text: string; opened: boolean; items: readonly Car
 
 export function CheckoutView() {
   const items = useCart();
+  const promo = usePromo();
   const hydrated = useHydrated();
   const [d, setD] = useState<OrderData>(INITIAL);
   const [consent, setConsent] = useState(false);
@@ -254,7 +309,7 @@ export function CheckoutView() {
       document.getElementById(`f-${first}`)?.focus();
       return;
     }
-    const { text, href } = buildOrder(items, clean);
+    const { text, href } = buildOrder(items, clean, promo);
     setDone({ number: orderNumber(), text, opened: href !== null, items, total });
     if (href) window.open(href, "_self");
   }
@@ -269,12 +324,23 @@ export function CheckoutView() {
       <Container>
         <form noValidate onSubmit={submit} className="grid items-start gap-6 lg:grid-cols-[1fr_380px]">
           <div className="grid gap-4">
+            <div className="flex flex-col gap-4 rounded-[14px] bg-brand-soft p-4 sm:flex-row sm:items-center">
+              <Gift size={28} strokeWidth={1.5} aria-hidden="true" className="shrink-0 text-brand" />
+              <div className="sm:flex-1">
+                <p className="text-[15px] font-semibold text-ink">Войдите в личный кабинет или создайте его</p>
+                <p className="mt-0.5 text-[13px] text-muted">и получайте бонусы за заказы</p>
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Link href="/account/login" className={`${btnPrimary} h-11 px-6 text-[14px]`}>Войти</Link>
+                <Link href="/account/register" className={`${btnOutline} h-11 px-6 text-[14px]`}>Создать кабинет</Link>
+              </div>
+            </div>
             <Card n={1} title="Контактные данные">
               <Field name="name" label="Имя" required error={errors.name}>
                 {(p) => <input {...p} type="text" autoComplete="name" value={d.name} onChange={(e) => set("name", e.target.value)} className={field} />}
               </Field>
               <Field name="phone" label="Телефон" required error={errors.phone}>
-                {(p) => <input {...p} type="tel" autoComplete="tel" value={d.phone} onChange={(e) => set("phone", e.target.value)} className={field} />}
+                {(p) => <PhoneInput {...p} value={d.phone} onValueChange={(v) => set("phone", v)} className={field} />}
               </Field>
               <Field name="email" label="Email" error={errors.email}>
                 {(p) => <input {...p} type="email" autoComplete="email" value={d.email} onChange={(e) => set("email", e.target.value)} className={field} />}
@@ -362,11 +428,12 @@ export function CheckoutView() {
             </Card>
           </div>
 
-          <aside aria-label="Ваш заказ" className="rounded-[14px] bg-surface p-5 md:p-6 lg:sticky lg:top-28">
+          <aside aria-label="Ваш заказ" className="rounded-[14px] bg-surface p-5 md:p-6 lg:sticky lg:top-24">
             <h2 className="mb-4 text-[18px] font-bold">Ваш заказ</h2>
             <div className="max-h-[320px] overflow-y-auto pr-1">
               <OrderLines items={items} />
             </div>
+            <PromoBox />
             <div className="mt-5 border-t border-line pt-4">
               <p className="text-sm text-muted">Товаров: {count}</p>
               <p className="mt-1 text-[22px] font-bold md:text-[26px]">Итого: от {formatPriceValue(total)}</p>

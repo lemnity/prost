@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Clock, Mail, MapPin, Phone } from "lucide-react";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Container } from "@/components/ui/container";
 import { YandexMap, yandexRouteUrl } from "@/components/ui/yandex-map";
 import { SocialLinks } from "@/components/layout/social-links";
@@ -100,7 +101,7 @@ export default function ContactsPage() {
               </label>
               <label className="block text-sm font-medium text-ink">
                 Телефон <span className="text-brand">*</span>
-                <input name="Телефон" type="tel" required autoComplete="tel" className={field} />
+                <PhoneInput name="Телефон" required className={field} />
               </label>
               <label className="block text-sm font-medium text-ink sm:col-span-2">
                 Компания
