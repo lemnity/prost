@@ -14,6 +14,7 @@ import { BrandLogo } from "./brand-logo";
 import { StickyBar } from "./sticky-bar";
 import { TopBar } from "./top-bar";
 import { CategoryNav } from "./category-nav";
+import { CategoryNavGate } from "./category-nav-gate";
 import { CatalogMenu } from "./catalog-menu";
 import { CatalogRows } from "./catalog-panel";
 
@@ -143,7 +144,9 @@ export function SiteHeader() {
         </div>
       </Container>
     </StickyBar>
-    <CategoryNav />
+    <CategoryNavGate>
+      <CategoryNav />
+    </CategoryNavGate>
     </>
   );
 }
