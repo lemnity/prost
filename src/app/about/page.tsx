@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Clock, Mail, MapPin, Phone } from "lucide-react";
+import { YandexMap, yandexMapUrl } from "@/components/ui/yandex-map";
 import { Container } from "@/components/ui/container";
 import { HowWeWork } from "@/components/home/how-we-work";
 import { ApplicationTypes } from "@/components/home/application-types";
@@ -16,10 +17,6 @@ export const metadata: Metadata = {
   description: company.quote,
 };
 
-// Координаты адреса (геокодированы один раз), чтобы виджет показал метку.
-const MAP_POINT = "65.535297,57.128887";
-const mapEmbedUrl = `https://yandex.ru/map-widget/v1/?ll=${MAP_POINT}&z=16&pt=${MAP_POINT},pm2rdm`;
-const mapUrl = `https://yandex.ru/maps/?text=${encodeURIComponent(site.address)}`;
 
 export default async function AboutPage() {
   const categories = await getPopularCategories();
@@ -31,7 +28,7 @@ export default async function AboutPage() {
   ];
   const contacts = [
     { icon: MapPin, label: "Адрес", node: (
-        <a href={mapUrl} target="_blank" rel="noopener" className="hover:text-brand">
+        <a href={yandexMapUrl} target="_blank" rel="noopener" className="hover:text-brand">
           {site.address}
         </a>
       ) },
@@ -101,18 +98,9 @@ export default async function AboutPage() {
                   </li>
                 ))}
               </ul>
-              <div className="mt-5 h-[240px] overflow-hidden rounded-[12px] bg-[#E9ECEF] lg:h-auto lg:min-h-[220px] lg:flex-1">
-                <iframe
-                  src={mapEmbedUrl}
-                  title={`Карта: ${site.address}`}
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  allowFullScreen
-                  className="size-full border-0"
-                />
-              </div>
+              <YandexMap className="mt-5 h-[240px] lg:h-auto lg:min-h-[220px] lg:flex-1" />
               <a
-                href={mapUrl}
+                href={yandexMapUrl}
                 target="_blank"
                 rel="noopener"
                 className="mt-4 inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-brand px-6 text-sm font-semibold text-brand transition-colors hover:bg-brand hover:text-white"
@@ -121,7 +109,7 @@ export default async function AboutPage() {
                 Открыть на карте
               </a>
             </div>
-            <dl className="grid h-full grid-cols-1 gap-x-4 rounded-[10px] bg-surface p-5 sm:grid-cols-[minmax(0,200px)_1fr]">
+            <dl id="requisites" className="grid h-full scroll-mt-24 grid-cols-1 gap-x-4 rounded-[10px] bg-surface p-5 sm:grid-cols-[minmax(0,200px)_1fr]">
               {requisites.map((r, i) => {
                 const line = i > 0 ? "sm:border-t sm:border-line sm:py-2" : "sm:pb-2 sm:pt-0";
                 return (
