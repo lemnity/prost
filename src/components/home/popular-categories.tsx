@@ -61,7 +61,7 @@ function WideTile({ cat, className = "" }: { cat: Cat; className?: string }) {
       </div>
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 z-10 overflow-hidden"
+        className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
       >
         {FLAKES.map((f, i) => (
           <span
@@ -81,7 +81,7 @@ function WideTile({ cat, className = "" }: { cat: Cat; className?: string }) {
           />
         ))}
       </div>
-      <div className="relative flex h-full w-full flex-col justify-between p-3 xl:p-4">
+      <div className="relative z-10 flex h-full w-full flex-col justify-between p-3 xl:p-4">
         <div>
           <span className="block whitespace-nowrap text-base font-semibold leading-tight xl:text-xl">
             {cat.title}
