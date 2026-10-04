@@ -12,7 +12,7 @@ export function ProductCard({ product }: { product: Product }) {
     ? Math.round((1 - product.priceFrom / oldPrice) * 100)
     : 0;
   return (
-    <article className="flex flex-col rounded-[10px] border border-line bg-white p-3">
+    <article className="relative flex flex-col rounded-[10px] border border-line bg-white p-3">
       <div className="relative aspect-square">
         <Link href={product.url} tabIndex={-1} aria-hidden="true" className="absolute inset-0">
           <Image
