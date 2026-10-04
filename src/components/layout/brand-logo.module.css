@@ -1,4 +1,4 @@
-/* Wordmark flip: PRO STYLE <-> ПРО СТИЛЬ, 8s cycle, only without reduced motion. */
+/* Letter-by-letter swap PRO STYLE <-> ПРО СТИЛЬ, 8s cycle, 70ms stagger. */
 .a,
 .b {
   transform-box: view-box;
@@ -14,14 +14,11 @@
     display: inline;
     transform: scaleY(0);
     opacity: 0;
+    animation: flip-b 8s ease-in-out calc(var(--i) * 70ms) infinite both;
   }
 
   .a {
-    animation: flip-a 8s ease-in-out infinite;
-  }
-
-  .b {
-    animation: flip-b 8s ease-in-out infinite;
+    animation: flip-a 8s ease-in-out calc(var(--i) * 70ms) infinite both;
   }
 }
 
@@ -31,11 +28,12 @@
     transform: scaleY(1);
     opacity: 1;
   }
-  46.9%,
-  96.9% {
+  46%,
+  93.75% {
     transform: scaleY(0);
     opacity: 0;
   }
+  96%,
   100% {
     transform: scaleY(1);
     opacity: 1;
@@ -44,16 +42,16 @@
 
 @keyframes flip-b {
   0%,
-  46.9% {
+  46% {
     transform: scaleY(0);
     opacity: 0;
   }
-  50%,
+  48.25%,
   93.75% {
     transform: scaleY(1);
     opacity: 1;
   }
-  96.9%,
+  96%,
   100% {
     transform: scaleY(0);
     opacity: 0;
