@@ -151,9 +151,9 @@
 }
 /* ВАЖНО: проценты рассчитаны на ровно 7 слайдов (3 с каждый). Цикл на 7 слайдов по 3 с (21 с); сдвиг -0.5с: первый слайд виден сразу. */
 @keyframes ny-slide {
-  0% { opacity: 0; transform: translateX(45%); }
+  0% { opacity: 0; transform: translateX(30%); }
   2.4%, 11.9% { opacity: 1; transform: translateX(0); }
-  14.3%, 100% { opacity: 0; transform: translateX(-45%); }
+  14.3%, 100% { opacity: 0; transform: translateX(-30%); }
 }
 @keyframes sec-tick {
   0% { transform: scale(1.06); }

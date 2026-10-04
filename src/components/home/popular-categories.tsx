@@ -42,7 +42,7 @@ function WideTile({
         backgroundImage:
           "radial-gradient(circle at 0% 0%, #fff 0, transparent 35%), radial-gradient(circle at 100% 0%, #fff 0, transparent 30%), linear-gradient(160deg, var(--color-snow-1), var(--color-snow-2) 55%, var(--color-snow-3))",
       }}
-      className={`group relative block h-[150px] overflow-hidden rounded-[10px] bg-snow-2 shadow-[0_1px_2px_rgba(16,24,40,0.06),0_8px_24px_rgba(16,24,40,0.08)] ring-1 ring-[#DCEAF5] transition-shadow duration-200 hover:shadow-[0_2px_4px_rgba(16,24,40,0.08),0_12px_32px_rgba(16,24,40,0.12)] focus-visible:outline-offset-[-2px] lg:h-[182px] ${className}`}
+      className={`relative block h-[150px] overflow-hidden rounded-[10px] bg-snow-2 shadow-[0_1px_2px_rgba(16,24,40,0.06),0_8px_24px_rgba(16,24,40,0.08)] ring-1 ring-[#DCEAF5] transition-shadow duration-200 hover:shadow-[0_2px_4px_rgba(16,24,40,0.08),0_12px_32px_rgba(16,24,40,0.12)] focus-visible:outline-offset-[-2px] lg:h-[182px] ${className}`}
     >
       <div
         aria-hidden="true"
@@ -56,8 +56,8 @@ function WideTile({
       {/* Анимация (opacity/transform) вешается на сам <img>, а не на обёртку:
           обёртка создала бы stacking context и заблокировала mix-blend-multiply. */}
       <ul
-        aria-label="Подборка новогодних подарков"
-        className="absolute inset-y-0 right-0 m-0 w-[32%] list-none p-0"
+        aria-hidden="true"
+        className="absolute inset-y-0 right-0 m-0 w-[28%] list-none overflow-hidden p-0 sm:w-[32%]"
       >
         {picks.map((p, i) => {
           const anim = `ny-slide ${i === 0 ? "opacity-100" : "opacity-0"}`;
@@ -70,9 +70,9 @@ function WideTile({
               <div className="relative min-h-0 w-full flex-1">
                 <Image
                   src={asset(p.image)}
-                  alt={p.title}
+                  alt=""
                   fill
-                  sizes="(min-width:1280px) 130px, (min-width:768px) 25vw, 35vw"
+                  sizes="(min-width:1280px) 130px, (min-width:640px) 15vw, 28vw"
                   loading={i === 0 ? "eager" : "lazy"}
                   style={vars}
                   className={`${anim} object-contain mix-blend-multiply`}
@@ -113,7 +113,7 @@ function WideTile({
           />
         ))}
       </div>
-      <div className="relative z-10 flex h-full w-[68%] min-w-0 flex-col justify-between p-3 xl:p-4">
+      <div className="relative z-10 flex h-full w-[72%] min-w-0 sm:w-[68%] flex-col justify-between p-3 xl:p-4">
         <div>
           <span className="block whitespace-nowrap text-base font-semibold leading-tight xl:text-xl">
             {cat.title}
@@ -180,7 +180,8 @@ function Tile({
 export async function PopularCategories() {
   const [cats, picks] = await Promise.all([
     getPopularCategories(),
-    getNewYearPicks(),
+    // Keyframes ny-slide рассчитаны ровно на 7 слайдов — не менять лимит.
+    getNewYearPicks(7),
   ]);
   const first = cats.slice(0, 11);
   const rest = cats.slice(11);
