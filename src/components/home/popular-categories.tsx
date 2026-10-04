@@ -71,54 +71,53 @@ function WideTile({
         className="pointer-events-none absolute -bottom-[10px] -left-[5%] h-5 w-[110%] rounded-[50%] bg-white"
         style={{ boxShadow: "0 -1px 4px rgba(191,217,238,.6)" }}
       />
-      <ul
-        aria-hidden="true"
-        className="absolute bottom-3 right-3 top-3 z-10 m-0 w-[34%] list-none overflow-hidden rounded-[14px] bg-white p-0 ring-1 ring-[#DCEAF5] shadow-[0_1px_2px_rgba(16,24,40,.05),0_6px_16px_rgba(16,24,40,.08)] xl:bottom-4 xl:right-4 xl:top-4"
-      >
-        {picks.map((p, i) => (
-          <li
-            key={p.id}
-            style={{ "--i": i } as React.CSSProperties}
-            className={`ny-slide absolute inset-0 flex flex-col p-2 sm:p-3 ${
-              i === 0 ? "opacity-100" : "opacity-0"
-            }`}
-          >
-            <div className="relative min-h-0 w-full flex-1">
-              <Image
-                src={asset(p.image)}
-                alt=""
-                fill
-                sizes="(min-width:1280px) 120px, (min-width:640px) 15vw, 30vw"
-                loading={i === 0 ? "eager" : "lazy"}
-                className="object-contain"
-              />
-            </div>
-            <span className="mt-1.5 block truncate text-[12px] leading-tight text-ink">
-              {p.title}
-            </span>
-            <span className="block text-[13px] font-bold leading-tight text-brand">
-              от {formatPriceValue(p.priceFrom)}
-            </span>
-          </li>
-        ))}
-      </ul>
       <div
         aria-hidden="true"
-        className="absolute bottom-[3px] right-3 z-10 flex w-[34%] items-center justify-center gap-1 xl:bottom-[5px] xl:right-4"
+        className="absolute bottom-3 right-3 top-3 z-10 flex w-[30%] flex-col overflow-hidden min-[360px]:w-[32%] rounded-[14px] bg-white ring-1 ring-[#DCEAF5] shadow-[0_1px_2px_rgba(16,24,40,.05),0_6px_16px_rgba(16,24,40,.08)] sm:w-[34%] xl:w-[32%]"
       >
-        {picks.map((p, i) => (
-          <span
-            key={p.id}
-            style={{ "--i": i } as React.CSSProperties}
-            className={`ny-dot h-[5px] rounded-full ${
-              i === 0 ? "w-[14px] bg-brand" : "w-[5px] bg-[#C9DCEB]"
-            }`}
-          />
-        ))}
+        <ul className="relative m-0 min-h-0 flex-1 list-none p-0">
+          {picks.map((p, i) => (
+            <li
+              key={p.id}
+              style={{ "--i": i } as React.CSSProperties}
+              className={`ny-slide absolute inset-0 flex flex-col px-2 pt-2 sm:px-3 sm:pt-3 ${
+                i === 0 ? "opacity-100" : "opacity-0"
+              }`}
+            >
+              <div className="relative min-h-0 w-full flex-1">
+                <Image
+                  src={asset(p.image)}
+                  alt=""
+                  fill
+                  sizes="(min-width:1280px) 120px, (min-width:640px) 15vw, 30vw"
+                  loading={i === 0 ? "eager" : "lazy"}
+                  className="object-contain"
+                />
+              </div>
+              <span className="mt-1.5 block truncate text-[12px] leading-tight text-ink">
+                {p.title}
+              </span>
+              <span className="block text-[13px] font-bold leading-tight text-brand">
+                от {formatPriceValue(p.priceFrom)}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <div className="flex h-[5px] shrink-0 items-center justify-center gap-1 mb-2 mt-1.5 sm:mb-3">
+          {picks.map((p, i) => (
+            <span
+              key={p.id}
+              style={{ "--i": i } as React.CSSProperties}
+              className={`ny-dot h-[5px] rounded-full ${
+                i === 0 ? "w-[14px] bg-brand" : "w-[5px] bg-[#C9DCEB]"
+              }`}
+            />
+          ))}
+        </div>
       </div>
-      <div className="relative z-10 flex h-full w-[62%] min-w-0 flex-col justify-between p-3 xl:p-4">
+      <div className="relative z-10 flex h-full w-[62%] min-w-0 flex-col justify-between p-3">
         <div>
-          <span className="block whitespace-nowrap text-base font-semibold leading-tight xl:text-xl">
+          <span className="block whitespace-nowrap text-[15px] font-semibold min-[360px]:text-base leading-tight xl:text-xl">
             {cat.title}
           </span>
           <div className="mt-1.5 xl:mt-2">
