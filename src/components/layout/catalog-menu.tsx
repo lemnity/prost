@@ -11,6 +11,9 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown, Menu, X } from "lucide-react";
+import type { MenuData } from "@/lib/catalog/menu";
+import { getSaleRemaining, type SaleRemaining } from "@/lib/sale";
+import { CatalogPanes, CatalogSheetContent } from "./catalog-menu-content";
 
 const btnClass =
   "grid size-12 shrink-0 place-items-center rounded-[10px] bg-white/10 text-white hover:bg-white/20 md:flex md:w-[240px] md:items-center md:justify-between md:px-5";
@@ -24,13 +27,24 @@ const subscribeDesktop = (cb: () => void) => {
 };
 const getDesktop = () => window.matchMedia(MQ).matches;
 
-export function CatalogMenu({
-  desktop,
-  sheet,
-}: {
-  desktop: ReactNode;
-  sheet: ReactNode;
-}) {
+// Подкатегории и «Товар дня» — статический JSON, грузится один раз:
+// в простое после загрузки страницы или при первом наведении/фокусе.
+const MENU_URL = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/catalog-menu.json`;
+let menuPromise: Promise<MenuData> | null = null;
+function loadMenu(): Promise<MenuData> {
+  menuPromise ??= fetch(MENU_URL)
+    .then((r) => {
+      if (!r.ok) throw new Error(String(r.status));
+      return r.json() as Promise<MenuData>;
+    })
+    .catch((e) => {
+      menuPromise = null;
+      throw e;
+    });
+  return menuPromise;
+}
+
+export function CatalogMenu({ rows }: { rows: ReactNode }) {
   const hydrated = useSyncExternalStore(
     noopSubscribe,
     () => true,
@@ -43,22 +57,47 @@ export function CatalogMenu({
   const panelRef = useRef<HTMLDivElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const [menu, setMenu] = useState<{ data: MenuData; dayLeft: SaleRemaining } | null>(null);
+
+  const ensureMenu = useCallback(() => {
+    loadMenu()
+      .then((data) => setMenu((m) => m ?? { data, dayLeft: getSaleRemaining(new Date(), "day") }))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const idle = () => ensureMenu();
+    const start = () => {
+      if ("requestIdleCallback" in window) {
+        const id = window.requestIdleCallback(idle, { timeout: 4000 });
+        return () => window.cancelIdleCallback(id);
+      }
+      const id = setTimeout(idle, 1500);
+      return () => clearTimeout(id);
+    };
+    if (document.readyState === "complete") return start();
+    let cancel: (() => void) | undefined;
+    const onLoad = () => (cancel = start());
+    window.addEventListener("load", onLoad, { once: true });
+    return () => {
+      window.removeEventListener("load", onLoad);
+      cancel?.();
+    };
+  }, [ensureMenu]);
 
   const close = useCallback((refocus = false) => {
     setOpen(false);
     if (refocus) btnRef.current?.focus();
   }, []);
 
-  // Active row / pane state is applied to the server-rendered markup.
+  // Active row state is applied to the server-rendered rows; panes are
+  // rendered on the client from the menu JSON.
   useEffect(() => {
     const root = panelRef.current;
     if (!root) return;
     root.querySelectorAll<HTMLElement>("[data-row]").forEach((el) => {
       const on = Number(el.dataset.row) === active;
       el.dataset.active = String(on);
-    });
-    root.querySelectorAll<HTMLElement>("[data-pane]").forEach((el) => {
-      el.hidden = Number(el.dataset.pane) !== active;
     });
   }, [active, open]);
 
@@ -240,7 +279,12 @@ export function CatalogMenu({
           aria-label="Каталог"
           aria-expanded={open}
           aria-controls={desk ? "catalog-menu" : "catalog-sheet"}
-          onClick={() => setOpen((o) => !o)}
+          onClick={() => {
+            ensureMenu();
+            setOpen((o) => !o);
+          }}
+          onPointerEnter={ensureMenu}
+          onFocus={ensureMenu}
           className={btnClass}
         >
           {label}
@@ -268,7 +312,10 @@ export function CatalogMenu({
         }}
         className="absolute left-2 right-0 top-full z-50 mt-2 hidden max-h-(--menu-max-h) overflow-hidden rounded-[16px] bg-white text-ink shadow-xl lg:[&:not([hidden])]:block [&_a:focus-visible]:-outline-offset-2 [&_a:focus-visible]:outline-brand!"
       >
-        {desktop}
+        <nav aria-label="Каталог" className="flex" data-catalog-panel>
+          {rows}
+          <CatalogPanes data={menu?.data ?? null} active={active} dayLeft={menu?.dayLeft ?? null} />
+        </nav>
       </div>
       <div
         id="catalog-sheet"
@@ -294,7 +341,9 @@ export function CatalogMenu({
             <X size={24} aria-hidden />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto overscroll-contain">{sheet}</div>
+        <div className="flex-1 overflow-y-auto overscroll-contain">
+          {open ? <CatalogSheetContent data={menu?.data ?? null} /> : null}
+        </div>
       </div>
     </>
   );

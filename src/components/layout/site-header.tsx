@@ -15,7 +15,7 @@ import { StickyBar } from "./sticky-bar";
 import { TopBar } from "./top-bar";
 import { CategoryNav } from "./category-nav";
 import { CatalogMenu } from "./catalog-menu";
-import { CatalogDesktop, CatalogSheet } from "./catalog-panel";
+import { CatalogRows } from "./catalog-panel";
 
 const iconBtn =
   "grid size-12 shrink-0 place-items-center rounded-[10px] bg-white/10 text-white hover:bg-white/20";
@@ -107,7 +107,7 @@ export function SiteHeader() {
               <path fillRule="evenodd" clipRule="evenodd" d="M129.59 0H166.16C169.931 0 173.016 3.08323 173.016 6.85281V43.4057C173.016 47.1755 169.931 50.2585 166.16 50.2585H129.59C125.819 50.2585 122.734 47.1755 122.734 43.4057V6.85281C122.734 3.08323 125.819 0 129.59 0Z" fill="#65B137"/>
             </svg>
           </Link>
-          <CatalogMenu desktop={<CatalogDesktop />} sheet={<CatalogSheet />} />
+          <CatalogMenu rows={<CatalogRows />} />
           <form
             action="/search"
             role="search"
