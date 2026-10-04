@@ -4,6 +4,7 @@
 import raw from "@/data/catalog-products.json";
 import { catalogTree, newProducts, newYearPicks, saleProducts } from "./static-data";
 import { deriveColors } from "./colors";
+import { getProductDetails, normalizeMaterials } from "./details";
 import type { CatalogNode, Product } from "./types";
 
 export type ProductVariant = {
@@ -32,6 +33,9 @@ export type CatalogProduct = {
   variants: ProductVariant[];
   /** Нормализованные цвета (id из COLOR_TAGS), вычисляются при загрузке. */
   colors: string[];
+  /** Поставщик (specs.supplier карточки) и материалы — из описаний, при загрузке. */
+  supplier: string;
+  materials: string[];
 };
 
 /** Виртуальные подборки из навигации (не входят в дерево категорий). */
@@ -79,6 +83,8 @@ function fromStatic(p: Product, popularity: number): CatalogProduct {
     popularity,
     variants: [],
     colors: [],
+    supplier: "",
+    materials: [],
   };
 }
 
@@ -104,7 +110,12 @@ function load(): CatalogProduct[] {
       byUrl.set(p.url, p);
     }
   }
-  for (const p of list) p.colors = deriveColors([p.title, ...p.variants.map((v) => v.title)]);
+  for (const p of list) {
+    p.colors = deriveColors([p.title, ...p.variants.map((v) => v.title)]);
+    const d = getProductDetails(p.url);
+    p.supplier = d?.specs.supplier?.trim() ?? "";
+    p.materials = normalizeMaterials(d);
+  }
   cache = list;
   return list;
 }

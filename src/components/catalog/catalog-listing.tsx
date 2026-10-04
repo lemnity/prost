@@ -10,7 +10,8 @@ import {
   SORTS,
   activeCount,
   apply,
-  brandOptions,
+  valueOptions,
+  type ListFilterKey,
   colorOptions,
   parse,
   serialize,
@@ -24,7 +25,9 @@ import { productsLabel } from "@/lib/format";
 
 const PAGE = 24;
 
-type Props = { products: ListingProduct[]; brands: string[] };
+type Props = { products: ListingProduct[] };
+
+type Group = { key: Exclude<ListFilterKey, "prints">; label: string; options: Option[]; empty: string };
 
 /** Островок с фильтрами: читает состояние из URL. */
 export function CatalogListingIsland(props: Props) {
@@ -33,7 +36,7 @@ export function CatalogListingIsland(props: Props) {
 }
 
 /** Листинг: строка фильтров, тулбар и сетка. Без query — статичный рендер (SSR/SEO). */
-export function CatalogListing({ products, brands, query: urlQuery = "" }: Props & { query?: string }) {
+export function CatalogListing({ products, query: urlQuery = "" }: Props & { query?: string }) {
   const router = useRouter();
   const pathname = usePathname();
   // Мгновенный отклик контролов, пока URL обновляется.
@@ -41,7 +44,15 @@ export function CatalogListing({ products, brands, query: urlQuery = "" }: Props
   const filters = useMemo(() => parse(query), [query]);
   const list = useMemo(() => apply(products, filters), [products, filters]);
   const colors = useMemo(() => colorOptions(products), [products]);
-  const suppliers = useMemo(() => brandOptions(products, brands), [products, brands]);
+  const groups = useMemo<Group[]>(
+    () => [
+      { key: "suppliers", label: "Поставщик", options: valueOptions(products, (p) => [p.supplier]), empty: "Нет данных о поставщиках в этом разделе" },
+      { key: "materials", label: "Материал", options: valueOptions(products, (p) => p.materials), empty: "Нет данных о материалах в этом разделе" },
+      { key: "colors", label: "Цвет", options: colors, empty: "Нет данных о цвете в этом разделе" },
+      { key: "brands", label: "Бренд", options: valueOptions(products, (p) => [p.brand]), empty: "Нет данных о брендах в этом разделе" },
+    ],
+    [products, colors],
+  );
   const hasNew = useMemo(() => products.some((p) => p.isNew), [products]);
   const [sheet, setSheet] = useState(false);
   const closeSheet = useCallback(() => setSheet(false), []);
@@ -55,6 +66,16 @@ export function CatalogListing({ products, brands, query: urlQuery = "" }: Props
     });
   }
   const reset = () => update(EMPTY_FILTERS);
+  const listDropdown = (g: Group) => (
+    <ListDropdown
+      key={g.key}
+      label={g.label}
+      options={g.options}
+      selected={filters[g.key]}
+      onApply={(v) => update({ [g.key]: v })}
+      emptyTitle={g.empty}
+    />
+  );
 
   const priceOn = filters.min != null || filters.max != null;
 
@@ -77,23 +98,9 @@ export function CatalogListing({ products, brands, query: urlQuery = "" }: Props
         <Dropdown label="Цена" count={priceOn ? 1 : 0}>
           <PricePopover min={filters.min} max={filters.max} onApply={(min, max) => update({ min, max })} />
         </Dropdown>
-        <ListDropdown
-          label="Поставщик"
-          options={suppliers}
-          selected={filters.brands}
-          onApply={(v) => update({ brands: v })}
-          emptyTitle="Нет данных о поставщиках в этом разделе"
-        />
-        <Dropdown label="Материал" disabled title={OASIS_HINT} />
-        <ListDropdown
-          label="Цвет"
-          options={colors}
-          selected={filters.colors}
-          onApply={(v) => update({ colors: v })}
-          emptyTitle="Нет данных о цвете в этом разделе"
-        />
+        {groups.slice(0, 3).map(listDropdown)}
         <Dropdown label="Вид нанесения" disabled title={OASIS_HINT} />
-        <Dropdown label="Бренд" disabled title={OASIS_HINT} />
+        {listDropdown(groups[3])}
       </div>
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -163,8 +170,7 @@ export function CatalogListing({ products, brands, query: urlQuery = "" }: Props
         <Drawer onClose={closeSheet} count={list.length}>
           <SheetFilters
             filters={filters}
-            suppliers={suppliers}
-            colors={colors}
+            groups={groups}
             hasNew={hasNew}
             onChange={update}
             onReset={reset}
@@ -226,15 +232,13 @@ function ProductGrid({ products }: { products: ListingProduct[] }) {
 /** Все группы фильтров для мобильного листа (применяются сразу). */
 function SheetFilters({
   filters,
-  suppliers,
-  colors,
+  groups,
   hasNew,
   onChange,
   onReset,
 }: {
   filters: Filters;
-  suppliers: Option[];
-  colors: Option[];
+  groups: Group[];
   hasNew: boolean;
   onChange: (f: Partial<Filters>) => void;
   onReset: () => void;
@@ -242,7 +246,7 @@ function SheetFilters({
   const [min, setMin] = useState(filters.min?.toString() ?? "");
   const [max, setMax] = useState(filters.max?.toString() ?? "");
   const commitPrice = () => onChange({ min: min ? Number(min) : null, max: max ? Number(max) : null });
-  const toggle = (key: "brands" | "colors") => (v: string, on: boolean) =>
+  const toggle = (key: Group["key"]) => (v: string, on: boolean) =>
     onChange({ [key]: on ? [...filters[key], v] : filters[key].filter((x) => x !== v) });
   const check = "flex items-center gap-2 text-[13px]";
   return (
@@ -276,24 +280,18 @@ function SheetFilters({
           Только в наличии
         </label>
       </div>
-      {suppliers.length ? (
-        <fieldset>
-          <legend className="mb-2 text-[13px] font-semibold">Поставщик</legend>
-          <OptionList name="Поставщик" options={suppliers} selected={filters.brands} onToggle={toggle("brands")} />
-        </fieldset>
-      ) : null}
-      {colors.length ? (
-        <fieldset>
-          <legend className="mb-2 text-[13px] font-semibold">Цвет</legend>
-          <OptionList name="Цвет" options={colors} selected={filters.colors} onToggle={toggle("colors")} />
-        </fieldset>
-      ) : null}
-      {["Материал", "Вид нанесения", "Бренд"].map((g) => (
-        <div key={g} aria-disabled="true" title={OASIS_HINT} className="text-[13px] text-faint">
-          <p className="font-semibold">{g}</p>
-          <p className="mt-0.5 text-[12px]">{OASIS_HINT}</p>
-        </div>
-      ))}
+      {groups.map((g) =>
+        g.options.length ? (
+          <fieldset key={g.key}>
+            <legend className="mb-2 text-[13px] font-semibold">{g.label}</legend>
+            <OptionList name={g.label} options={g.options} selected={filters[g.key]} onToggle={toggle(g.key)} />
+          </fieldset>
+        ) : null,
+      )}
+      <div aria-disabled="true" title={OASIS_HINT} className="text-[13px] text-faint">
+        <p className="font-semibold">Вид нанесения</p>
+        <p className="mt-0.5 text-[12px]">{OASIS_HINT}</p>
+      </div>
       <button
         type="button"
         onClick={onReset}

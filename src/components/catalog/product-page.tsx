@@ -6,6 +6,8 @@ import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { SectionHeader } from "@/components/ui/section-header";
 import { ProductCard } from "./product-card";
 import { ProductDetail, type VariantView } from "./product-detail";
+import { ProductTabs } from "./product-tabs";
+import { buildSpecRows, getProductDetails } from "@/lib/catalog/details";
 import { asset } from "@/lib/asset";
 import { applications } from "@/content/home";
 import {
@@ -17,11 +19,22 @@ import {
   type CatalogProduct,
 } from "@/lib/catalog/products";
 
+/** Первые ~160 символов текста по границе слова. */
+function snippet(text: string, max = 160): string {
+  const t = text.replace(/\s+/g, " ").trim();
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max - 1);
+  return `${cut.slice(0, Math.max(cut.lastIndexOf(" "), max - 20))}…`;
+}
+
 export function productMetadata(product: CatalogProduct | null): Metadata {
   if (!product) return {};
+  const description = getProductDetails(product.url)?.description?.trim();
   return {
     title: `${product.title} — ProStyle`,
-    description: `${product.title}, артикул ${product.sku}. Нанесение логотипа, доставка по России.`,
+    description: description
+      ? snippet(description)
+      : `${product.title}, артикул ${product.sku}. Нанесение логотипа, доставка по России.`,
   };
 }
 
@@ -105,6 +118,12 @@ export function ProductPage({ product }: { product: CatalogProduct }) {
     : undefined;
   const { variants, initial } = buildVariants(product);
   const similar = getSimilarProducts(product);
+  const details = getProductDetails(product.url);
+  const paragraphs = (details?.description ?? "")
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  const specs = buildSpecRows(details, product);
   const crumbs = [
     { label: "Главная", href: "/" },
     { label: "Каталог", href: "/catalog" },
@@ -120,7 +139,7 @@ export function ProductPage({ product }: { product: CatalogProduct }) {
       </Container>
 
       <Container className="py-6 md:py-8">
-        <ProductDetail title={product.title} brand={product.brand} variants={variants} initial={initial}>
+        <ProductDetail title={product.title} brand={product.supplier} variants={variants} initial={initial}>
           <section aria-labelledby="apps-title" className="mt-8 border-t border-line pt-6">
             <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
               <h2 id="apps-title" className="text-[17px] font-semibold">
@@ -145,6 +164,45 @@ export function ProductPage({ product }: { product: CatalogProduct }) {
             </ul>
           </section>
         </ProductDetail>
+      </Container>
+
+      <Container className="pb-6 md:pb-8">
+        <ProductTabs
+          tabs={[
+            {
+              id: "description",
+              label: "Описание",
+              content: paragraphs.length ? (
+                <div className="max-w-[820px] space-y-3 text-[15px] leading-relaxed text-ink/90">
+                  {paragraphs.map((p, i) => (
+                    <p key={i} className="whitespace-pre-line">
+                      {p}
+                    </p>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[15px] text-muted">Описание уточняйте у менеджера.</p>
+              ),
+            },
+            {
+              id: "specs",
+              label: "Характеристики",
+              content: (
+                <dl className="grid max-w-[980px] gap-x-10 text-[14px] md:grid-cols-2">
+                  {specs.map((r, i) => (
+                    <div
+                      key={`${r.label}-${i}`}
+                      className="grid grid-cols-[minmax(0,42%)_minmax(0,1fr)] gap-3 border-b border-line py-2.5"
+                    >
+                      <dt className="text-muted">{r.label}</dt>
+                      <dd className="whitespace-pre-line break-words text-ink">{r.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              ),
+            },
+          ]}
+        />
       </Container>
 
       {similar.length ? (

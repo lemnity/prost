@@ -18,24 +18,23 @@ export type Filters = {
   isNew: boolean;
   /** Акции — появятся с Oasis. */
   promo: boolean;
-  /** Поставщик (поле brand выгрузки). */
+  suppliers: string[];
   brands: string[];
   colors: string[];
-  /** Материал, вид нанесения, бренд — появятся с Oasis. */
   materials: string[];
+  /** Вид нанесения — появится с Oasis. */
   prints: string[];
-  brands2: string[];
 };
 
-export type ListFilterKey = "brands" | "colors" | "materials" | "prints" | "brands2";
+export type ListFilterKey = "suppliers" | "brands" | "colors" | "materials" | "prints";
 
 // Имена параметров URL.
 const LIST_PARAMS: Record<ListFilterKey, string> = {
+  suppliers: "supplier",
   brands: "brand",
   colors: "color",
   materials: "material",
   prints: "print",
-  brands2: "brand2",
 };
 
 export const EMPTY_FILTERS: Omit<Filters, "sort"> = {
@@ -44,11 +43,11 @@ export const EMPTY_FILTERS: Omit<Filters, "sort"> = {
   inStock: false,
   isNew: false,
   promo: false,
+  suppliers: [],
   brands: [],
   colors: [],
   materials: [],
   prints: [],
-  brands2: [],
 };
 
 export function num(v: string | null): number | null {
@@ -98,11 +97,11 @@ export function apply(products: ListingProduct[], f: Filters): ListingProduct[] 
       (!f.inStock || p.stock > 0) &&
       (!f.isNew || !!p.isNew) &&
       (!f.promo || !!p.promo) &&
+      anyOf(f.suppliers, [p.supplier]) &&
       anyOf(f.brands, [p.brand]) &&
       anyOf(f.colors, p.colors) &&
       anyOf(f.materials, p.materials) &&
-      anyOf(f.prints, p.prints) &&
-      anyOf(f.brands2, p.brand2 ? [p.brand2] : []),
+      anyOf(f.prints, p.prints),
   );
   if (f.sort === "price-asc") list.sort((a, b) => a.priceFrom - b.priceFrom);
   else if (f.sort === "price-desc") list.sort((a, b) => b.priceFrom - a.priceFrom);
@@ -117,11 +116,11 @@ export function activeCount(f: Filters): number {
     (f.inStock ? 1 : 0) +
     (f.isNew ? 1 : 0) +
     (f.promo ? 1 : 0) +
+    f.suppliers.length +
     f.brands.length +
     f.colors.length +
     f.materials.length +
-    f.prints.length +
-    f.brands2.length
+    f.prints.length
   );
 }
 
@@ -138,8 +137,15 @@ export function colorOptions(products: ListingProduct[]): Option[] {
   }));
 }
 
-export function brandOptions(products: ListingProduct[], brands: string[]): Option[] {
-  return brands.map((b) => ({ value: b, label: b, count: products.filter((p) => p.brand === b).length }));
+/** Варианты по значениям поля (пустые пропускаются), по алфавиту. */
+export function valueOptions(products: ListingProduct[], get: (p: ListingProduct) => string[]): Option[] {
+  const counts = new Map<string, number>();
+  for (const p of products) {
+    for (const v of new Set(get(p).map((x) => x.trim()).filter(Boolean))) counts.set(v, (counts.get(v) ?? 0) + 1);
+  }
+  return [...counts]
+    .sort(([a], [b]) => a.localeCompare(b, "ru"))
+    .map(([value, count]) => ({ value, label: value, count }));
 }
 
 export const OASIS_HINT = "Появится после подключения склада Oasis";

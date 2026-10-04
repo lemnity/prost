@@ -28,12 +28,11 @@ export type CatalogNode = {
 
 /** Товар в листинге каталога (карточка + поля для фильтров). */
 export type ListingProduct = Product & {
-  /** Поставщик (сейчас поле brand выгрузки). */
   brand: string;
+  supplier: string;
   colors: string[];
-  // Появятся с провайдером склада Oasis (URL: promo, material, print, brand2).
+  materials: string[];
+  // Появятся с провайдером склада Oasis (URL: promo, print).
   promo?: boolean;
-  materials?: string[];
   prints?: string[];
-  brand2?: string;
 };

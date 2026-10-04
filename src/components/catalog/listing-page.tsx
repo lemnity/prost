@@ -5,7 +5,7 @@ import { Breadcrumbs, type Crumb } from "@/components/ui/breadcrumbs";
 import { ConsultationCta } from "@/components/home/consultation-cta";
 import { CatalogListing, CatalogListingIsland } from "./catalog-listing";
 import { SubscribeBlock } from "./subscribe-block";
-import { getBrands, toCard, type CatalogProduct } from "@/lib/catalog/products";
+import { toCard, type CatalogProduct } from "@/lib/catalog/products";
 import type { ListingProduct } from "@/lib/catalog/types";
 
 export type Chip = { title: string; href: string; active: boolean; count?: number };
@@ -21,8 +21,13 @@ export function ListingPage({
   chips?: Chip[];
   products: CatalogProduct[];
 }) {
-  const items: ListingProduct[] = products.map((p) => ({ ...toCard(p), brand: p.brand, colors: p.colors }));
-  const brands = getBrands(products);
+  const items: ListingProduct[] = products.map((p) => ({
+    ...toCard(p),
+    brand: p.brand,
+    supplier: p.supplier,
+    colors: p.colors,
+    materials: p.materials,
+  }));
   return (
     <main id="main">
       <Container className="pt-4 md:pt-6">
@@ -56,8 +61,8 @@ export function ListingPage({
 
       <Container className="py-6 md:py-8">
         {items.length ? (
-          <Suspense fallback={<CatalogListing products={items} brands={brands} />}>
-            <CatalogListingIsland products={items} brands={brands} />
+          <Suspense fallback={<CatalogListing products={items} />}>
+            <CatalogListingIsland products={items} />
           </Suspense>
         ) : (
           <div className="rounded-[10px] bg-surface px-6 py-12 text-center">
