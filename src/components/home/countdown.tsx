@@ -1,12 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { Clock } from "lucide-react";
 import {
   getSaleRemaining,
   type SaleRemaining,
   type SaleTarget,
 } from "@/lib/sale";
+import {
+  getTickerServerSnapshot,
+  getTickerSnapshot,
+  subscribeTicker,
+} from "@/lib/ticker";
 import { plural } from "@/lib/plural";
 
 export function Countdown({
@@ -16,30 +27,30 @@ export function Countdown({
   initial: SaleRemaining;
   target?: SaleTarget;
 }) {
-  // Первый клиентский рендер == серверный (initial из сборки);
-  // реальное значение — в useEffect. По достижении 0 getSaleRemaining
-  // сам переходит на следующий период.
-  const [c, setC] = useState<SaleRemaining>(initial);
-
+  // Серверный/первый клиентский рендер == initial (из сборки); дальше —
+  // общий тикер. Таймер в скрытой панели (display:none) не подписывается.
+  const ref = useRef<HTMLDivElement>(null);
+  const [shown, setShown] = useState(target !== "day");
   useEffect(() => {
-    const tick = () => setC(getSaleRemaining(new Date(), target));
-    let id: ReturnType<typeof setInterval> | undefined;
-    const start = () => {
-      tick();
-      id ??= setInterval(tick, 1000);
-    };
-    const stop = () => {
-      if (id !== undefined) clearInterval(id);
-      id = undefined;
-    };
-    const onVis = () => (document.hidden ? stop() : start());
-    if (!document.hidden) start();
-    document.addEventListener("visibilitychange", onVis);
-    return () => {
-      stop();
-      document.removeEventListener("visibilitychange", onVis);
-    };
+    const el = ref.current;
+    if (target !== "day" || !el) return;
+    const io = new IntersectionObserver(([e]) => setShown(e.isIntersecting));
+    io.observe(el);
+    return () => io.disconnect();
   }, [target]);
+  const subscribe = useMemo(
+    () => (shown ? subscribeTicker : () => () => {}),
+    [shown],
+  );
+  const t = useSyncExternalStore(
+    subscribe,
+    getTickerSnapshot,
+    getTickerServerSnapshot,
+  );
+  const c = useMemo(
+    () => (t ? getSaleRemaining(new Date(t * 1000), target) : initial),
+    [t, target, initial],
+  );
 
   const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -47,6 +58,7 @@ export function Countdown({
     const hm = `${c.hours} ${plural("h", c.hours)} ${c.minutes} ${plural("m", c.minutes)}`;
     return (
       <div
+        ref={ref}
         role="group"
         aria-label={`До конца предложения ${hm}`}
         className="inline-flex shrink-0 items-center gap-1 rounded-full bg-ink px-2.5 py-1 text-[12px] font-bold leading-none tabular-nums text-white"
@@ -68,6 +80,7 @@ export function Countdown({
 
   return (
     <div
+      ref={ref}
       role="group"
       aria-label={`До конца распродажи ${c.days} ${plural("d", c.days)} ${c.hours} ${plural("h", c.hours)} ${c.minutes} ${plural("m", c.minutes)}`}
     >
