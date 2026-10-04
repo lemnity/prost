@@ -2,11 +2,11 @@ import { asset } from "@/lib/asset";
 import Image from "next/image";
 import Link from "next/link";
 import { Heart } from "lucide-react";
+import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { formatPriceValue } from "@/lib/format";
 import type { Product } from "@/lib/catalog/types";
 
 export function ProductCard({ product }: { product: Product }) {
-  const inStock = product.stock > 0;
   const { oldPrice } = product;
   const discount = oldPrice
     ? Math.round((1 - product.priceFrom / oldPrice) * 100)
@@ -58,16 +58,7 @@ export function ProductCard({ product }: { product: Product }) {
           </span>
         ) : null}
       </p>
-      <button
-        type="button"
-        className={`mt-3 h-9 rounded-lg text-[13px] font-semibold ${
-          inStock
-            ? "bg-brand text-white hover:bg-brand-hover"
-            : "border border-brand bg-white text-brand"
-        }`}
-      >
-        {inStock ? "В корзину" : "Запросить"}
-      </button>
+      <AddToCartButton product={product} />
     </article>
   );
 }

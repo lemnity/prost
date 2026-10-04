@@ -5,10 +5,10 @@ import {
   Mail,
   PhoneCall,
   Search,
-  ShoppingCart,
   User,
 } from "lucide-react";
 import { Container } from "@/components/ui/container";
+import { CartLink } from "@/components/cart/cart-badge";
 import { site } from "@/content/site";
 import { BrandLogo } from "./brand-logo";
 import { TopBar } from "./top-bar";
@@ -123,14 +123,7 @@ export function SiteHeader() {
               </li>
             ))}
             <li>
-              <Link
-                href="/cart"
-                aria-label="Корзина"
-                className="grid size-12 place-items-center rounded-[10px] bg-white/10 text-white hover:bg-white/20 md:flex md:h-12 md:w-auto md:items-center md:gap-2 md:px-5"
-              >
-                <ShoppingCart size={22} aria-hidden />
-                <span className="hidden text-[15px] font-semibold md:inline">Корзина</span>
-              </Link>
+              <CartLink className="grid size-12 place-items-center rounded-[10px] bg-white/10 text-white hover:bg-white/20 md:flex md:h-12 md:w-auto md:items-center md:gap-2 md:px-5" />
             </li>
           </ul>
         </div>
