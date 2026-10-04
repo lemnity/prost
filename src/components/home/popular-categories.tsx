@@ -18,9 +18,9 @@ const buildNow = new Date();
 const initialCountdown = getNewYearCountdown(buildNow);
 const initialHolidays = getUpcomingHolidays(buildNow, 2);
 
-const FLAKES = Array.from({ length: 20 }, (_, i) => ({
-  left: (i * 37 + 11) % 97,
-  size: 3 + ((i * 3) % 5),
+const FLAKES = Array.from({ length: 10 }, (_, i) => ({
+  left: (i * 37 + 11) % 61,
+  size: 2 + ((i * 3) % 3),
   dur: 6 + ((i * 7) % 9),
   delay: -((i * 3) % 11),
   drift: ((i % 2 ? 1 : -1) * (6 + ((i * 4) % 12))),
@@ -46,53 +46,6 @@ function WideTile({
     >
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -bottom-3 -left-[5%] h-10 w-[110%] rounded-[50%] bg-white"
-        style={{ boxShadow: "0 -2px 8px rgba(191,217,238,.6)" }}
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -bottom-5 left-[30%] h-9 w-[80%] rounded-[50%] bg-white"
-      />
-      {/* Анимация (opacity/transform) вешается на сам <img>, а не на обёртку:
-          обёртка создала бы stacking context и заблокировала mix-blend-multiply. */}
-      <ul
-        aria-hidden="true"
-        className="absolute inset-y-0 right-0 m-0 w-[28%] list-none overflow-hidden p-0 sm:w-[32%]"
-      >
-        {picks.map((p, i) => {
-          const anim = `ny-slide ${i === 0 ? "opacity-100" : "opacity-0"}`;
-          const vars = { "--i": i } as React.CSSProperties;
-          return (
-            <li
-              key={p.id}
-              className="absolute inset-0 flex flex-col items-center px-2 pb-2 pt-2"
-            >
-              <div className="relative min-h-0 w-full flex-1">
-                <Image
-                  src={asset(p.image)}
-                  alt=""
-                  fill
-                  sizes="(min-width:1280px) 130px, (min-width:640px) 15vw, 28vw"
-                  loading={i === 0 ? "eager" : "lazy"}
-                  style={vars}
-                  className={`${anim} object-contain mix-blend-multiply`}
-                />
-              </div>
-              <div
-                style={vars}
-                className={`${anim} mt-1 w-full text-center text-[11px] leading-tight`}
-              >
-                <span className="line-clamp-2 text-ink">{p.title}</span>
-                <span className="block font-bold text-brand">
-                  от {formatPriceValue(p.priceFrom)}
-                </span>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-      <div
-        aria-hidden="true"
         className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
       >
         {FLAKES.map((f, i) => (
@@ -113,12 +66,62 @@ function WideTile({
           />
         ))}
       </div>
-      <div className="relative z-10 flex h-full w-[72%] min-w-0 sm:w-[68%] flex-col justify-between p-3 xl:p-4">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-[10px] -left-[5%] h-5 w-[110%] rounded-[50%] bg-white"
+        style={{ boxShadow: "0 -1px 4px rgba(191,217,238,.6)" }}
+      />
+      <ul
+        aria-hidden="true"
+        className="absolute bottom-3 right-3 top-3 z-10 m-0 w-[34%] list-none overflow-hidden rounded-[14px] bg-white p-0 ring-1 ring-[#DCEAF5] shadow-[0_1px_2px_rgba(16,24,40,.05),0_6px_16px_rgba(16,24,40,.08)] xl:bottom-4 xl:right-4 xl:top-4"
+      >
+        {picks.map((p, i) => (
+          <li
+            key={p.id}
+            style={{ "--i": i } as React.CSSProperties}
+            className={`ny-slide absolute inset-0 flex flex-col p-2 sm:p-3 ${
+              i === 0 ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            <div className="relative min-h-0 w-full flex-1">
+              <Image
+                src={asset(p.image)}
+                alt=""
+                fill
+                sizes="(min-width:1280px) 120px, (min-width:640px) 15vw, 30vw"
+                loading={i === 0 ? "eager" : "lazy"}
+                className="object-contain"
+              />
+            </div>
+            <span className="mt-1.5 block truncate text-[12px] leading-tight text-ink">
+              {p.title}
+            </span>
+            <span className="block text-[13px] font-bold leading-tight text-brand">
+              от {formatPriceValue(p.priceFrom)}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <div
+        aria-hidden="true"
+        className="absolute bottom-[3px] right-3 z-10 flex w-[34%] items-center justify-center gap-1 xl:bottom-[5px] xl:right-4"
+      >
+        {picks.map((p, i) => (
+          <span
+            key={p.id}
+            style={{ "--i": i } as React.CSSProperties}
+            className={`ny-dot h-[5px] rounded-full ${
+              i === 0 ? "w-[14px] bg-brand" : "w-[5px] bg-[#C9DCEB]"
+            }`}
+          />
+        ))}
+      </div>
+      <div className="relative z-10 flex h-full w-[62%] min-w-0 flex-col justify-between p-3 xl:p-4">
         <div>
           <span className="block whitespace-nowrap text-base font-semibold leading-tight xl:text-xl">
             {cat.title}
           </span>
-          <div className="mt-1 xl:mt-1.5">
+          <div className="mt-1.5 xl:mt-2">
             <NewYearCountdown initial={initialCountdown} />
           </div>
         </div>

@@ -144,9 +144,9 @@
 
 @keyframes snowfall {
   0% { transform: translate3d(0, -12px, 0); opacity: 0; }
-  10% { opacity: 1; }
+  10% { opacity: 0.8; }
   50% { transform: translate3d(var(--drift, 8px), 90px, 0); }
-  90% { opacity: 1; }
+  90% { opacity: 0.8; }
   100% { transform: translate3d(calc(var(--drift, 8px) * -0.6), 210px, 0); opacity: 0; }
 }
 /* ВАЖНО: проценты рассчитаны на ровно 7 слайдов (3 с каждый). Цикл на 7 слайдов по 3 с (21 с); сдвиг -0.5с: первый слайд виден сразу. */
@@ -154,6 +154,11 @@
   0% { opacity: 0; transform: translateX(30%); }
   2.4%, 11.9% { opacity: 1; transform: translateX(0); }
   14.3%, 100% { opacity: 0; transform: translateX(-30%); }
+}
+@keyframes ny-dot {
+  0% { width: 5px; background-color: #C9DCEB; }
+  2.4%, 11.9% { width: 14px; background-color: var(--color-brand); }
+  14.3%, 100% { width: 5px; background-color: #C9DCEB; }
 }
 @keyframes sec-tick {
   0% { transform: scale(1.06); }
@@ -166,6 +171,7 @@
 @media (prefers-reduced-motion: no-preference) {
   .ny-flake { animation: snowfall var(--dur, 9s) linear var(--delay, 0s) infinite; }
   .ny-slide { animation: ny-slide 21s linear calc(var(--i) * 3s - 0.5s) infinite backwards; }
+  .ny-dot { animation: ny-dot 21s linear calc(var(--i) * 3s - 0.5s) infinite backwards; }
   .ny-tick { animation: sec-tick 0.35s ease-out; }
   .ny-arrow { animation: arrow-pulse 1.6s ease-in-out infinite; }
 }
