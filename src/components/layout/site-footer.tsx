@@ -1,10 +1,9 @@
-import { asset } from "@/lib/asset";
-import Image from "next/image";
 import Link from "next/link";
 import { MapPin } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { site } from "@/content/site";
 import { CurrentYear } from "./current-year";
+import { BrandLogo } from "./brand-logo";
 import { SocialLinks } from "./social-links";
 
 export function SiteFooter() {
@@ -12,14 +11,8 @@ export function SiteFooter() {
     <footer className="border-t border-line py-10">
       <Container className="grid gap-8 sm:grid-cols-2 xl:grid-cols-[2.1fr_0.8fr_0.8fr_auto_auto] xl:gap-8">
         <div className="sm:col-span-2 xl:col-span-1">
-          <Link href="/" className="inline-block">
-            <Image
-              src={asset("/images/brand/logo.svg")}
-              alt="ProStyle — бизнес-подарки"
-              width={150}
-              height={36}
-              className="h-auto w-[150px]"
-            />
+          <Link href="/" aria-label="ProStyle — на главную" className="inline-block">
+            <BrandLogo className="h-auto w-[150px]" />
           </Link>
           <p className="mt-7 text-xs leading-5 text-muted">
             © <CurrentYear /> ProStyle. Все права защищены.

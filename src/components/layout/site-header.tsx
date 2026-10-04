@@ -1,5 +1,3 @@
-import { asset } from "@/lib/asset";
-import Image from "next/image";
 import Link from "next/link";
 import {
   FileText,
@@ -12,6 +10,7 @@ import {
 } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { site } from "@/content/site";
+import { BrandLogo } from "./brand-logo";
 import { TopBar } from "./top-bar";
 import { CategoryNav } from "./category-nav";
 import { CatalogMenu } from "./catalog-menu";
@@ -45,16 +44,8 @@ export function SiteHeader() {
       </a>
       <TopBar />
       <Container className="flex h-[72px] items-center justify-between gap-6 md:h-[88px]">
-        <Link href="/" className="shrink-0">
-          <Image
-            src={asset("/images/brand/logo.svg")}
-            alt="ProStyle — бизнес-подарки"
-            width={170}
-            height={41}
-            loading="eager"
-            fetchPriority="low"
-            className="h-auto w-[130px] md:w-[170px]"
-          />
+        <Link href="/" aria-label="ProStyle — на главную" className="shrink-0">
+          <BrandLogo className="h-auto w-[130px] md:w-[170px]" />
         </Link>
         <nav aria-label="Основное меню" className="hidden lg:block">
           <ul className="flex items-center gap-5 text-[15px] font-semibold xl:gap-10 xl:text-base">

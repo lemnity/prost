@@ -1,0 +1,61 @@
+/* Wordmark flip: PRO STYLE <-> ПРО СТИЛЬ, 8s cycle, only without reduced motion. */
+.a,
+.b {
+  transform-box: view-box;
+  transform-origin: 0 83px;
+}
+
+.b {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .b {
+    display: inline;
+    transform: scaleY(0);
+    opacity: 0;
+  }
+
+  .a {
+    animation: flip-a 8s ease-in-out infinite;
+  }
+
+  .b {
+    animation: flip-b 8s ease-in-out infinite;
+  }
+}
+
+@keyframes flip-a {
+  0%,
+  43.75% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  46.9%,
+  96.9% {
+    transform: scaleY(0);
+    opacity: 0;
+  }
+  100% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes flip-b {
+  0%,
+  46.9% {
+    transform: scaleY(0);
+    opacity: 0;
+  }
+  50%,
+  93.75% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  96.9%,
+  100% {
+    transform: scaleY(0);
+    opacity: 0;
+  }
+}
