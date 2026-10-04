@@ -14,14 +14,14 @@ export function HowWeWork() {
           {steps.items.map((s) => {
             const Icon = icons[s.icon];
             return (
-              <li key={s.number} className="flex items-start gap-5 rounded-[24px] bg-white p-6 xl:p-8">
-                <span className="flex size-14 shrink-0 items-center justify-center">
-                  <Icon size={48} strokeWidth={1.5} aria-hidden="true" className="text-ink" />
+              <li key={s.number} className="flex items-start gap-[14px] rounded-[24px] bg-white p-5">
+                <span className="flex size-10 shrink-0 items-center justify-center">
+                  <Icon size={36} strokeWidth={1.5} aria-hidden="true" className="text-ink" />
                 </span>
                 <div className="min-w-0">
-                  <span className="text-[13px] font-semibold tracking-wide text-brand">{s.number}</span>
-                  <h3 className="mt-1 text-xl font-semibold text-ink">{s.title}</h3>
-                  <p className="mt-2 text-[15px] leading-relaxed text-muted">{s.text}</p>
+                  <span className="text-xs font-semibold tracking-wide text-brand">{s.number}</span>
+                  <h3 className="mt-1 whitespace-nowrap text-[17px] font-semibold text-ink">{s.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted">{s.text}</p>
                 </div>
               </li>
             );
