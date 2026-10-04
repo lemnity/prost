@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
   env: { NEXT_PUBLIC_BASE_PATH: basePath },
   images: {
     formats: ["image/avif", "image/webp"],
+    // Фото товаров каталога (временный источник — prostyle.gifts).
+    remotePatterns: [new URL("https://prostyle.gifts/content/**")],
     ...(pages ? { unoptimized: true } : {}),
   },
   turbopack: { root: path.resolve(__dirname) },

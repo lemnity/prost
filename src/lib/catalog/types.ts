@@ -25,3 +25,6 @@ export type CatalogNode = {
   href: string;
   children: { title: string; href: string }[];
 };
+
+/** Товар в листинге каталога (карточка + поля для фильтров). */
+export type ListingProduct = Product & { brand: string };

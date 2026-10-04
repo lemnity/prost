@@ -118,13 +118,13 @@ export const getCartServerSnapshot = (): readonly CartItem[] => EMPTY;
 
 const clamp = (n: number) => Math.min(MAX_QTY, Math.max(1, Math.floor(n) || 1));
 
-export function addToCart(item: Omit<CartItem, "qty">) {
+export function addToCart(item: Omit<CartItem, "qty">, qty = 1) {
   ensure();
   const found = items.find((i) => i.id === item.id);
   commit(
     found
-      ? items.map((i) => (i.id === item.id ? { ...i, qty: clamp(i.qty + 1) } : i))
-      : [...items, { ...item, qty: 1 }],
+      ? items.map((i) => (i.id === item.id ? { ...i, qty: clamp(i.qty + qty) } : i))
+      : [...items, { ...item, qty: clamp(qty) }],
   );
 }
 
