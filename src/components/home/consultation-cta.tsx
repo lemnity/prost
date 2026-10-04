@@ -4,7 +4,7 @@ import { Container } from "@/components/ui/container";
 
 export function ConsultationCta() {
   return (
-    <section aria-labelledby="cta-title" className="relative mt-4 overflow-hidden bg-cta">
+    <section aria-labelledby="cta-title" className="relative mt-6 overflow-hidden bg-cta">
       <div aria-hidden="true" className="absolute inset-y-0 right-0 hidden w-[40%] lg:block">
         <Image
           src="/images/cta/cta.webp"

@@ -67,6 +67,7 @@ function Tile({
   small?: boolean;
   className?: string;
 }) {
+  const hasBadge = cat.id === "suveniry-k-prazdnikam";
   return (
     <Link
       href={cat.href}
@@ -74,21 +75,27 @@ function Tile({
         small ? "lg:h-[182px] xl:h-[158px]" : "lg:h-[182px]"
       } ${className}`}
     >
-      <div className={`absolute inset-x-1 top-1 bottom-[56px] ${small ? "xl:bottom-[46px]" : ""}`}>
+      <div
+        className={`absolute inset-x-3 ${hasBadge ? "top-[34px]" : "top-3"} ${
+          small ? "bottom-[52px] xl:bottom-[46px]" : "bottom-[52px]"
+        }`}
+      >
         <Image
           src={cat.image}
           alt=""
           fill
           sizes="(min-width:1280px) 16vw, (min-width:1024px) 200px, 45vw"
-          className="object-contain mix-blend-multiply transition-transform duration-200 group-hover:scale-[1.03]"
+          className="object-contain mix-blend-multiply brightness-[1.07] transition-transform duration-200 group-hover:scale-[1.03]"
         />
       </div>
-      {cat.id === "suveniry-k-prazdnikam" && (
+      {hasBadge && (
         <HolidayStatus initial={initialHolidays} />
       )}
       <span
-        className={`absolute inset-x-0 bottom-0 line-clamp-2 text-balance p-3.5 font-semibold leading-tight ${
-          small ? "text-[13px] xl:text-xs" : "text-[13px]"
+        className={`absolute inset-x-0 bottom-0 line-clamp-2 box-border px-3.5 pt-1 text-balance font-semibold leading-tight ${
+          small
+            ? "h-[52px] text-[13px] xl:h-[46px] xl:text-xs"
+            : "h-[52px] text-[13px]"
         }`}
       >
         {cat.title}

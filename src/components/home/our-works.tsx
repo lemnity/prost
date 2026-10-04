@@ -14,7 +14,7 @@ export function OurWorks() {
             <li key={w.id}>
               <Link
                 href={w.href}
-                className="relative flex h-[130px] items-center overflow-hidden rounded-[10px] bg-work focus-visible:outline-offset-[-2px]"
+                className="relative flex h-[130px] items-start overflow-hidden rounded-[10px] bg-work focus-visible:outline-offset-[-2px]"
               >
                 <div className="absolute inset-y-0 right-0 w-[60%]">
                   <Image
@@ -29,7 +29,7 @@ export function OurWorks() {
                     className="absolute inset-y-0 left-0 w-[40%] bg-gradient-to-r from-work via-work/80 to-transparent"
                   />
                 </div>
-                <div className="relative z-10 max-w-[60%] p-4">
+                <div className="relative z-10 max-w-[60%] p-5">
                   <p className="text-[13px] font-bold text-balance text-case">{w.client}</p>
                   <p className="mt-1.5 text-[12.5px] leading-snug text-muted">{w.text}</p>
                 </div>

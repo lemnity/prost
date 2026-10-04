@@ -22,16 +22,13 @@ export function HolidayStatus({ initial }: { initial: UpcomingHoliday[] }) {
       className="pointer-events-none absolute left-2 top-2 z-10 max-w-[calc(100%-1rem)] rounded-[8px] bg-white/95 px-2 py-1 text-ink shadow-sm"
     >
       <div aria-hidden="true">
-        <div className="whitespace-nowrap text-[11px] leading-tight text-muted">
-          Ближайшие праздники
-        </div>
         {list.map((h, i) => (
           <div
             key={h.title}
-            className={`mt-0.5 gap-1 text-xs leading-tight ${i === 0 ? "flex" : "hidden @[185px]:flex"}`}
+            className={`gap-1 text-[11px] leading-tight ${i === 0 ? "flex" : "mt-0.5 hidden @[300px]:flex"}`}
           >
             <span className="shrink-0 font-bold">{h.date}</span>
-            <span className="whitespace-nowrap">{h.short}</span>
+            <span className="truncate">{h.short}</span>
           </div>
         ))}
       </div>
