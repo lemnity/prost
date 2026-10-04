@@ -130,33 +130,41 @@ export async function CatalogDesktop() {
                   {list}
                   <aside
                     aria-label="Товар дня"
-                    className="flex max-h-full min-h-0 w-[280px] shrink-0 flex-col rounded-[12px] border border-line p-4"
+                    className="flex max-h-full min-h-0 w-[280px] shrink-0 flex-col gap-3 rounded-[16px] border border-line bg-white p-4"
                   >
-                    <p className="mb-3 flex shrink-0 items-center gap-1.5 text-xs font-semibold text-brand">
-                      <Sparkles size={14} aria-hidden />
-                      Товар дня
-                    </p>
-                    <div className="mb-2 shrink-0">
-                      <Countdown initial={dayLeft} target="day" />
+                    <div className="flex shrink-0 flex-col gap-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="flex items-center gap-1.5 text-[13px] font-semibold text-brand">
+                          <Sparkles size={14} aria-hidden />
+                          Товар дня
+                        </p>
+                        <Countdown initial={dayLeft} target="day" />
+                      </div>
+                      <p
+                        aria-hidden="true"
+                        className="text-[11px] leading-tight text-muted"
+                      >
+                        До конца предложения
+                      </p>
                     </div>
-                    <div className="relative mx-auto min-h-[96px] w-full max-h-[248px] flex-1 basis-[248px] overflow-hidden rounded-[12px] bg-surface">
+                    <div className="relative min-h-[96px] w-full max-h-[220px] flex-1 basis-[220px] overflow-hidden rounded-[12px] bg-surface">
                       <Image
                         src={p.image}
                         alt={p.title}
                         fill
                         sizes="280px"
-                        className="object-contain"
+                        className="object-contain p-3 mix-blend-multiply"
                       />
                     </div>
-                    <p className="mt-3 shrink-0 line-clamp-2 text-sm font-medium text-ink">
+                    <p className="line-clamp-2 shrink-0 text-sm text-ink">
                       {p.title}
                     </p>
-                    <p className="mt-1 shrink-0 text-base font-bold text-ink">
+                    <p className="shrink-0 text-base font-bold leading-none text-ink">
                       от {p.priceFrom.toLocaleString("ru-RU")} ₽
                     </p>
                     <Link
                       href={p.url}
-                      className="mt-3 block shrink-0 rounded-lg bg-brand py-2 text-center text-sm font-semibold text-white hover:bg-brand-hover"
+                      className="flex h-10 shrink-0 items-center justify-center rounded-[10px] bg-brand text-sm font-semibold text-white hover:bg-brand-hover"
                     >
                       Подробнее
                     </Link>

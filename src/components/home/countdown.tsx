@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Clock } from "lucide-react";
 import {
   getSaleRemaining,
   type SaleRemaining,
@@ -45,22 +46,15 @@ export function Countdown({
   if (target === "day") {
     const hm = `${c.hours} ${plural("h", c.hours)} ${c.minutes} ${plural("m", c.minutes)}`;
     return (
-      <div role="group" aria-label={`До конца предложения ${hm}`}>
-        <div aria-hidden="true" className="flex items-center gap-2">
-          <span className="text-[11px] leading-tight text-muted">
-            До конца предложения
-          </span>
-          <span className="flex items-center gap-0.5 text-[13px] font-bold leading-none text-ink">
-            {[pad(c.hours), pad(c.minutes), pad(c.seconds)].map((n, i) => (
-              <span key={i} className="flex items-center gap-0.5">
-                {i > 0 ? ":" : null}
-                <span className="rounded-[6px] bg-ink px-1.5 py-0.5 tabular-nums text-white">
-                  {n}
-                </span>
-              </span>
-            ))}
-          </span>
-        </div>
+      <div
+        role="group"
+        aria-label={`До конца предложения ${hm}`}
+        className="inline-flex shrink-0 items-center gap-1 rounded-full bg-ink px-2.5 py-1 text-[12px] font-bold leading-none tabular-nums text-white"
+      >
+        <Clock size={12} aria-hidden />
+        <span aria-hidden="true">
+          {pad(c.hours)}:{pad(c.minutes)}:{pad(c.seconds)}
+        </span>
       </div>
     );
   }
