@@ -1,3 +1,4 @@
+import { asset } from "@/lib/asset";
 import Image from "next/image";
 import { Container } from "@/components/ui/container";
 import { clients } from "@/content/home";
@@ -26,7 +27,7 @@ export function Clients() {
           {clients.items.map((c) => (
             <li key={c.id} className="shrink-0">
               <Image
-                src={c.logo}
+                src={asset(c.logo)}
                 alt={c.name}
                 width={logoWidth[c.id] ?? 132}
                 height={84}

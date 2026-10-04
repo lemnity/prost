@@ -1,3 +1,4 @@
+import { asset } from "@/lib/asset";
 import Image from "next/image";
 import Link from "next/link";
 import { Container } from "@/components/ui/container";
@@ -27,7 +28,7 @@ export function ApplicationTypes() {
               className="group @container relative block h-[200px] shrink-0 basis-[85%] snap-start overflow-hidden rounded-[10px] bg-surface p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.05)] transition-shadow hover:shadow-[0_2px_4px_rgba(0,0,0,0.06),0_8px_20px_rgba(0,0,0,0.09)] focus-visible:outline-offset-[-2px] md:h-[220px] md:basis-[calc((100%-16px)/2)] md:p-6 lg:basis-[calc((100%-32px)/3)] xl:h-[230px] xl:basis-[calc((100%-48px)/4)]"
             >
               <Image
-                src={a.image}
+                src={asset(a.image)}
                 alt=""
                 width={640}
                 height={640}

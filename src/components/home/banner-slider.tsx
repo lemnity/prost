@@ -1,3 +1,4 @@
+import { asset } from "@/lib/asset";
 import Image from "next/image";
 import { Container } from "@/components/ui/container";
 import { banners } from "@/content/home";
@@ -29,7 +30,7 @@ export function BannerSlider() {
                 className="relative h-full w-full min-w-full shrink-0 basis-full snap-start snap-always"
               >
                 <Image
-                  src={b.image}
+                  src={asset(b.image)}
                   alt={b.alt}
                   fill
                   sizes="100vw"

@@ -1,3 +1,4 @@
+import { asset } from "@/lib/asset";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -51,7 +52,7 @@ function WideTile({ cat, className = "" }: { cat: Cat; className?: string }) {
         }}
       >
         <Image
-          src={cat.image}
+          src={asset(cat.image)}
           alt=""
           fill
           sizes="(min-width:1280px) 20vw, (min-width:768px) 30vw, 40vw"
@@ -121,7 +122,7 @@ function Tile({
         }`}
       >
         <Image
-          src={cat.image}
+          src={asset(cat.image)}
           alt=""
           fill
           sizes="(min-width:1280px) 16vw, (min-width:1024px) 200px, 45vw"

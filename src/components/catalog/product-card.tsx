@@ -1,3 +1,4 @@
+import { asset } from "@/lib/asset";
 import Image from "next/image";
 import Link from "next/link";
 import { Heart } from "lucide-react";
@@ -15,7 +16,7 @@ export function ProductCard({ product }: { product: Product }) {
       <div className="relative aspect-square">
         <Link href={product.url} tabIndex={-1} aria-hidden="true" className="absolute inset-0">
           <Image
-            src={product.image}
+            src={asset(product.image)}
             alt={product.title}
             fill
             sizes="(min-width:1280px) 15vw, (min-width:1024px) 190px, 220px"

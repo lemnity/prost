@@ -1,3 +1,4 @@
+import { asset } from "@/lib/asset";
 import Link from "next/link";
 import {
   Baby,
@@ -149,7 +150,7 @@ export async function CatalogDesktop() {
                     </div>
                     <div className="relative min-h-[96px] w-full max-h-[220px] flex-1 basis-[220px] overflow-hidden rounded-[12px] bg-surface">
                       <Image
-                        src={p.image}
+                        src={asset(p.image)}
                         alt={p.title}
                         fill
                         sizes="280px"

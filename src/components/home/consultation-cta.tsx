@@ -1,3 +1,4 @@
+import { asset } from "@/lib/asset";
 import Image from "next/image";
 import Link from "next/link";
 import { Container } from "@/components/ui/container";
@@ -7,7 +8,7 @@ export function ConsultationCta() {
     <section aria-labelledby="cta-title" className="relative mt-6 overflow-hidden bg-cta">
       <div aria-hidden="true" className="absolute inset-y-0 right-0 hidden w-[40%] lg:block">
         <Image
-          src="/images/cta/cta.webp"
+          src={asset("/images/cta/cta.webp")}
           alt=""
           fill
           sizes="(min-width:1280px) 45vw, 40vw"

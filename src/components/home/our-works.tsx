@@ -1,3 +1,4 @@
+import { asset } from "@/lib/asset";
 import Image from "next/image";
 import Link from "next/link";
 import { Container } from "@/components/ui/container";
@@ -18,7 +19,7 @@ export function OurWorks() {
               >
                 <div className="absolute inset-y-0 right-0 w-[60%]">
                   <Image
-                    src={w.image}
+                    src={asset(w.image)}
                     alt=""
                     fill
                     sizes="(min-width: 1280px) 15vw, (min-width: 1024px) 14vw, (min-width: 640px) 30vw, 55vw"

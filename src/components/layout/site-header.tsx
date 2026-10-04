@@ -1,3 +1,4 @@
+import { asset } from "@/lib/asset";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -42,7 +43,7 @@ export function SiteHeader() {
       <Container className="flex h-[72px] items-center justify-between gap-6 md:h-[88px]">
         <Link href="/" className="shrink-0">
           <Image
-            src="/images/brand/logo.svg"
+            src={asset("/images/brand/logo.svg")}
             alt="ProStyle — бизнес-подарки"
             width={170}
             height={41}

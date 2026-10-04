@@ -1,19 +1,20 @@
+import { asset } from "@/lib/asset";
 import Image from "next/image";
 import Link from "next/link";
 import { MapPin } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { site } from "@/content/site";
+import { CurrentYear } from "./current-year";
 import { socialIcons } from "./social-icons";
 
 export function SiteFooter() {
-  const year = new Date().getFullYear();
   return (
     <footer className="border-t border-line py-10">
       <Container className="grid gap-8 sm:grid-cols-2 xl:grid-cols-[2.1fr_0.8fr_0.8fr_auto_auto] xl:gap-8">
         <div className="sm:col-span-2 xl:col-span-1">
           <Link href="/" className="inline-block">
             <Image
-              src="/images/brand/logo.svg"
+              src={asset("/images/brand/logo.svg")}
               alt="ProStyle — бизнес-подарки"
               width={150}
               height={36}
@@ -21,7 +22,7 @@ export function SiteFooter() {
             />
           </Link>
           <p className="mt-7 text-xs leading-5 text-muted">
-            © {year} ProStyle. Все права защищены.
+            © <CurrentYear /> ProStyle. Все права защищены.
             <br />
             <span className="sm:whitespace-nowrap">Корпоративные подарки и сувенирная продукция в Тюмени.</span>
           </p>
