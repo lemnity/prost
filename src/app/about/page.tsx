@@ -86,20 +86,31 @@ export default async function AboutPage() {
             Контакты и реквизиты
           </h2>
           <div className="grid gap-4 lg:grid-cols-2">
-            <ul className="space-y-3 rounded-[10px] bg-surface p-5 lg:self-start">
-              {contacts.map(({ icon: Icon, label, node }) => (
-                <li key={label} className="flex items-start gap-3">
-                  <Icon size={20} aria-hidden="true" className="mt-0.5 shrink-0 text-brand" />
-                  <div>
-                    <div className="text-xs text-muted">{label}</div>
-                    <div className="text-[15px] font-medium text-ink">{node}</div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-            <dl className="grid grid-cols-1 gap-x-4 rounded-[10px] bg-surface p-5 sm:grid-cols-[minmax(0,200px)_1fr]">
+            <div className="flex h-full flex-col rounded-[10px] bg-surface p-5">
+              <ul className="space-y-3">
+                {contacts.map(({ icon: Icon, label, node }) => (
+                  <li key={label} className="flex items-start gap-3">
+                    <Icon size={20} aria-hidden="true" className="mt-0.5 shrink-0 text-brand" />
+                    <div>
+                      <div className="text-xs text-muted">{label}</div>
+                      <div className="text-[15px] font-medium text-ink">{node}</div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <a
+                href={mapUrl}
+                target="_blank"
+                rel="noopener"
+                className="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-brand px-6 text-sm font-semibold text-brand transition-colors hover:bg-brand hover:text-white lg:mt-auto"
+              >
+                <MapPin size={18} aria-hidden="true" />
+                Открыть на карте
+              </a>
+            </div>
+            <dl className="grid h-full grid-cols-1 gap-x-4 rounded-[10px] bg-surface p-5 sm:grid-cols-[minmax(0,200px)_1fr]">
               {requisites.map((r, i) => {
-                const line = i > 0 ? "sm:border-t sm:border-line sm:py-2" : "sm:pb-2";
+                const line = i > 0 ? "sm:border-t sm:border-line sm:py-2" : "sm:pb-2 sm:pt-0";
                 return (
                   <div key={r.label} className="contents">
                     <dt className={`pt-2 text-sm text-muted ${line}`}>{r.label}</dt>
