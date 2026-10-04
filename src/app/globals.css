@@ -27,6 +27,17 @@
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
+html {
+  /* sticky navy panel: 64px on md+, two rows (~124px) on mobile */
+  scroll-padding-top: 136px;
+}
+
+@media (min-width: 768px) {
+  html {
+    scroll-padding-top: 76px;
+  }
+}
+
 @layer base {
   body {
     @apply bg-white text-ink antialiased;
