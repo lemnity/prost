@@ -139,15 +139,17 @@ export function ProductDetail({
           </fieldset>
         ) : null}
 
-        <BuyBox key={v.key} variant={v} />
+        <div className="mt-6 flex flex-wrap items-stretch gap-3">
+          <BuyBox key={v.key} variant={v} />
 
-        <Link
-          href="/contact-us#callback"
-          className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-brand bg-white px-5 text-sm font-semibold text-brand hover:bg-brand hover:text-white sm:w-auto"
-        >
-          <Ruler size={16} aria-hidden="true" />
-          Рассчитать нанесение
-        </Link>
+          <Link
+            href="/contact-us#callback"
+            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-[10px] border border-brand bg-white px-5 text-sm font-semibold text-brand hover:bg-brand hover:text-white sm:w-auto"
+          >
+            <Ruler size={16} aria-hidden="true" />
+            Рассчитать нанесение
+          </Link>
+        </div>
 
         {children}
       </div>
@@ -195,17 +197,17 @@ function BuyBox({ variant: v }: { variant: VariantView }) {
     return (
       <Link
         href="/contact-us#callback"
-        className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-lg bg-brand px-8 text-sm font-semibold text-white hover:bg-brand-hover sm:w-auto"
+        className="inline-flex h-12 w-full items-center justify-center rounded-[10px] bg-brand px-8 text-sm font-semibold text-white hover:bg-brand-hover sm:w-auto"
       >
         Запросить
       </Link>
     );
   }
 
-  const btn = "grid size-11 shrink-0 place-items-center text-ink hover:text-brand disabled:text-faint";
+  const btn = "grid size-12 shrink-0 place-items-center text-ink hover:text-brand disabled:text-faint";
   return (
-    <div className="mt-6 flex flex-wrap items-center gap-3">
-      <div role="group" aria-label="Количество" className="inline-flex h-11 items-center rounded-lg border border-line bg-white">
+    <>
+      <div role="group" aria-label="Количество" className="inline-flex h-12 items-center rounded-[10px] border border-line bg-white">
         <button type="button" aria-label="Уменьшить количество" disabled={qty <= 1} onClick={() => setQty((q) => clamp(q - 1))} className={btn}>
           <Minus size={16} aria-hidden="true" />
         </button>
@@ -236,7 +238,7 @@ function BuyBox({ variant: v }: { variant: VariantView }) {
           clearTimeout(timer.current);
           timer.current = setTimeout(() => setAdded(false), 2500);
         }}
-        className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-lg bg-brand px-8 text-sm font-semibold text-white hover:bg-brand-hover sm:flex-none"
+        className="inline-flex h-12 flex-1 items-center justify-center gap-1.5 rounded-[10px] bg-brand px-8 text-sm font-semibold text-white hover:bg-brand-hover sm:flex-none"
       >
         {added ? (
           <>
@@ -250,10 +252,10 @@ function BuyBox({ variant: v }: { variant: VariantView }) {
         {added ? "Добавлено в корзину" : ""}
       </span>
       {added ? (
-        <Link href="/cart" className="text-[13px] font-medium text-brand hover:text-brand-hover">
+        <Link href="/cart" className="order-last basis-full text-[13px] font-medium text-brand hover:text-brand-hover">
           Перейти в корзину
         </Link>
       ) : null}
-    </div>
+    </>
   );
 }
