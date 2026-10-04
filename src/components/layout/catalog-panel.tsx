@@ -84,13 +84,14 @@ export async function CatalogDesktop() {
           );
         })}
       </ul>
-      <div className="sticky top-0 max-h-(--menu-max-h) min-w-0 flex-1 self-start overflow-y-auto p-8">
+      <div className="flex max-h-(--menu-max-h) min-w-0 flex-1 flex-col self-start overflow-y-auto p-8">
         {tree.map((c, i) => (
           <section
             key={c.id}
             data-pane={i}
             hidden={i !== 0}
             aria-label={c.title}
+            className="min-h-0 flex-1 flex-col [&:not([hidden])]:flex"
           >
             <Link
               href={c.href}
@@ -105,7 +106,7 @@ export async function CatalogDesktop() {
               const p = c.children.length <= 12 ? potd[i] : null;
               const list = (
                 <ul
-                  className={`${p ? "columns-2" : "columns-3"} min-w-0 flex-1 gap-8 text-sm`}
+                  className={`${p ? "columns-2" : "columns-3"} min-w-0 flex-1 gap-8 self-start text-sm`}
                 >
                   {c.children.map((s) => (
                     <li key={s.href} className="break-inside-avoid">
@@ -122,17 +123,17 @@ export async function CatalogDesktop() {
               );
               if (!p) return list;
               return (
-                <div className="flex items-start gap-8">
+                <div className="flex min-h-0 flex-1 items-stretch gap-8">
                   {list}
                   <aside
                     aria-label="Товар дня"
-                    className="w-[280px] shrink-0 rounded-[12px] border border-line p-4"
+                    className="flex max-h-full min-h-0 w-[280px] shrink-0 flex-col rounded-[12px] border border-line p-4"
                   >
-                    <p className="mb-3 flex items-center gap-1.5 text-xs font-semibold text-brand">
+                    <p className="mb-3 flex shrink-0 items-center gap-1.5 text-xs font-semibold text-brand">
                       <Sparkles size={14} aria-hidden />
                       Товар дня
                     </p>
-                    <div className="relative aspect-square overflow-hidden rounded-[12px] bg-surface">
+                    <div className="relative mx-auto min-h-[96px] w-full max-h-[248px] flex-1 basis-[248px] overflow-hidden rounded-[12px] bg-surface">
                       <Image
                         src={p.image}
                         alt={p.title}
@@ -141,15 +142,15 @@ export async function CatalogDesktop() {
                         className="object-contain"
                       />
                     </div>
-                    <p className="mt-3 line-clamp-2 text-sm font-medium text-ink">
+                    <p className="mt-3 shrink-0 line-clamp-2 text-sm font-medium text-ink">
                       {p.title}
                     </p>
-                    <p className="mt-1 text-base font-bold text-ink">
+                    <p className="mt-1 shrink-0 text-base font-bold text-ink">
                       от {p.priceFrom.toLocaleString("ru-RU")} ₽
                     </p>
                     <Link
                       href={p.url}
-                      className="mt-3 block rounded-lg bg-brand py-2 text-center text-sm font-semibold text-white hover:bg-brand-hover"
+                      className="mt-3 block shrink-0 rounded-lg bg-brand py-2 text-center text-sm font-semibold text-white hover:bg-brand-hover"
                     >
                       Подробнее
                     </Link>

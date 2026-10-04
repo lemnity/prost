@@ -62,23 +62,35 @@ export function CatalogMenu({
     });
   }, [active, open]);
 
-  // Fluid height: panel always ends 16px above the window bottom (zoom-aware).
+  // Fluid height: panel always ends 16px above the window bottom. Scale is
+  // measured (rect / offsetHeight) so it matches whatever zoom the browser
+  // applies; CSS --menu-max-h (uses --zoom) is only the SSR/pre-measure fallback.
+  // The 200px floor only matters for windows shorter than ~450px.
   useEffect(() => {
     const el = panelRef.current;
     if (!open || !desk || !el) return;
+    let raf = 0;
     const fit = () => {
       el.style.removeProperty("--menu-max-h");
       const r = el.getBoundingClientRect();
-      const scale = el.offsetHeight ? r.height / el.offsetHeight : 1;
-      const h = (window.innerHeight - r.top - 16) / (scale || 1);
+      const scale = (el.offsetHeight ? r.height / el.offsetHeight : 1) || 1;
+      const h = (window.innerHeight - r.top - 16) / scale;
       el.style.setProperty("--menu-max-h", `${Math.max(200, Math.floor(h))}px`);
     };
+    const schedule = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(fit);
+    };
     fit();
-    window.addEventListener("resize", fit);
-    window.addEventListener("scroll", fit, { passive: true });
+    const ro = new ResizeObserver(schedule);
+    ro.observe(el.closest("header") ?? document.body);
+    window.addEventListener("resize", schedule);
+    window.addEventListener("scroll", schedule, { passive: true });
     return () => {
-      window.removeEventListener("resize", fit);
-      window.removeEventListener("scroll", fit);
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+      window.removeEventListener("resize", schedule);
+      window.removeEventListener("scroll", schedule);
     };
   }, [open, desk]);
 
