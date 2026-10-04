@@ -52,8 +52,11 @@ const icons: Record<string, LucideIcon> = {
 export async function CatalogDesktop() {
   const tree = await getCatalogTree();
   return (
-    <div className="flex" data-catalog-panel>
-      <ul className="w-[300px] shrink-0 border-r border-line py-2" data-rows>
+    <nav aria-label="Каталог" className="flex" data-catalog-panel>
+      <ul
+        className="max-h-[calc(100vh-250px)] w-[300px] shrink-0 overflow-y-auto border-r border-line py-2"
+        data-rows
+      >
         {tree.map((c, i) => {
           const Icon = icons[c.id] ?? Package;
           return (
@@ -61,32 +64,48 @@ export async function CatalogDesktop() {
               <Link
                 href={c.href}
                 data-row={i}
-                className="group flex h-12 items-center gap-3 border-b border-line px-5 text-[15px] text-ink data-[active=true]:bg-surface data-[active=true]:text-brand"
+                data-active={i === 0}
+                className="group flex h-11 items-center gap-3 border-b border-line px-5 text-[15px] text-ink data-[active=true]:bg-surface data-[active=true]:text-brand"
               >
                 <Icon size={22} aria-hidden className="shrink-0" />
                 <span className="min-w-0 flex-1 truncate">{c.title}</span>
                 {c.children.length > 0 && (
-                  <ChevronRight size={16} aria-hidden className="shrink-0 text-faint" />
+                  <ChevronRight
+                    size={16}
+                    aria-hidden
+                    className="shrink-0 text-faint"
+                  />
                 )}
               </Link>
             </li>
           );
         })}
       </ul>
-      <div className="min-w-0 flex-1 p-8">
+      <div className="sticky top-0 max-h-[calc(100vh-250px)] min-w-0 flex-1 self-start overflow-y-auto p-8">
         {tree.map((c, i) => (
-          <section key={c.id} data-pane={i} hidden aria-label={c.title}>
+          <section
+            key={c.id}
+            data-pane={i}
+            hidden={i !== 0}
+            aria-label={c.title}
+          >
             <Link
               href={c.href}
               className="mb-6 flex items-baseline gap-4 text-xl font-semibold text-ink hover:text-brand"
             >
               {c.title}
-              <span className="text-sm font-normal text-brand">Все товары →</span>
+              <span className="text-sm font-normal text-brand">
+                Все товары →
+              </span>
             </Link>
             <ul className="columns-3 gap-8 text-sm">
               {c.children.map((s) => (
                 <li key={s.href} className="break-inside-avoid">
-                  <Link href={s.href} data-sub className="block py-1.5 text-ink hover:text-brand">
+                  <Link
+                    href={s.href}
+                    data-sub
+                    className="block py-1.5 text-ink hover:text-brand"
+                  >
                     {s.title}
                   </Link>
                 </li>
@@ -95,7 +114,7 @@ export async function CatalogDesktop() {
           </section>
         ))}
       </div>
-    </div>
+    </nav>
   );
 }
 
@@ -103,50 +122,61 @@ export async function CatalogDesktop() {
 export async function CatalogSheet() {
   const tree = await getCatalogTree();
   return (
-    <ul>
-      {tree.map((c) => {
-        const Icon = icons[c.id] ?? Package;
-        const head = (
-          <>
-            <Icon size={22} aria-hidden className="shrink-0" />
-            <span className="min-w-0 flex-1">{c.title}</span>
-          </>
-        );
-        return (
-          <li key={c.id} className="border-b border-line">
-            {c.children.length === 0 ? (
-              <Link href={c.href} className="flex min-h-14 items-center gap-3 px-4 text-base text-ink">
-                {head}
-              </Link>
-            ) : (
-              <details className="group">
-                <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 px-4 text-base text-ink [&::-webkit-details-marker]:hidden">
+    <nav aria-label="Каталог">
+      <ul>
+        {tree.map((c) => {
+          const Icon = icons[c.id] ?? Package;
+          const head = (
+            <>
+              <Icon size={22} aria-hidden className="shrink-0" />
+              <span className="min-w-0 flex-1">{c.title}</span>
+            </>
+          );
+          return (
+            <li key={c.id} className="border-b border-line">
+              {c.children.length === 0 ? (
+                <Link
+                  href={c.href}
+                  className="flex min-h-14 items-center gap-3 px-4 text-base text-ink"
+                >
                   {head}
-                  <ChevronRight
-                    size={18}
-                    aria-hidden
-                    className="shrink-0 text-faint transition-transform group-open:rotate-90"
-                  />
-                </summary>
-                <ul className="bg-surface px-4 py-2 pl-[52px]">
-                  <li>
-                    <Link href={c.href} className="block py-2.5 text-sm font-semibold text-brand">
-                      Все товары →
-                    </Link>
-                  </li>
-                  {c.children.map((s) => (
-                    <li key={s.href}>
-                      <Link href={s.href} className="block py-2.5 text-sm text-ink">
-                        {s.title}
+                </Link>
+              ) : (
+                <details className="group">
+                  <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 px-4 text-base text-ink [&::-webkit-details-marker]:hidden">
+                    {head}
+                    <ChevronRight
+                      size={18}
+                      aria-hidden
+                      className="shrink-0 text-faint transition-transform group-open:rotate-90"
+                    />
+                  </summary>
+                  <ul className="bg-surface px-4 py-2 pl-[52px]">
+                    <li>
+                      <Link
+                        href={c.href}
+                        className="block py-2.5 text-sm font-semibold text-brand"
+                      >
+                        Все товары →
                       </Link>
                     </li>
-                  ))}
-                </ul>
-              </details>
-            )}
-          </li>
-        );
-      })}
-    </ul>
+                    {c.children.map((s) => (
+                      <li key={s.href}>
+                        <Link
+                          href={s.href}
+                          className="block py-2.5 text-sm text-ink"
+                        >
+                          {s.title}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
   );
 }

@@ -1,7 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown, Menu, X } from "lucide-react";
 
@@ -9,10 +16,27 @@ const btnClass =
   "grid size-12 shrink-0 place-items-center rounded-[10px] bg-white/10 text-white hover:bg-white/20 md:flex md:w-[240px] md:items-center md:justify-between md:px-5";
 
 const noopSubscribe = () => () => {};
-const isDesktop = () => window.matchMedia("(min-width: 1024px)").matches;
+const MQ = "(min-width: 1024px)";
+const subscribeDesktop = (cb: () => void) => {
+  const m = window.matchMedia(MQ);
+  m.addEventListener("change", cb);
+  return () => m.removeEventListener("change", cb);
+};
+const getDesktop = () => window.matchMedia(MQ).matches;
 
-export function CatalogMenu({ desktop, sheet }: { desktop: ReactNode; sheet: ReactNode }) {
-  const hydrated = useSyncExternalStore(noopSubscribe, () => true, () => false);
+export function CatalogMenu({
+  desktop,
+  sheet,
+}: {
+  desktop: ReactNode;
+  sheet: ReactNode;
+}) {
+  const hydrated = useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false,
+  );
+  const desk = useSyncExternalStore(subscribeDesktop, getDesktop, () => true);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -32,41 +56,80 @@ export function CatalogMenu({ desktop, sheet }: { desktop: ReactNode; sheet: Rea
     root.querySelectorAll<HTMLElement>("[data-row]").forEach((el) => {
       const on = Number(el.dataset.row) === active;
       el.dataset.active = String(on);
-      if (on) el.setAttribute("aria-current", "true");
-      else el.removeAttribute("aria-current");
     });
     root.querySelectorAll<HTMLElement>("[data-pane]").forEach((el) => {
       el.hidden = Number(el.dataset.pane) !== active;
     });
   }, [active, open]);
 
+  // Focus on open only (not on breakpoint changes).
   useEffect(() => {
     if (!open) return;
-    const desk = isDesktop();
-    if (desk) panelRef.current?.querySelector<HTMLElement>(`[data-row="${active}"]`)?.focus();
+    if (getDesktop())
+      panelRef.current
+        ?.querySelector<HTMLElement>("[data-row][data-active=true]")
+        ?.focus();
     else sheetRef.current?.querySelector<HTMLElement>("button")?.focus();
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || desk) return;
     const prev = document.body.style.overflow;
-    if (!desk) document.body.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open, desk]);
+
+  useEffect(() => {
+    if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") close(true);
     };
     const onDown = (e: PointerEvent) => {
       const t = e.target as Node;
-      if (btnRef.current?.contains(t) || panelRef.current?.contains(t) || sheetRef.current?.contains(t)) return;
+      if (
+        btnRef.current?.contains(t) ||
+        panelRef.current?.contains(t) ||
+        sheetRef.current?.contains(t)
+      )
+        return;
       close();
     };
     document.addEventListener("keydown", onKey);
     document.addEventListener("pointerdown", onDown);
     return () => {
-      document.body.style.overflow = prev;
       document.removeEventListener("keydown", onKey);
       document.removeEventListener("pointerdown", onDown);
       clearTimeout(timer.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, close]);
 
-  const rowOf = (t: EventTarget | null) => (t as HTMLElement | null)?.closest<HTMLElement>("[data-row]");
+  const trapTab = (e: React.KeyboardEvent) => {
+    if (e.key !== "Tab") return;
+    const items = Array.from(
+      sheetRef.current?.querySelectorAll<HTMLElement>(
+        "button, a[href], summary",
+      ) ?? [],
+    ).filter((el) => el.checkVisibility());
+    if (!items.length) return;
+    const first = items[0];
+    const last = items[items.length - 1];
+    const cur = document.activeElement;
+    if (e.shiftKey && (cur === first || !sheetRef.current?.contains(cur))) {
+      e.preventDefault();
+      last.focus();
+    } else if (
+      !e.shiftKey &&
+      (cur === last || !sheetRef.current?.contains(cur))
+    ) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
+
+  const rowOf = (t: EventTarget | null) =>
+    (t as HTMLElement | null)?.closest<HTMLElement>("[data-row]");
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     const root = panelRef.current;
@@ -77,21 +140,30 @@ export function CatalogMenu({ desktop, sheet }: { desktop: ReactNode; sheet: Rea
     if (row && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
       e.preventDefault();
       const i = Number(row.dataset.row);
-      const n = (i + (e.key === "ArrowDown" ? 1 : -1) + rows.length) % rows.length;
+      const n =
+        (i + (e.key === "ArrowDown" ? 1 : -1) + rows.length) % rows.length;
       rows[n].focus();
     } else if (row && e.key === "ArrowRight") {
       e.preventDefault();
-      root.querySelector<HTMLElement>(`[data-pane="${row.dataset.row}"] [data-sub]`)?.focus();
+      root
+        .querySelector<HTMLElement>(
+          `[data-pane="${row.dataset.row}"] [data-sub]`,
+        )
+        ?.focus();
     } else if (sub && e.key === "ArrowLeft") {
       e.preventDefault();
       rows[active]?.focus();
     } else if (sub && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
       e.preventDefault();
       const subs = Array.from(
-        root.querySelectorAll<HTMLElement>(`[data-pane="${active}"] [data-sub]`),
+        root.querySelectorAll<HTMLElement>(
+          `[data-pane="${active}"] [data-sub]`,
+        ),
       );
       const i = subs.indexOf(sub);
-      subs[(i + (e.key === "ArrowDown" ? 1 : -1) + subs.length) % subs.length]?.focus();
+      subs[
+        (i + (e.key === "ArrowDown" ? 1 : -1) + subs.length) % subs.length
+      ]?.focus();
     }
   };
 
@@ -118,27 +190,25 @@ export function CatalogMenu({ desktop, sheet }: { desktop: ReactNode; sheet: Rea
     </>
   );
 
-  if (!hydrated) {
-    return (
-      <Link href="/catalog" aria-label="Каталог" className={btnClass}>
-        {label}
-      </Link>
-    );
-  }
-
   return (
     <>
-      <button
-        ref={btnRef}
-        type="button"
-        aria-label="Каталог"
-        aria-expanded={open}
-        aria-controls="catalog-menu"
-        onClick={() => setOpen((o) => !o)}
-        className={btnClass}
-      >
-        {label}
-      </button>
+      {!hydrated ? (
+        <Link href="/catalog" aria-label="Каталог" className={btnClass}>
+          {label}
+        </Link>
+      ) : (
+        <button
+          ref={btnRef}
+          type="button"
+          aria-label="Каталог"
+          aria-expanded={open}
+          aria-controls={desk ? "catalog-menu" : "catalog-sheet"}
+          onClick={() => setOpen((o) => !o)}
+          className={btnClass}
+        >
+          {label}
+        </button>
+      )}
       {open &&
         createPortal(
           <div
@@ -154,6 +224,7 @@ export function CatalogMenu({ desktop, sheet }: { desktop: ReactNode; sheet: Rea
         hidden={!open}
         onKeyDown={onKeyDown}
         onMouseOver={(e) => activate(e.target, 80)}
+        onMouseLeave={() => clearTimeout(timer.current)}
         onFocus={(e) => activate(e.target, 0)}
         onClick={(e) => {
           if ((e.target as HTMLElement).closest("a")) close();
@@ -163,7 +234,9 @@ export function CatalogMenu({ desktop, sheet }: { desktop: ReactNode; sheet: Rea
         {desktop}
       </div>
       <div
+        id="catalog-sheet"
         ref={sheetRef}
+        onKeyDown={trapTab}
         role="dialog"
         aria-modal="true"
         aria-label="Каталог"
