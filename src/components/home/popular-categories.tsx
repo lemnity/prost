@@ -89,7 +89,7 @@ function WideTile({
                   className="object-contain"
                 />
               </div>
-              <span className="mt-1.5 block truncate text-[12px] leading-tight text-ink">
+              <span className="mt-1.5 line-clamp-2 text-[11px] leading-tight text-ink md:text-[12px]">
                 {p.title}
               </span>
               <span className="block text-[13px] font-bold leading-tight text-brand">
