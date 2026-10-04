@@ -7,23 +7,22 @@ const icons = { basket: ShoppingBasket, file: FileImage, pen: PencilLine, truck:
 
 export function HowWeWork() {
   return (
-    <section aria-labelledby="how-we-work-title" className="py-5 md:py-6">
+    <section aria-labelledby="how-we-work-title" className="my-5 bg-band-soft py-8 md:my-6 md:py-10">
       <Container>
         <SectionHeader id="how-we-work-title" title={steps.title} note={steps.note} />
-        <ol className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <ol className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           {steps.items.map((s) => {
             const Icon = icons[s.icon];
             return (
-              <li key={s.number} className="relative min-h-[150px] rounded-[10px] bg-surface p-6">
-                <span className="text-2xl font-light text-faint">{s.number}</span>
-                <Icon
-                  size={26}
-                  strokeWidth={1.75}
-                  aria-hidden="true"
-                  className="absolute right-6 top-6 text-brand"
-                />
-                <h3 className="mt-3 text-[15px] font-bold">{s.title}</h3>
-                <p className="mt-2 text-[13px] text-muted">{s.text}</p>
+              <li key={s.number} className="flex items-start gap-5 rounded-[24px] bg-white p-6 xl:p-8">
+                <span className="flex size-14 shrink-0 items-center justify-center">
+                  <Icon size={48} strokeWidth={1.5} aria-hidden="true" className="text-ink" />
+                </span>
+                <div className="min-w-0">
+                  <span className="text-[13px] font-semibold tracking-wide text-brand">{s.number}</span>
+                  <h3 className="mt-1 text-xl font-semibold text-ink">{s.title}</h3>
+                  <p className="mt-2 text-[15px] leading-relaxed text-muted">{s.text}</p>
+                </div>
               </li>
             );
           })}
