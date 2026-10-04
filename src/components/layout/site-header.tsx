@@ -3,8 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   FileText,
-  Headset,
   Heart,
+  PhoneCall,
   Search,
   ShoppingCart,
   User,
@@ -71,10 +71,10 @@ export function SiteHeader() {
           aria-label={site.phone.label}
           className="grid size-10 shrink-0 place-items-center text-brand lg:hidden"
         >
-          <Headset size={32} aria-hidden />
+          <PhoneCall size={30} strokeWidth={1.75} aria-hidden />
         </a>
         <div className="hidden shrink-0 items-center gap-3 lg:flex">
-          <Headset size={40} className="text-brand" aria-hidden />
+          <PhoneCall size={36} strokeWidth={1.75} className="text-brand" aria-hidden />
           <div className="leading-tight">
             <a href={site.phone.href} className="block text-lg font-bold hover:text-brand">
               {site.phone.label}
