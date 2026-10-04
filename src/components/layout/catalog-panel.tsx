@@ -23,7 +23,9 @@ import {
   Watch,
   type LucideIcon,
 } from "lucide-react";
-import { getCatalogTree } from "@/lib/catalog";
+import Image from "next/image";
+import { Sparkles } from "lucide-react";
+import { getCatalogTree, getProductOfDay } from "@/lib/catalog";
 
 const icons: Record<string, LucideIcon> = {
   "promo-odezhda": Shirt,
@@ -51,10 +53,11 @@ const icons: Record<string, LucideIcon> = {
 /** Серверная разметка мега-меню (десктоп). */
 export async function CatalogDesktop() {
   const tree = await getCatalogTree();
+  const potd = await Promise.all(tree.map((c) => getProductOfDay(c.id)));
   return (
     <nav aria-label="Каталог" className="flex" data-catalog-panel>
       <ul
-        className="max-h-[calc(100vh-250px)] w-[300px] shrink-0 overflow-y-auto border-r border-line py-2"
+        className="max-h-(--menu-max-h) w-[300px] shrink-0 overflow-y-auto border-r border-line py-2"
         data-rows
       >
         {tree.map((c, i) => {
@@ -81,7 +84,7 @@ export async function CatalogDesktop() {
           );
         })}
       </ul>
-      <div className="sticky top-0 max-h-[calc(100vh-250px)] min-w-0 flex-1 self-start overflow-y-auto p-8">
+      <div className="sticky top-0 max-h-(--menu-max-h) min-w-0 flex-1 self-start overflow-y-auto p-8">
         {tree.map((c, i) => (
           <section
             key={c.id}
@@ -98,19 +101,62 @@ export async function CatalogDesktop() {
                 Все товары →
               </span>
             </Link>
-            <ul className="columns-3 gap-8 text-sm">
-              {c.children.map((s) => (
-                <li key={s.href} className="break-inside-avoid">
-                  <Link
-                    href={s.href}
-                    data-sub
-                    className="block py-1.5 text-ink hover:text-brand"
+            {(() => {
+              const p = c.children.length <= 12 ? potd[i] : null;
+              const list = (
+                <ul
+                  className={`${p ? "columns-2" : "columns-3"} min-w-0 flex-1 gap-8 text-sm`}
+                >
+                  {c.children.map((s) => (
+                    <li key={s.href} className="break-inside-avoid">
+                      <Link
+                        href={s.href}
+                        data-sub
+                        className="block py-1.5 text-ink hover:text-brand"
+                      >
+                        {s.title}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              );
+              if (!p) return list;
+              return (
+                <div className="flex items-start gap-8">
+                  {list}
+                  <aside
+                    aria-label="Товар дня"
+                    className="w-[280px] shrink-0 rounded-[12px] border border-line p-4"
                   >
-                    {s.title}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+                    <p className="mb-3 flex items-center gap-1.5 text-xs font-semibold text-brand">
+                      <Sparkles size={14} aria-hidden />
+                      Товар дня
+                    </p>
+                    <div className="relative aspect-square overflow-hidden rounded-[12px] bg-surface">
+                      <Image
+                        src={p.image}
+                        alt={p.title}
+                        fill
+                        sizes="280px"
+                        className="object-contain"
+                      />
+                    </div>
+                    <p className="mt-3 line-clamp-2 text-sm font-medium text-ink">
+                      {p.title}
+                    </p>
+                    <p className="mt-1 text-base font-bold text-ink">
+                      от {p.priceFrom.toLocaleString("ru-RU")} ₽
+                    </p>
+                    <Link
+                      href={p.url}
+                      className="mt-3 block rounded-lg bg-brand py-2 text-center text-sm font-semibold text-white hover:bg-brand-hover"
+                    >
+                      Подробнее
+                    </Link>
+                  </aside>
+                </div>
+              );
+            })()}
           </section>
         ))}
       </div>

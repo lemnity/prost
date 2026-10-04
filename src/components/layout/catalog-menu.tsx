@@ -62,6 +62,26 @@ export function CatalogMenu({
     });
   }, [active, open]);
 
+  // Fluid height: panel always ends 16px above the window bottom (zoom-aware).
+  useEffect(() => {
+    const el = panelRef.current;
+    if (!open || !desk || !el) return;
+    const fit = () => {
+      el.style.removeProperty("--menu-max-h");
+      const r = el.getBoundingClientRect();
+      const scale = el.offsetHeight ? r.height / el.offsetHeight : 1;
+      const h = (window.innerHeight - r.top - 16) / (scale || 1);
+      el.style.setProperty("--menu-max-h", `${Math.max(200, Math.floor(h))}px`);
+    };
+    fit();
+    window.addEventListener("resize", fit);
+    window.addEventListener("scroll", fit, { passive: true });
+    return () => {
+      window.removeEventListener("resize", fit);
+      window.removeEventListener("scroll", fit);
+    };
+  }, [open, desk]);
+
   // Focus on open only (not on breakpoint changes).
   useEffect(() => {
     if (!open) return;
@@ -229,7 +249,7 @@ export function CatalogMenu({
         onClick={(e) => {
           if ((e.target as HTMLElement).closest("a")) close();
         }}
-        className="absolute left-2 right-0 top-full z-50 mt-2 hidden max-h-[calc(100vh-250px)] min-h-[200px] overflow-y-auto rounded-[16px] bg-white text-ink shadow-xl lg:[&:not([hidden])]:block [&_a:focus-visible]:-outline-offset-2 [&_a:focus-visible]:outline-brand!"
+        className="absolute left-2 right-0 top-full z-50 mt-2 hidden max-h-(--menu-max-h) overflow-hidden rounded-[16px] bg-white text-ink shadow-xl lg:[&:not([hidden])]:block [&_a:focus-visible]:-outline-offset-2 [&_a:focus-visible]:outline-brand!"
       >
         {desktop}
       </div>

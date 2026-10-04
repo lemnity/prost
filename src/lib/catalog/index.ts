@@ -1,5 +1,5 @@
 // Здесь позже подключаются провайдеры складов (Oasis и др.).
-import { catalogTree, newProducts, saleProducts, popularCategories } from "./static-data";
+import { catalogTree, newProducts, saleProducts, popularCategories, productOfDay } from "./static-data";
 import type { CatalogNode, Category, Product } from "./types";
 
 export type { CatalogNode, Category, Product } from "./types";
@@ -18,4 +18,8 @@ export async function getPopularCategories(): Promise<Category[]> {
 
 export async function getCatalogTree(): Promise<CatalogNode[]> {
   return catalogTree;
+}
+
+export async function getProductOfDay(categoryId: string): Promise<Product | null> {
+  return productOfDay[categoryId] ?? null;
 }

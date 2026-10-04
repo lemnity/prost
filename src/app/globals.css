@@ -45,70 +45,89 @@
   }
 }
 
+/* --zoom mirrors the html zoom of the active step (used to size viewport-bound panels). */
+:root {
+  --zoom: 1;
+  --menu-max-h: max(200px, calc(100dvh / var(--zoom) - 250px));
+}
+
 /* Proportional autoscale: layout base is 1280px; zoom grows in steps, the fluid container fills the rest. */
 @media (min-width: 1360px) {
   html {
     zoom: 1.0625;
+    --zoom: 1.0625;
   }
 }
 @media (min-width: 1440px) {
   html {
     zoom: 1.125;
+    --zoom: 1.125;
   }
 }
 @media (min-width: 1520px) {
   html {
     zoom: 1.1875;
+    --zoom: 1.1875;
   }
 }
 @media (min-width: 1600px) {
   html {
     zoom: 1.25;
+    --zoom: 1.25;
   }
 }
 @media (min-width: 1680px) {
   html {
     zoom: 1.3125;
+    --zoom: 1.3125;
   }
 }
 @media (min-width: 1760px) {
   html {
     zoom: 1.375;
+    --zoom: 1.375;
   }
 }
 @media (min-width: 1840px) {
   html {
     zoom: 1.4375;
+    --zoom: 1.4375;
   }
 }
 @media (min-width: 1920px) {
   html {
     zoom: 1.5;
+    --zoom: 1.5;
   }
 }
 @media (min-width: 2048px) {
   html {
     zoom: 1.6;
+    --zoom: 1.6;
   }
 }
 @media (min-width: 2176px) {
   html {
     zoom: 1.7;
+    --zoom: 1.7;
   }
 }
 @media (min-width: 2304px) {
   html {
     zoom: 1.8;
+    --zoom: 1.8;
   }
 }
 @media (min-width: 2432px) {
   html {
     zoom: 1.9;
+    --zoom: 1.9;
   }
 }
 @media (min-width: 2560px) {
   html {
     zoom: 2.0;
+    --zoom: 2.0;
   }
 }
 
