@@ -23,7 +23,7 @@ export default function ContactsPage() {
     {
       icon: MapPin,
       label: "Адрес",
-      node: site.address,
+      node: site.address.replace("ул. ", "ул.\u00A0").replace("Пышминская, ", "Пышминская,\u00A0"),
       extra: (
         <a
           href={yandexRouteUrl}
@@ -65,10 +65,10 @@ export default function ContactsPage() {
 
       <section aria-label="Как с нами связаться" className="py-6 md:py-8">
         <Container className="grid gap-4 lg:grid-cols-[45fr_55fr] lg:gap-6">
-          <div className="flex flex-col gap-4">
-            <ul className="grid gap-4 sm:grid-cols-2">
+          <div className="flex flex-col">
+            <ul className="grid flex-1 gap-4 sm:grid-cols-2 sm:grid-rows-2">
               {cards.map(({ icon: Icon, label, node, extra }) => (
-                <li key={label} className="rounded-[10px] bg-surface p-5">
+                <li key={label} className="rounded-[14px] bg-surface p-5">
                   <Icon size={24} strokeWidth={1.5} aria-hidden="true" className="text-brand" />
                   <div className="mt-3 text-xs text-muted">{label}</div>
                   <div className="mt-0.5 text-[15px] font-medium text-ink">{node}</div>
@@ -76,10 +76,6 @@ export default function ContactsPage() {
                 </li>
               ))}
             </ul>
-            <div className="rounded-[10px] bg-surface p-5">
-              <h2 className="mb-3 text-[15px] font-semibold text-ink">Мы в соцсетях</h2>
-              <SocialLinks size={32} className="gap-3" />
-            </div>
           </div>
           <YandexMap className="h-[280px] lg:h-auto lg:min-h-[420px]" />
         </Container>
@@ -139,13 +135,23 @@ export default function ContactsPage() {
                 <p className="mt-2 text-xs text-muted">Откроется ваш почтовый клиент с готовым письмом</p>
               </div>
             </form>
-            <aside className="rounded-[10px] bg-surface p-5 md:p-6 lg:self-start">
-              <h3 className="text-[17px] font-semibold text-ink">Или позвоните</h3>
-              <a href={site.phone.href} className="mt-3 block text-[22px] font-bold text-ink hover:text-brand">
-                {site.phone.label}
-              </a>
-              <p className="mt-1 text-sm text-muted">{site.hours}</p>
-            </aside>
+            <div className="flex h-full flex-col gap-3">
+              <aside className="rounded-[14px] bg-surface p-5 md:p-6">
+                <h3 className="text-[17px] font-semibold text-ink">Или позвоните</h3>
+                <a href={site.phone.href} className="mt-3 block text-[22px] font-bold text-ink hover:text-brand">
+                  {site.phone.label}
+                </a>
+                <p className="mt-1 text-sm text-muted">{site.hours}</p>
+              </aside>
+              <aside className="flex-1 rounded-[14px] bg-surface p-5 md:p-6">
+                <h3 className="text-[17px] font-semibold text-ink">Или напишите</h3>
+                <a href={`mailto:${site.email}`} className="mt-3 block break-all text-[17px] font-bold text-ink hover:text-brand">
+                  {site.email}
+                </a>
+                <h4 className="mb-3 mt-5 text-sm font-semibold text-ink">Мы в соцсетях</h4>
+                <SocialLinks size={32} className="gap-3" />
+              </aside>
+            </div>
           </div>
         </Container>
       </section>
