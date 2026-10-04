@@ -10,7 +10,7 @@ export function BannerSlider() {
     <section
       aria-roledescription="carousel"
       aria-label="Акции и подборки"
-      className="pt-4"
+      className="pt-0"
     >
       <Container>
         <div
