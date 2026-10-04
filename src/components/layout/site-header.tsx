@@ -79,9 +79,9 @@ export function SiteHeader() {
             <a href={site.phone.href} className="block text-lg font-bold hover:text-brand">
               {site.phone.label}
             </a>
-            <Link href="/contact-us#callback" className="text-sm text-muted hover:text-brand">
-              Заказать звонок
-            </Link>
+            <a href={`mailto:${site.email}`} className="block whitespace-nowrap text-sm text-muted hover:text-brand">
+              {site.email}
+            </a>
           </div>
         </div>
       </Container>
