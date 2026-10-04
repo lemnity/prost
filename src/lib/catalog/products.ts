@@ -3,6 +3,7 @@
 // источник, не меняя сигнатуры функций и страниц.
 import raw from "@/data/catalog-products.json";
 import { catalogTree, newProducts, newYearPicks, saleProducts } from "./static-data";
+import { deriveColors } from "./colors";
 import type { CatalogNode, Product } from "./types";
 
 export type ProductVariant = {
@@ -29,6 +30,8 @@ export type CatalogProduct = {
   image: string;
   popularity: number;
   variants: ProductVariant[];
+  /** Нормализованные цвета (id из COLOR_TAGS), вычисляются при загрузке. */
+  colors: string[];
 };
 
 /** Виртуальные подборки из навигации (не входят в дерево категорий). */
@@ -75,6 +78,7 @@ function fromStatic(p: Product, popularity: number): CatalogProduct {
     image: p.image,
     popularity,
     variants: [],
+    colors: [],
   };
 }
 
@@ -100,6 +104,7 @@ function load(): CatalogProduct[] {
       byUrl.set(p.url, p);
     }
   }
+  for (const p of list) p.colors = deriveColors([p.title, ...p.variants.map((v) => v.title)]);
   cache = list;
   return list;
 }

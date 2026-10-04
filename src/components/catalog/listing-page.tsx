@@ -21,7 +21,7 @@ export function ListingPage({
   chips?: Chip[];
   products: CatalogProduct[];
 }) {
-  const items: ListingProduct[] = products.map((p) => ({ ...toCard(p), brand: p.brand }));
+  const items: ListingProduct[] = products.map((p) => ({ ...toCard(p), brand: p.brand, colors: p.colors }));
   const brands = getBrands(products);
   return (
     <main id="main">
