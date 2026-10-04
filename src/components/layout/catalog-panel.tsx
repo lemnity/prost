@@ -60,7 +60,7 @@ export async function CatalogDesktop() {
   return (
     <nav aria-label="Каталог" className="flex" data-catalog-panel>
       <ul
-        className="max-h-(--menu-max-h) w-[300px] shrink-0 overflow-y-auto border-r border-line py-2"
+        className="max-h-(--menu-max-h) w-[300px] shrink-0 overflow-y-auto overscroll-contain border-r border-line py-2"
         data-rows
       >
         {tree.map((c, i) => {
@@ -87,7 +87,7 @@ export async function CatalogDesktop() {
           );
         })}
       </ul>
-      <div className="flex max-h-(--menu-max-h) min-w-0 flex-1 flex-col self-start overflow-y-auto p-8">
+      <div className="flex max-h-(--menu-max-h) min-w-0 flex-1 flex-col self-start overflow-y-auto overscroll-contain p-8">
         {tree.map((c, i) => (
           <section
             key={c.id}

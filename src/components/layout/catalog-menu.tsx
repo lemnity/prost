@@ -62,7 +62,8 @@ export function CatalogMenu({
     });
   }, [active, open]);
 
-  // Fluid height: panel always ends 16px above the window bottom. Scale is
+  // Fluid height: panel always ends 16px above the window bottom (computed on
+  // open and on resize / header size change; page scroll is locked meanwhile). Scale is
   // measured (rect / offsetHeight) so it matches whatever zoom the browser
   // applies; CSS --menu-max-h (uses --zoom) is only the SSR/pre-measure fallback.
   // The 200px floor only matters for windows shorter than ~450px.
@@ -85,12 +86,10 @@ export function CatalogMenu({
     const ro = new ResizeObserver(schedule);
     ro.observe(el.closest("header") ?? document.body);
     window.addEventListener("resize", schedule);
-    window.addEventListener("scroll", schedule, { passive: true });
     return () => {
       cancelAnimationFrame(raf);
       ro.disconnect();
       window.removeEventListener("resize", schedule);
-      window.removeEventListener("scroll", schedule);
     };
   }, [open, desk]);
 
@@ -104,14 +103,20 @@ export function CatalogMenu({
     else sheetRef.current?.querySelector<HTMLElement>("button")?.focus();
   }, [open]);
 
+  // Lock page scroll while the catalog is open (sheet and desktop panel);
+  // the gutter stays reserved so the layout does not shift.
   useEffect(() => {
-    if (!open || desk) return;
+    if (!open) return;
+    const root = document.documentElement;
     const prev = document.body.style.overflow;
+    const prevGutter = root.style.scrollbarGutter;
+    root.style.scrollbarGutter = "stable";
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = prev;
+      root.style.scrollbarGutter = prevGutter;
     };
-  }, [open, desk]);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
