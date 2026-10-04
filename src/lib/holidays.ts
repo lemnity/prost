@@ -1,7 +1,6 @@
 // Чистые функции дат. Часовой пояс заказчика — Тюмень (Asia/Yekaterinburg, UTC+5, без DST).
 const TZ = "Asia/Yekaterinburg";
 const OFFSET_MS = 5 * 3600_000;
-const MIN = 60_000;
 
 /** Сдвигает момент так, что UTC-геттеры дают локальное (тюменское) время. */
 function toLocal(d: Date): Date {
@@ -17,14 +16,20 @@ export function getNewYearCountdown(now: Date): {
   days: number;
   hours: number;
   minutes: number;
+  seconds: number;
 } {
   const year = toLocal(now).getUTCFullYear();
   const target = localMidnight(year + 1, 0, 1);
-  const total = Math.max(0, Math.floor((target.getTime() - now.getTime()) / MIN));
+  const totalSec = Math.max(
+    0,
+    Math.floor((target.getTime() - now.getTime()) / 1000),
+  );
+  const total = Math.floor(totalSec / 60);
   return {
     days: Math.floor(total / 1440),
     hours: Math.floor((total % 1440) / 60),
     minutes: total % 60,
+    seconds: totalSec % 60,
   };
 }
 

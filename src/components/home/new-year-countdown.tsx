@@ -16,7 +16,7 @@ export function NewYearCountdown({ initial }: { initial: Countdown }) {
     let id: ReturnType<typeof setInterval> | undefined;
     const start = () => {
       tick();
-      id ??= setInterval(tick, 30_000);
+      id ??= setInterval(tick, 1000);
     };
     const stop = () => {
       if (id !== undefined) clearInterval(id);
@@ -41,21 +41,28 @@ export function NewYearCountdown({ initial }: { initial: Countdown }) {
       n: String(c.minutes).padStart(2, "0"),
       label: plural("m", c.minutes),
     },
+    {
+      n: String(c.seconds).padStart(2, "0"),
+      label: plural("s", c.seconds),
+      tick: true,
+    },
   ];
 
+  const label = `До Нового года ${c.days} ${plural("d", c.days)} ${c.hours} ${plural("h", c.hours)} ${c.minutes} ${plural("m", c.minutes)}`;
+
   return (
-    <div
-      role="group"
-      aria-label={`До Нового года ${c.days} ${plural("d", c.days)} ${c.hours} ${plural("h", c.hours)} ${c.minutes} ${plural("m", c.minutes)}`}
-    >
+    <div role="group" aria-label={label}>
       <div aria-hidden="true">
-        <div className="text-xs leading-tight text-muted">
-          До Нового года осталось
+        <div className="text-[12px] font-semibold leading-tight text-brand xl:text-[13px]">
+          Поторопитесь! До Нового года осталось
         </div>
-        <div className="mt-1.5 flex gap-2 xl:mt-2">
+        <div className="mt-1.5 flex gap-1 xl:mt-2 xl:gap-1.5">
           {cells.map((x, i) => (
             <div key={i} className="flex flex-col items-center gap-0.5">
-              <div className="min-w-[46px] rounded-[10px] bg-white px-1.5 py-1.5 text-center text-[22px] font-bold leading-none tabular-nums text-brand xl:min-w-[56px] xl:px-3 xl:py-2 xl:text-[28px]">
+              <div
+                key={x.tick ? x.n : undefined}
+                className={`min-w-[38px] rounded-[10px] bg-white px-1 py-1.5 text-center text-[22px] font-bold leading-none tabular-nums text-brand ring-1 ring-[#CFE3F2] xl:min-w-[50px] xl:px-2 xl:py-2 xl:text-[28px] ${x.tick ? "ny-tick" : ""}`}
+              >
                 {x.n}
               </div>
               <div className="text-[11px] leading-tight text-muted">

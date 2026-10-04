@@ -20,6 +20,9 @@
   --color-band-soft: #f5f6f8;
   --color-field: #f1f1f4;
   --color-field-hover: #e6e6ea;
+  --color-snow-1: #ffffff;
+  --color-snow-2: #eaf4fb;
+  --color-snow-3: #d6e9f7;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -118,4 +121,30 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+@keyframes snowfall {
+  0% { transform: translate3d(0, -12px, 0); opacity: 0; }
+  10% { opacity: 1; }
+  50% { transform: translate3d(var(--drift, 8px), 90px, 0); }
+  90% { opacity: 1; }
+  100% { transform: translate3d(calc(var(--drift, 8px) * -0.6), 210px, 0); opacity: 0; }
+}
+@keyframes globe-sway {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+}
+@keyframes sec-tick {
+  0% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+@keyframes arrow-pulse {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(3px); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ny-flake { animation: snowfall var(--dur, 9s) linear var(--delay, 0s) infinite; }
+  .ny-globe { animation: globe-sway 4s ease-in-out infinite; transform-origin: 50% 20%; }
+  .ny-tick { animation: sec-tick 0.35s ease-out; }
+  .ny-arrow { animation: arrow-pulse 1.6s ease-in-out infinite; }
 }

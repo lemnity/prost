@@ -15,18 +15,35 @@ const buildNow = new Date();
 const initialCountdown = getNewYearCountdown(buildNow);
 const initialHolidays = getUpcomingHolidays(buildNow, 2);
 
+const FLAKES = Array.from({ length: 16 }, (_, i) => ({
+  left: (i * 37 + 11) % 97,
+  size: 3 + ((i * 5) % 5),
+  dur: 6 + ((i * 7) % 9),
+  delay: -((i * 3) % 11),
+  drift: ((i % 2 ? 1 : -1) * (6 + ((i * 4) % 12))),
+}));
+
 function WideTile({ cat, className = "" }: { cat: Cat; className?: string }) {
   return (
     <Link
       href={cat.href}
       style={{
         backgroundImage:
-          "radial-gradient(circle at 76% 55%, var(--color-glow), transparent 60%)",
+          "radial-gradient(circle at 0% 0%, #fff 0, transparent 35%), radial-gradient(circle at 100% 0%, #fff 0, transparent 30%), linear-gradient(160deg, var(--color-snow-1), var(--color-snow-2) 55%, var(--color-snow-3))",
       }}
-      className={`group relative block h-[150px] overflow-hidden rounded-[10px] bg-surface focus-visible:outline-offset-[-2px] lg:h-[182px] ${className}`}
+      className={`group relative block h-[150px] overflow-hidden rounded-[10px] bg-snow-2 focus-visible:outline-offset-[-2px] lg:h-[182px] ${className}`}
     >
       <div
-        className="absolute -bottom-[6%] right-0 top-0 w-[40%] xl:w-[45%]"
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-3 -left-[5%] h-10 w-[110%] rounded-[50%] bg-white"
+        style={{ boxShadow: "0 -2px 8px rgba(191,217,238,.6)" }}
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-5 left-[30%] h-9 w-[80%] rounded-[50%] bg-white"
+      />
+      <div
+        className="ny-globe absolute -bottom-[6%] right-0 top-0 w-[40%] xl:w-[45%]"
         style={{
           WebkitMaskImage:
             "radial-gradient(closest-side, #000 72%, transparent)",
@@ -41,6 +58,28 @@ function WideTile({ cat, className = "" }: { cat: Cat; className?: string }) {
           className="object-contain mix-blend-multiply transition-transform duration-200 group-hover:scale-[1.03]"
         />
       </div>
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+      >
+        {FLAKES.map((f, i) => (
+          <span
+            key={i}
+            className="ny-flake absolute -top-2 rounded-full bg-white opacity-0"
+            style={
+              {
+                left: `${f.left}%`,
+                width: f.size,
+                height: f.size,
+                boxShadow: "0 0 0 1px #BFD9EE, 0 1px 3px rgba(120,160,200,.5)",
+                "--dur": `${f.dur}s`,
+                "--delay": `${f.delay}s`,
+                "--drift": `${f.drift}px`,
+              } as React.CSSProperties
+            }
+          />
+        ))}
+      </div>
       <div className="relative flex h-full w-[60%] flex-col justify-between p-3 xl:p-4">
         <div>
           <span className="block whitespace-nowrap text-base font-semibold leading-tight xl:text-xl">
@@ -51,7 +90,8 @@ function WideTile({ cat, className = "" }: { cat: Cat; className?: string }) {
           </div>
         </div>
         <span className="flex items-center gap-1 text-[13px] font-semibold leading-none text-brand">
-          Выбрать подарки <ArrowRight size={14} aria-hidden="true" />
+          Выбрать подарки{" "}
+          <ArrowRight size={14} aria-hidden="true" className="ny-arrow" />
         </span>
       </div>
     </Link>
