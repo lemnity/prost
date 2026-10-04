@@ -42,7 +42,7 @@ function WideTile({
         backgroundImage:
           "radial-gradient(circle at 0% 0%, #fff 0, transparent 35%), radial-gradient(circle at 100% 0%, #fff 0, transparent 30%), linear-gradient(160deg, var(--color-snow-1), var(--color-snow-2) 55%, var(--color-snow-3))",
       }}
-      className={`relative block h-[150px] overflow-hidden rounded-[10px] bg-snow-2 shadow-[0_1px_2px_rgba(16,24,40,0.06),0_8px_24px_rgba(16,24,40,0.08)] ring-1 ring-[#DCEAF5] transition-shadow duration-200 hover:shadow-[0_2px_4px_rgba(16,24,40,0.08),0_12px_32px_rgba(16,24,40,0.12)] focus-visible:outline-offset-[-2px] lg:h-[182px] ${className}`}
+      className={`relative block h-[150px] overflow-hidden rounded-[10px] bg-snow-2 shadow-[0_1px_2px_rgba(16,24,40,0.06),0_8px_24px_rgba(16,24,40,0.08)] ring-1 ring-[#B9D6EE] transition-shadow hover:ring-[#9CC5E8] duration-200 hover:shadow-[0_2px_4px_rgba(16,24,40,0.08),0_12px_32px_rgba(16,24,40,0.12)] focus-visible:outline-offset-[-2px] lg:h-[182px] ${className}`}
     >
       <div
         aria-hidden="true"
@@ -66,11 +66,6 @@ function WideTile({
           />
         ))}
       </div>
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -bottom-[10px] -left-[5%] h-5 w-[110%] rounded-[50%] bg-white"
-        style={{ boxShadow: "0 -1px 4px rgba(191,217,238,.6)" }}
-      />
       <div
         aria-hidden="true"
         className="absolute bottom-3 right-3 top-3 z-10 flex w-[30%] flex-col overflow-hidden min-[360px]:w-[32%] rounded-[14px] bg-white ring-1 ring-[#DCEAF5] shadow-[0_1px_2px_rgba(16,24,40,.05),0_6px_16px_rgba(16,24,40,.08)] sm:w-[34%] xl:w-[32%]"
