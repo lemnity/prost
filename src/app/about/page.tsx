@@ -90,7 +90,7 @@ export default async function AboutPage() {
           </h2>
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="flex h-full flex-col rounded-[10px] bg-surface p-5">
-              <ul className="space-y-3">
+              <ul className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
                 {contacts.map(({ icon: Icon, label, node }) => (
                   <li key={label} className="flex items-start gap-3">
                     <Icon size={20} aria-hidden="true" className="mt-0.5 shrink-0 text-brand" />
