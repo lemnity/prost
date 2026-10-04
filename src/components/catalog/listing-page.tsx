@@ -4,6 +4,7 @@ import { Container } from "@/components/ui/container";
 import { Breadcrumbs, type Crumb } from "@/components/ui/breadcrumbs";
 import { ConsultationCta } from "@/components/home/consultation-cta";
 import { CatalogListing, CatalogListingIsland } from "./catalog-listing";
+import { SubscribeBlock } from "./subscribe-block";
 import { getBrands, toCard, type CatalogProduct } from "@/lib/catalog/products";
 import type { ListingProduct } from "@/lib/catalog/types";
 
@@ -64,6 +65,7 @@ export function ListingPage({
             <p className="mt-2 text-sm text-muted">
               Мы пополняем каталог. Оставьте заявку — подберём товары под вашу задачу.
             </p>
+            <SubscribeBlock />
           </div>
         )}
       </Container>
