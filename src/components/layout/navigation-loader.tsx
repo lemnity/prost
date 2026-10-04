@@ -3,7 +3,8 @@
 import { Suspense, useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
-const FUSE_MS = 8000;
+const FUSE_MS = 4000;
+const FILE_RE = /\.[a-z0-9]{2,5}$/i;
 let fuse: ReturnType<typeof setTimeout> | undefined;
 let hideTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -16,23 +17,24 @@ function show() {
   if (!el) return;
   clearTimeout(hideTimer);
   el.hidden = false;
-  void el.offsetWidth; // restart the opacity transition
+  void el.offsetWidth; // force reflow so the opacity change below transitions
   el.setAttribute("data-state", "visible");
   el.setAttribute("data-nav", "1");
   document.body.setAttribute("aria-busy", "true");
   clearTimeout(fuse);
-  fuse = setTimeout(hide, FUSE_MS);
+  fuse = setTimeout(() => hide(), FUSE_MS);
 }
 
-function hide() {
+function hide(force?: boolean) {
   const el = overlay();
   clearTimeout(fuse);
-  if (!el || el.getAttribute("data-nav") !== "1") return;
+  if (!el) return;
+  if (el.getAttribute("data-nav") !== "1" && !force) return;
   el.removeAttribute("data-nav");
   el.setAttribute("data-state", "hiding");
   document.body.removeAttribute("aria-busy");
   hideTimer = setTimeout(() => {
-    el.hidden = true;
+    if (el.getAttribute("data-nav") !== "1") el.hidden = true;
   }, 250);
 }
 
@@ -43,6 +45,14 @@ function Watcher() {
   useEffect(() => {
     hide();
   }, [pathname, search]);
+
+  useEffect(() => {
+    function onPageShow(e: PageTransitionEvent) {
+      if (e.persisted) hide(true); // restored from bfcache
+    }
+    addEventListener("pageshow", onPageShow);
+    return () => removeEventListener("pageshow", onPageShow);
+  }, []);
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
@@ -60,15 +70,17 @@ function Watcher() {
       if (a.target && a.target !== "_self") return;
       const url = new URL(a.href, location.href);
       if (url.origin !== location.origin) return;
+      if (FILE_RE.test(url.pathname)) return; // downloads / files
       if (url.pathname === location.pathname && url.search === location.search)
         return;
       show();
     }
+    const onPop = () => hide();
     document.addEventListener("click", onClick, true);
-    addEventListener("popstate", hide);
+    addEventListener("popstate", onPop);
     return () => {
       document.removeEventListener("click", onClick, true);
-      removeEventListener("popstate", hide);
+      removeEventListener("popstate", onPop);
     };
   }, []);
 

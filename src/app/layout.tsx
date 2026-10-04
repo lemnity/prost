@@ -22,7 +22,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="ru" className={inter.variable}>
       <body
         className="min-h-screen font-sans"
-        aria-busy="true"
         suppressHydrationWarning
       >
         <PageLoader />
