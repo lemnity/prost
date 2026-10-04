@@ -22,6 +22,10 @@
   border: 0;
 }
 
+.srOnly {
+  white-space: nowrap;
+}
+
 @keyframes brand-dash {
   to {
     stroke-dashoffset: -100;
@@ -48,7 +52,7 @@
     stroke-dasharray: none;
   }
 
-  .label {
+  .label:not(.srOnly) {
     position: static;
     width: auto;
     height: auto;
@@ -56,6 +60,6 @@
     overflow: visible;
     clip: auto;
     font-size: 11px;
-    color: #6b6b78;
+    color: var(--color-muted);
   }
 }

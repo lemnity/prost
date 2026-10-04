@@ -1,9 +1,9 @@
 import styles from "./brand-loader.module.css";
 
 /*
- * Dash-along-outline animation adapted from the "Rectangle loading" CodePen
- * (stroke-dasharray + animated stroke-dashoffset). MIT License, see the
- * original author's license at loading/LICENSE.txt in the repository root.
+ * Animation adapted from "Rectangle loading" by John Grishin
+ * (https://codepen.io/exah/pen/VYLNJG), Copyright (c) 2026 John Grishin,
+ * MIT License (full text in THIRD_PARTY_NOTICES.md).
  */
 
 const BRACKET =
@@ -12,9 +12,12 @@ const BRACKET =
 export function BrandLoader({
   size = 56,
   label = "Загрузка…",
+  hideVisibleLabel = false,
 }: {
   size?: number;
   label?: string;
+  /** Keep the label screen-reader only, even under reduced motion. */
+  hideVisibleLabel?: boolean;
 }) {
   return (
     <div
@@ -25,7 +28,7 @@ export function BrandLoader({
       <svg
         width={size}
         height={size}
-        viewBox="0 0 173.02 173.3"
+        viewBox="-6 -6 185.02 185.3"
         fill="none"
         aria-hidden="true"
       >
@@ -47,7 +50,11 @@ export function BrandLoader({
           fill="#65B137"
         />
       </svg>
-      <span className={styles.label}>{label}</span>
+      <span
+        className={
+          hideVisibleLabel ? `${styles.label} ${styles.srOnly}` : styles.label
+        }
+      >{label}</span>
     </div>
   );
 }
