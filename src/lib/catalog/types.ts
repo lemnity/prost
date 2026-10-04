@@ -18,3 +18,10 @@ export type Category = {
   href: string;
   image: string;
 };
+
+export type CatalogNode = {
+  id: string;
+  title: string;
+  href: string;
+  children: { title: string; href: string }[];
+};

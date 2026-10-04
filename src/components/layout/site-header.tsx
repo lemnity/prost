@@ -1,11 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
-  ChevronDown,
   FileText,
   Headset,
   Heart,
-  Menu,
   Search,
   ShoppingCart,
   User,
@@ -14,6 +12,8 @@ import { Container } from "@/components/ui/container";
 import { site } from "@/content/site";
 import { TopBar } from "./top-bar";
 import { CategoryNav } from "./category-nav";
+import { CatalogMenu } from "./catalog-menu";
+import { CatalogDesktop, CatalogSheet } from "./catalog-panel";
 
 const iconBtn =
   "grid size-12 shrink-0 place-items-center rounded-[10px] bg-white/10 text-white hover:bg-white/20";
@@ -85,18 +85,8 @@ export function SiteHeader() {
         </div>
       </Container>
       <Container>
-        <div className="flex flex-wrap items-center gap-3 rounded-[14px] bg-navy p-2 md:flex-nowrap [&_a:focus-visible]:outline-white">
-          <Link
-            href="/catalog"
-            aria-label="Каталог"
-            className="grid size-12 shrink-0 place-items-center rounded-[10px] bg-white/10 text-white hover:bg-white/20 md:flex md:w-[240px] md:items-center md:justify-between md:px-5"
-          >
-            <span className="flex items-center gap-3 text-[15px] font-bold uppercase tracking-wide">
-              <Menu size={22} aria-hidden />
-              <span className="sr-only md:not-sr-only">Каталог</span>
-            </span>
-            <ChevronDown size={18} aria-hidden className="hidden text-white/70 md:block" />
-          </Link>
+        <div className="relative z-[45] flex flex-wrap items-center gap-3 rounded-[14px] bg-navy p-2 md:flex-nowrap [&_a:focus-visible]:outline-white">
+          <CatalogMenu desktop={<CatalogDesktop />} sheet={<CatalogSheet />} />
           <form
             action="/search"
             role="search"
