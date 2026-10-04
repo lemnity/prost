@@ -5,7 +5,7 @@ import { MapPin } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { site } from "@/content/site";
 import { CurrentYear } from "./current-year";
-import { socialIcons } from "./social-icons";
+import { SocialLinks } from "./social-links";
 
 export function SiteFooter() {
   return (
@@ -55,25 +55,7 @@ export function SiteFooter() {
             </a>
           </li>
         </ul>
-        <ul className="flex items-start gap-3 sm:col-span-2 xl:col-span-1">
-          {site.socials.map((s) => {
-            const cls =
-              "grid size-8 place-items-center rounded-full bg-[#5F6368] text-white";
-            return (
-              <li key={s.key}>
-                {s.url ? (
-                  <a href={s.url} aria-label={s.label} className={cls}>
-                    {socialIcons[s.key]}
-                  </a>
-                ) : (
-                  <span aria-hidden className={cls}>
-                    {socialIcons[s.key]}
-                  </span>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+        <SocialLinks size={32} className="items-start gap-3 sm:col-span-2 xl:col-span-1" />
       </Container>
     </footer>
   );

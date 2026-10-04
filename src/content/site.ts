@@ -1,6 +1,6 @@
 export type NavLink = { label: string; href: string };
 
-export type SocialKey = "telegram" | "whatsapp" | "vk" | "youtube";
+export type SocialKey = "telegram" | "vk" | "max";
 export type Social = { key: SocialKey; label: string; url: string | null };
 
 export const site = {
@@ -20,11 +20,11 @@ export const site = {
       { label: "Контакты", href: "/contact-us" },
     ] satisfies NavLink[],
   },
+  // TODO: заменить на ссылки компании
   socials: [
-    { key: "telegram", label: "Telegram", url: null },
-    { key: "whatsapp", label: "WhatsApp", url: null },
-    { key: "vk", label: "ВКонтакте", url: null },
-    { key: "youtube", label: "YouTube", url: null },
+    { key: "telegram", label: "Telegram", url: "https://t.me/" },
+    { key: "vk", label: "ВКонтакте", url: "https://vk.com/" },
+    { key: "max", label: "MAX", url: "https://max.ru/" },
   ] satisfies Social[],
   nav: [
     { label: "Новинки", href: "/catalog/new" },

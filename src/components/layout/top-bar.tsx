@@ -1,7 +1,7 @@
 import { MapPin } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { site } from "@/content/site";
-import { socialIcons } from "./social-icons";
+import { SocialLinks } from "./social-links";
 
 export function TopBar() {
   return (
@@ -19,25 +19,7 @@ export function TopBar() {
           <li aria-hidden className="hidden size-1 rounded-full bg-brand xl:block" />
           <li className="md:hidden xl:block">{site.topbar.center[1]}</li>
         </ul>
-        <ul className="hidden items-center justify-end gap-3 md:flex md:col-start-3">
-          {site.socials.map((s) => (
-            <li key={s.key}>
-              {s.url ? (
-                <a
-                  href={s.url}
-                  aria-label={s.label}
-                  className="grid size-6 place-items-center hover:text-brand"
-                >
-                  {socialIcons[s.key]}
-                </a>
-              ) : (
-                <span aria-hidden className="grid size-6 place-items-center">
-                  {socialIcons[s.key]}
-                </span>
-              )}
-            </li>
-          ))}
-        </ul>
+        <SocialLinks size={20} className="hidden justify-end gap-3 md:flex md:col-start-3" />
       </Container>
     </div>
   );
