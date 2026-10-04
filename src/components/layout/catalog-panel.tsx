@@ -25,6 +25,8 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { Sparkles } from "lucide-react";
+import { Countdown } from "@/components/home/countdown";
+import { getSaleRemaining } from "@/lib/sale";
 import { getCatalogTree, getProductOfDay } from "@/lib/catalog";
 
 const icons: Record<string, LucideIcon> = {
@@ -53,6 +55,7 @@ const icons: Record<string, LucideIcon> = {
 /** Серверная разметка мега-меню (десктоп). */
 export async function CatalogDesktop() {
   const tree = await getCatalogTree();
+  const dayLeft = getSaleRemaining(new Date(), "day");
   const potd = await Promise.all(tree.map((c) => getProductOfDay(c.id)));
   return (
     <nav aria-label="Каталог" className="flex" data-catalog-panel>
@@ -133,6 +136,9 @@ export async function CatalogDesktop() {
                       <Sparkles size={14} aria-hidden />
                       Товар дня
                     </p>
+                    <div className="mb-2 shrink-0">
+                      <Countdown initial={dayLeft} target="day" />
+                    </div>
                     <div className="relative mx-auto min-h-[96px] w-full max-h-[248px] flex-1 basis-[248px] overflow-hidden rounded-[12px] bg-surface">
                       <Image
                         src={p.image}

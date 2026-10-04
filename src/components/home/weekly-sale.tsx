@@ -1,5 +1,5 @@
 import { ProductCard } from "@/components/catalog/product-card";
-import { SaleCountdown } from "@/components/home/sale-countdown";
+import { Countdown } from "@/components/home/countdown";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Container } from "@/components/ui/container";
 import { getWeeklySale } from "@/lib/catalog";
@@ -14,7 +14,7 @@ export async function WeeklySale() {
         <SectionHeader
           id="weekly-sale-title"
           title="Распродажа недели"
-          aside={<SaleCountdown initial={initial} />}
+          aside={<Countdown initial={initial} />}
           link={{ label: "Все скидки", href: "/catalog/sale" }}
         />
         <div className="no-scrollbar -mx-4 scroll-px-4 md:scroll-px-8 lg:scroll-px-0 flex snap-x gap-3 overflow-x-auto px-4 md:-mx-8 md:px-8 lg:mx-0 lg:grid lg:grid-cols-6 lg:overflow-visible lg:px-0">
