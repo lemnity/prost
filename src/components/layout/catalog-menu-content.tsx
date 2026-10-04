@@ -20,22 +20,26 @@ export function CatalogPanes({
   dayLeft: SaleRemaining | null;
 }) {
   return (
-    <div className="flex max-h-(--menu-max-h) min-w-0 flex-1 flex-col self-start overflow-y-auto overscroll-contain p-8">
+    <div className="flex max-h-(--menu-max-h) min-w-0 flex-1 flex-col self-start overflow-hidden p-8">
       {!data ? (
         <PanesSkeleton />
       ) : (
         data.tree.map((c, i) => {
           const p = data.potd[c.id];
+          // Список прокручивается в своей области; колонки балансируются
+          // внутри обёртки, поэтому не уходят вбок при ограниченной высоте.
           const list = (
-            <ul className={`${p ? "columns-2" : "columns-3"} min-w-0 flex-1 gap-8 self-start text-sm`}>
-              {c.children.map((s) => (
-                <li key={s.href} className="break-inside-avoid">
-                  <Link href={s.href} data-sub className="block py-1.5 text-ink hover:text-brand">
-                    {s.title}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain">
+              <ul className="columns-2 gap-8 text-sm">
+                {c.children.map((s) => (
+                  <li key={s.href} className="break-inside-avoid">
+                    <Link href={s.href} data-sub className="block py-1.5 text-ink hover:text-brand">
+                      {s.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           );
           return (
             <section
@@ -53,7 +57,7 @@ export function CatalogPanes({
                 <span className="text-sm font-normal text-brand">Все товары →</span>
               </Link>
               {!p ? (
-                list
+                <div className="flex min-h-0 flex-1">{list}</div>
               ) : (
                 <div className="flex min-h-0 flex-1 items-stretch gap-8">
                   {list}
