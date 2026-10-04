@@ -76,8 +76,8 @@ function Tile({
       } ${className}`}
     >
       <div
-        className={`absolute inset-x-3 ${hasBadge ? "top-[34px]" : "top-3"} ${
-          small ? "bottom-[52px] xl:bottom-[46px]" : "bottom-[52px]"
+        className={`absolute inset-x-3 ${hasBadge ? "top-[44px]" : "top-3"} ${
+          small ? "bottom-[58px] xl:bottom-[52px]" : "bottom-[58px]"
         }`}
       >
         <Image

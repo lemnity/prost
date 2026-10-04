@@ -25,7 +25,7 @@ export function HolidayStatus({ initial }: { initial: UpcomingHoliday[] }) {
         {list.map((h, i) => (
           <div
             key={h.title}
-            className={`gap-1 text-[11px] leading-tight ${i === 0 ? "flex" : "mt-0.5 hidden @[300px]:flex"}`}
+            className={`gap-1 text-[11px] leading-tight ${i === 0 ? "flex" : "mt-0.5 flex"}`}
           >
             <span className="shrink-0 font-bold">{h.date}</span>
             <span className="truncate">{h.short}</span>
