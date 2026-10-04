@@ -2,14 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ShoppingCart, Trash2 } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { asset } from "@/lib/asset";
 import { formatPriceValue } from "@/lib/format";
 import { site } from "@/content/site";
-import { MIN_ORDER, cartCount, cartTotal, clearCart, removeFromCart } from "@/lib/cart/store";
-import { useCart } from "@/lib/cart/use-cart";
+import { MIN_ORDER, cartCount, cartTotal, clearCart, removeFromCart, type CartItem } from "@/lib/cart/store";
+import { useCart, useHydrated } from "@/lib/cart/use-cart";
 import { QtyStepper } from "./qty-stepper";
 
 const field =
@@ -21,11 +21,35 @@ const btnOutline =
 
 export function CartView() {
   const items = useCart();
-  const [open, setOpen] = useState(false);
-  const [sent, setSent] = useState(false);
-  const total = cartTotal(items);
-  const count = cartCount(items);
-  const reached = total >= MIN_ORDER;
+  const hydrated = useHydrated();
+  const pendingFocus = useRef<{ id: string | null } | null>(null);
+
+  useEffect(() => {
+    const p = pendingFocus.current;
+    if (!p) return;
+    pendingFocus.current = null;
+    const target = p.id
+      ? Array.from(document.querySelectorAll<HTMLElement>(`[data-remove="${CSS.escape(p.id)}"]`)).find((el) => el.offsetParent !== null)
+      : null;
+    (target ?? document.getElementById("cart-heading"))?.focus();
+  }, [items]);
+
+  function remove(id: string) {
+    const idx = items.findIndex((i) => i.id === id);
+    pendingFocus.current = { id: items[idx + 1]?.id ?? items[idx - 1]?.id ?? null };
+    removeFromCart(id);
+  }
+
+  if (!hydrated) {
+    return (
+      <section aria-label="Корзина загружается" aria-busy="true" className="py-6 md:py-8">
+        <Container className="grid items-start gap-6 lg:grid-cols-[1fr_360px]">
+          <div className="min-h-[300px] animate-pulse rounded-[10px] bg-surface motion-reduce:animate-none" />
+          <div className="hidden min-h-[220px] animate-pulse rounded-[14px] bg-surface motion-reduce:animate-none lg:block" />
+        </Container>
+      </section>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -33,7 +57,7 @@ export function CartView() {
         <Container>
           <div className="flex flex-col items-center rounded-[14px] bg-surface px-5 py-12 text-center md:py-16">
             <ShoppingCart size={40} strokeWidth={1.5} aria-hidden="true" className="text-brand" />
-            <h2 className="mt-4 text-[22px] font-bold md:text-[26px]">Корзина пуста</h2>
+            <h2 id="cart-heading" tabIndex={-1} className="mt-4 text-[22px] font-bold outline-none md:text-[26px]">Корзина пуста</h2>
             <p className="mt-2 max-w-md text-sm text-muted">
               Добавьте товары из каталога, чтобы оформить заказ.
             </p>
@@ -47,35 +71,11 @@ export function CartView() {
     );
   }
 
-  function submit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    const v = (k: string) => String(f.get(k) ?? "").trim();
-    const lines = items.map(
-      (i) => `${i.title} — ${i.sku} — ${i.qty} шт × ${formatPriceValue(i.price)} = ${formatPriceValue(i.qty * i.price)}`,
-    );
-    const optional = (label: string, key: string) => (v(key) ? [`${label}: ${v(key)}`] : []);
-    const text = [
-      "Состав заказа:",
-      ...lines,
-      "",
-      `Итого: от ${formatPriceValue(total)}`,
-      "",
-      "Контакты:",
-      `Имя: ${v("name")}`,
-      `Телефон: ${v("phone")}`,
-      ...optional("Компания", "company"),
-      ...optional("Email", "email"),
-      ...optional("Комментарий", "comment"),
-    ].join("\n");
-    setSent(true);
-    window.location.assign(`mailto:${site.email}?subject=${encodeURIComponent("Заказ с сайта ProStyle")}&body=${encodeURIComponent(text)}`);
-  }
-
   return (
     <section aria-label="Состав заказа" className="py-6 md:py-8">
       <Container className="grid items-start gap-6 lg:grid-cols-[1fr_360px]">
         <div>
+          <h2 id="cart-heading" tabIndex={-1} className="sr-only">Состав заказа</h2>
           <ul className="grid gap-3">
             {items.map((i) => (
               <li
@@ -97,7 +97,8 @@ export function CartView() {
                   <button
                     type="button"
                     aria-label={`Удалить: ${i.title}`}
-                    onClick={() => removeFromCart(i.id)}
+                    data-remove={i.id}
+                    onClick={() => remove(i.id)}
                     className="grid size-9 place-items-center rounded-lg text-muted hover:text-brand sm:hidden"
                   >
                     <Trash2 size={18} aria-hidden="true" />
@@ -110,7 +111,8 @@ export function CartView() {
                   <button
                     type="button"
                     aria-label={`Удалить: ${i.title}`}
-                    onClick={() => removeFromCart(i.id)}
+                    data-remove={i.id}
+                    onClick={() => remove(i.id)}
                     className="hidden size-9 place-items-center rounded-lg text-muted hover:text-brand sm:grid"
                   >
                     <Trash2 size={18} aria-hidden="true" />
@@ -121,18 +123,85 @@ export function CartView() {
           </ul>
           <button
             type="button"
-            onClick={() => {
-              clearCart();
-              setOpen(false);
-              setSent(false);
-            }}
+            onClick={() => clearCart()}
             className="mt-4 text-[13px] font-medium text-muted underline hover:text-brand"
           >
             Очистить корзину
           </button>
         </div>
 
-        <aside aria-label="Итого" className="rounded-[14px] bg-surface p-5 md:p-6 lg:sticky lg:top-4">
+        <Summary items={items} />
+      </Container>
+    </section>
+  );
+}
+
+type Sent = { text: string; opened: boolean };
+
+const MAILTO_LIMIT = 1800;
+
+function Summary({ items }: { items: readonly CartItem[] }) {
+  const [open, setOpen] = useState(false);
+  const [sent, setSent] = useState<Sent | null>(null);
+  const [copied, setCopied] = useState<"" | "ok" | "fail">("");
+  const area = useRef<HTMLTextAreaElement>(null);
+  const total = cartTotal(items);
+  const count = cartCount(items);
+  const reached = total >= MIN_ORDER;
+
+  function submit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    const v = (k: string) => String(f.get(k) ?? "").trim();
+    const opt = (label: string, val: string) => (val ? [`${label}: ${val}`] : []);
+    const contacts = (comment: string) => [
+      "Контакты:",
+      `Имя: ${v("name")}`,
+      `Телефон: ${v("phone")}`,
+      ...opt("Компания", v("company")),
+      ...opt("Email", v("email")),
+      ...opt("Комментарий", comment),
+    ];
+    const totalLine = `Итого: от ${formatPriceValue(total)}`;
+    const build = (lines: string[], comment: string) =>
+      ["Состав заказа:", ...lines, "", totalLine, "", ...contacts(comment)].join("\r\n");
+    const full = build(
+      items.map((i) => `${i.title} — ${i.sku} — ${i.qty} шт × ${formatPriceValue(i.price)} = ${formatPriceValue(i.qty * i.price)}`),
+      v("comment"),
+    );
+    const url = (body: string) =>
+      `mailto:${site.email}?subject=${encodeURIComponent("Заказ с сайта ProStyle")}&body=${encodeURIComponent(body)}`;
+
+    let href: string | null = url(full);
+    if (href.length > MAILTO_LIMIT) {
+      const compact = items.map((i) => `арт. ${i.sku} × ${i.qty} шт = ${formatPriceValue(i.qty * i.price)}`);
+      href = url(build(compact, ""));
+      if (href.length <= MAILTO_LIMIT) {
+        let c = v("comment");
+        while (c && url(build(compact, c)).length > MAILTO_LIMIT) c = c.slice(0, Math.max(0, c.length - 10));
+        href = url(build(compact, c));
+      } else {
+        href = null;
+      }
+    }
+    setCopied("");
+    setSent({ text: full, opened: href !== null });
+    if (href) window.open(href, "_self");
+  }
+
+  async function copy() {
+    if (!sent) return;
+    try {
+      await navigator.clipboard.writeText(sent.text.replace(/\r\n/g, "\n"));
+      setCopied("ok");
+    } catch {
+      area.current?.select();
+      setCopied("fail");
+    }
+  }
+
+  return (
+    <aside aria-label="Итого" className="rounded-[14px] bg-surface p-5 md:p-6 lg:sticky lg:top-4">
           <div aria-live="polite" aria-atomic="true">
             <p className="text-sm text-muted">Товаров: {count}</p>
             <p className="mt-1 text-[22px] font-bold md:text-[26px]">Итого: от {formatPriceValue(total)}</p>
@@ -198,15 +267,28 @@ export function CartView() {
                 Отправить заказ
               </button>
               {sent ? (
-                <p role="status" className="text-[13px] text-muted">
-                  Мы откроем ваш почтовый клиент. Если письмо не открылось — позвоните{" "}
-                  <a href={site.phone.href} className="font-medium text-ink hover:text-brand">{site.phone.label}</a>
-                </p>
+                <div role="status" className="grid gap-2 text-[13px] text-muted">
+                  {sent.opened ? (
+                    <p>
+                      Мы откроем ваш почтовый клиент. Если письмо не открылось — позвоните{" "}
+                      <a href={site.phone.href} className="font-medium text-ink hover:text-brand">{site.phone.label}</a>
+                    </p>
+                  ) : null}
+                  <p>
+                    Скопируйте заказ и отправьте на{" "}
+                    <a href={`mailto:${site.email}`} className="font-medium text-ink hover:text-brand">{site.email}</a>{" "}
+                    или позвоните{" "}
+                    <a href={site.phone.href} className="font-medium text-ink hover:text-brand">{site.phone.label}</a>
+                  </p>
+                  <label className="sr-only" htmlFor="order-text">Текст заказа</label>
+                  <textarea id="order-text" ref={area} readOnly rows={8} value={sent.text.replace(/\r\n/g, "\n")} className={`${field} mt-0 text-[13px]`} />
+                  <button type="button" onClick={copy} className={btnOutline}>Скопировать заказ</button>
+                  {copied === "ok" ? <p className="font-medium text-new-text">Заказ скопирован</p> : null}
+                  {copied === "fail" ? <p>Не удалось скопировать — выделите текст и скопируйте вручную</p> : null}
+                </div>
               ) : null}
             </form>
           ) : null}
         </aside>
-      </Container>
-    </section>
   );
 }

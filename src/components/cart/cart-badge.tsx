@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
+import { plural } from "@/lib/plural";
 import { cartCount } from "@/lib/cart/store";
 import { useCart } from "@/lib/cart/use-cart";
 
@@ -9,7 +10,7 @@ import { useCart } from "@/lib/cart/use-cart";
 export function CartLink({ className }: { className: string }) {
   const n = cartCount(useCart());
   return (
-    <Link href="/cart" aria-label={n ? `Корзина, ${n} товаров` : "Корзина"} className={className}>
+    <Link href="/cart" aria-label={n ? `Корзина, ${n} ${plural("item", n)}` : "Корзина"} className={className}>
       <span className="relative grid place-items-center">
         <ShoppingCart size={22} aria-hidden />
         {n > 0 ? (

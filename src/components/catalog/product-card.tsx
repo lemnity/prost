@@ -58,7 +58,17 @@ export function ProductCard({ product }: { product: Product }) {
           </span>
         ) : null}
       </p>
-      <AddToCartButton product={product} />
+      <AddToCartButton
+        product={{
+          id: product.id,
+          sku: product.sku,
+          title: product.title,
+          image: product.image,
+          url: product.url,
+          priceFrom: product.priceFrom,
+          stock: product.stock,
+        }}
+      />
     </article>
   );
 }

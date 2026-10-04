@@ -28,6 +28,7 @@ function isItem(x: unknown): x is CartItem {
     typeof o.url === "string" &&
     typeof o.price === "number" &&
     Number.isFinite(o.price) &&
+    o.price >= 0 &&
     typeof o.qty === "number" &&
     Number.isInteger(o.qty) &&
     o.qty >= 1
@@ -40,7 +41,11 @@ function read(): readonly CartItem[] {
     if (!raw) return EMPTY;
     const data: unknown = JSON.parse(raw);
     if (!Array.isArray(data) || !data.every(isItem)) throw new Error("bad");
-    return data.length ? Object.freeze(data.map((i) => ({ ...i, qty: Math.min(i.qty, MAX_QTY) }))) : EMPTY;
+    const seen = new Set<string>();
+    const list = data
+      .filter((i) => !seen.has(i.id) && !!seen.add(i.id))
+      .map((i) => ({ ...i, qty: Math.min(i.qty, MAX_QTY) }));
+    return list.length ? Object.freeze(list) : EMPTY;
   } catch {
     try {
       localStorage.removeItem(CART_KEY);

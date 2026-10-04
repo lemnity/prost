@@ -1,11 +1,20 @@
 "use client";
 
+import { useState } from "react";
 import { Minus, Plus } from "lucide-react";
 import { setQty } from "@/lib/cart/store";
 
 export function QtyStepper({ id, qty, title }: { id: string; qty: number; title: string }) {
+  const [draft, setDraft] = useState<string | null>(null);
   const btn =
     "grid size-9 shrink-0 place-items-center text-ink hover:text-brand disabled:text-faint disabled:hover:text-faint";
+  function commit() {
+    if (draft !== null) {
+      const n = parseInt(draft, 10);
+      if (n > 0) setQty(id, n);
+    }
+    setDraft(null);
+  }
   return (
     <div
       role="group"
@@ -19,14 +28,18 @@ export function QtyStepper({ id, qty, title }: { id: string; qty: number; title:
         type="text"
         inputMode="numeric"
         aria-label="Количество"
-        value={qty}
-        onChange={(e) => {
-          const n = parseInt(e.target.value.replace(/\D/g, ""), 10);
-          if (n > 0) setQty(id, n);
+        value={draft ?? String(qty)}
+        onChange={(e) => setDraft(e.target.value.replace(/\D/g, ""))}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            commit();
+          } else if (e.key === "Escape") setDraft(null);
         }}
         className="h-full w-12 min-w-0 bg-transparent text-center text-[13px] font-semibold tabular-nums text-ink outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"
       />
-      <button type="button" aria-label="Увеличить количество" disabled={qty >= 99999} onClick={() => setQty(id, qty + 1)} className={btn}>
+      <button type="button" data-plus aria-label="Увеличить количество" disabled={qty >= 99999} onClick={() => setQty(id, qty + 1)} className={btn}>
         <Plus size={14} aria-hidden="true" />
       </button>
     </div>
