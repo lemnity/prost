@@ -4,7 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { Container } from "@/components/ui/container";
 import { SectionHeader } from "@/components/ui/section-header";
-import { getPopularCategories } from "@/lib/catalog";
+import { getNewYearPicks, getPopularCategories } from "@/lib/catalog";
+import type { Product } from "@/lib/catalog";
+import { formatPriceValue } from "@/lib/format";
 import { getNewYearCountdown, getUpcomingHolidays } from "@/lib/holidays";
 import { HolidayStatus } from "./holiday-status";
 import { NewYearCountdown } from "./new-year-countdown";
@@ -24,7 +26,15 @@ const FLAKES = Array.from({ length: 20 }, (_, i) => ({
   drift: ((i % 2 ? 1 : -1) * (6 + ((i * 4) % 12))),
 }));
 
-function WideTile({ cat, className = "" }: { cat: Cat; className?: string }) {
+function WideTile({
+  cat,
+  picks,
+  className = "",
+}: {
+  cat: Cat;
+  picks: Product[];
+  className?: string;
+}) {
   return (
     <Link
       href={cat.href}
@@ -43,22 +53,37 @@ function WideTile({ cat, className = "" }: { cat: Cat; className?: string }) {
         aria-hidden="true"
         className="pointer-events-none absolute -bottom-5 left-[30%] h-9 w-[80%] rounded-[50%] bg-white"
       />
-      <div
-        className="ny-globe absolute -bottom-[6%] right-0 top-0 w-[36%] xl:w-[38%]"
-        style={{
-          WebkitMaskImage:
-            "radial-gradient(closest-side, #000 72%, transparent)",
-          maskImage: "radial-gradient(closest-side, #000 72%, transparent)",
-        }}
+      <ul
+        aria-label="Подборка новогодних подарков"
+        className="absolute inset-y-0 right-0 m-0 w-[36%] list-none p-0 xl:w-[38%]"
       >
-        <Image
-          src={asset(cat.image)}
-          alt=""
-          fill
-          sizes="(min-width:1280px) 20vw, (min-width:768px) 30vw, 40vw"
-          className="object-contain mix-blend-multiply transition-transform duration-200 group-hover:scale-[1.03]"
-        />
-      </div>
+        {picks.map((p, i) => (
+          <li
+            key={p.id}
+            className={`ny-slide absolute inset-0 flex flex-col items-center px-2 pb-2 pt-2 ${
+              i === 0 ? "opacity-100" : "opacity-0"
+            }`}
+            style={{ "--i": i } as React.CSSProperties}
+          >
+            <div className="relative min-h-0 w-full flex-1">
+              <Image
+                src={asset(p.image)}
+                alt={p.title}
+                fill
+                sizes="(min-width:1280px) 160px, (min-width:768px) 30vw, 40vw"
+                loading={i === 0 ? "eager" : "lazy"}
+                className="object-contain mix-blend-multiply"
+              />
+            </div>
+            <span className="relative z-10 mt-1 block w-full truncate text-center text-[11px] leading-tight text-ink">
+              {p.title}
+            </span>
+            <span className="relative z-10 block w-full text-center text-[11px] font-bold leading-tight text-brand">
+              от {formatPriceValue(p.priceFrom)}
+            </span>
+          </li>
+        ))}
+      </ul>
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
@@ -146,7 +171,10 @@ function Tile({
 }
 
 export async function PopularCategories() {
-  const cats = await getPopularCategories();
+  const [cats, picks] = await Promise.all([
+    getPopularCategories(),
+    getNewYearPicks(),
+  ]);
   const first = cats.slice(0, 11);
   const rest = cats.slice(11);
   return (
@@ -161,7 +189,7 @@ export async function PopularCategories() {
           <div className="contents xl:grid xl:grid-cols-6 xl:gap-3">
             {first.map((c) =>
               c.id === "novyy-god" ? (
-                <WideTile key={c.id} cat={c} className="col-span-2" />
+                <WideTile key={c.id} cat={c} picks={picks} className="col-span-2" />
               ) : (
                 <Tile key={c.id} cat={c} />
               ),

@@ -149,9 +149,11 @@
   90% { opacity: 1; }
   100% { transform: translate3d(calc(var(--drift, 8px) * -0.6), 210px, 0); opacity: 0; }
 }
-@keyframes globe-sway {
-  0%, 100% { transform: rotate(-2deg); }
-  50% { transform: rotate(2deg); }
+/* Цикл на 7 слайдов по 3 с (21 с); сдвиг -0.5с: первый слайд виден сразу. */
+@keyframes ny-slide {
+  0% { opacity: 0; transform: translateX(45%); }
+  2.4%, 11.9% { opacity: 1; transform: translateX(0); }
+  14.3%, 100% { opacity: 0; transform: translateX(-45%); }
 }
 @keyframes sec-tick {
   0% { transform: scale(1.06); }
@@ -163,7 +165,7 @@
 }
 @media (prefers-reduced-motion: no-preference) {
   .ny-flake { animation: snowfall var(--dur, 9s) linear var(--delay, 0s) infinite; }
-  .ny-globe { animation: globe-sway 4s ease-in-out infinite; transform-origin: 50% 20%; }
+  .ny-slide { animation: ny-slide 21s linear calc(var(--i) * 3s - 0.5s) infinite backwards; }
   .ny-tick { animation: sec-tick 0.35s ease-out; }
   .ny-arrow { animation: arrow-pulse 1.6s ease-in-out infinite; }
 }

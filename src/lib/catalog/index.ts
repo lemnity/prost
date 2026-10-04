@@ -1,5 +1,5 @@
 // Здесь позже подключаются провайдеры складов (Oasis и др.).
-import { catalogTree, newProducts, saleProducts, popularCategories, productOfDay } from "./static-data";
+import { catalogTree, newProducts, saleProducts, popularCategories, productOfDay, newYearPicks } from "./static-data";
 import type { CatalogNode, Category, Product } from "./types";
 
 export type { CatalogNode, Category, Product } from "./types";
@@ -22,4 +22,8 @@ export async function getCatalogTree(): Promise<CatalogNode[]> {
 
 export async function getProductOfDay(categoryId: string): Promise<Product | null> {
   return productOfDay[categoryId] ?? null;
+}
+
+export async function getNewYearPicks(limit = 7): Promise<Product[]> {
+  return newYearPicks.slice(0, limit);
 }

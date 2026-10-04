@@ -550,3 +550,14 @@ export const productOfDay: Record<string, Product> = {
   "uhod-i-zdorovie": { id: "potd-uhod-i-zdorovie", title: "Косметичка HALGAR, рециклированный хлопок (красный)", sku: "346832/08", priceFrom: 350, currency: "RUB", image: "/images/potd/uhod-i-zdorovie.webp", url: "/catalog/uhod-i-zdorovie/2331/item-kosmetichka-halgar-recziklirovannyj-xlopok-krasnyj-34683208", stock: 1 },
   "detyam": { id: "potd-detyam", title: "Набор карандашей (многоцветный)", sku: "KC2478-99", priceFrom: 44, currency: "RUB", image: "/images/potd/detyam.webp", url: "/catalog/detyam/2323/item-nabor-karandashej-kc2478-99", stock: 1 },
 };
+
+/** Подборка популярных новогодних товаров для плитки на главной (шов для API складов). */
+export const newYearPicks: Product[] = [
+  { id: "ny-cx1473-40", title: "Подвеска новогодняя (шар) (древесный)", sku: "CX1473-40", priceFrom: 48, currency: "RUB", image: "/images/ny/ny-cx1473-40.webp", url: "/catalog/novyy-god/s-novogodnie-shary/item-podveska-novogodnyaya-shar-cx1473-40", stock: 1 },
+  { id: "ny-cx1475-40", title: "Подвеска новогодняя (дерево) (древесный)", sku: "CX1475-40", priceFrom: 47, currency: "RUB", image: "/images/ny/ny-cx1475-40.webp", url: "/catalog/novyy-god/novogodnie-igrushki/item-podveska-novogodnyaya-derevo-cx1475-40", stock: 1 },
+  { id: "ny-cx1476-40", title: "Подвеска новогодняя (звезда) (древесный)", sku: "CX1476-40", priceFrom: 47, currency: "RUB", image: "/images/ny/ny-cx1476-40.webp", url: "/catalog/novyy-god/novogodnie-igrushki/item-podveska-novogodnyaya-zvezda-cx1476-40", stock: 1 },
+  { id: "ny-cx1013-05", title: "Рождественский сапожок (красный)", sku: "CX1013-05", priceFrom: 116, currency: "RUB", image: "/images/ny/ny-cx1013-05.webp", url: "/catalog/novyy-god/novogodnie-igrushki/item-rozhdestvenskij-sapozhok-cx1013-05", stock: 1 },
+  { id: "ny-cx1474-40", title: "Подвеска новогодняя (снежинка) (древесный)", sku: "CX1474-40", priceFrom: 47, currency: "RUB", image: "/images/ny/ny-cx1474-40.webp", url: "/catalog/novyy-god/novogodnie-igrushki/item-podveska-novogodnyaya-snezhinka-cx1474-40", stock: 1 },
+  { id: "ny-349537-b", title: "Украшение на елку ЕЛОЧКА (ярко-красный)", sku: "349537/B", priceFrom: 33, currency: "RUB", image: "/images/ny/ny-349537-b.webp", url: "/catalog/novyy-god/novogodnie-igrushki/item-ukrashenie-na-elku-elochka-yarko-krasnyj-349537b", stock: 1 },
+  { id: "ny-cx1435-16", title: "Ситечко чайное в виде звезды (тускло-серебряный)", sku: "CX1435-16", priceFrom: 432, currency: "RUB", image: "/images/ny/ny-cx1435-16.webp", url: "/catalog/novyy-god/s-novogodnie-nabory/item-sitechko-chajnoe-v-vide-zvezdy-cx1435-16", stock: 1 },
+];
