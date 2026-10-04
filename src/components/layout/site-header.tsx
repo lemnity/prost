@@ -4,6 +4,7 @@ import Link from "next/link";
 import {
   FileText,
   Heart,
+  Mail,
   PhoneCall,
   Search,
   ShoppingCart,
@@ -18,6 +19,9 @@ import { CatalogDesktop, CatalogSheet } from "./catalog-panel";
 
 const iconBtn =
   "grid size-12 shrink-0 place-items-center rounded-[10px] bg-white/10 text-white hover:bg-white/20";
+
+const circle =
+  "grid shrink-0 place-items-center rounded-full bg-brand-soft text-brand motion-safe:transition-colors motion-safe:duration-150 hover:bg-brand hover:text-white";
 
 const actions = [
   { label: "Профиль", href: "/account", Icon: User, mobile: true },
@@ -69,17 +73,28 @@ export function SiteHeader() {
         <a
           href={site.phone.href}
           aria-label={site.phone.label}
-          className="grid size-10 shrink-0 place-items-center text-brand lg:hidden"
+          className={`${circle} size-10 lg:hidden`}
         >
-          <PhoneCall size={30} strokeWidth={1.75} aria-hidden />
+          <PhoneCall size={20} strokeWidth={2} aria-hidden />
         </a>
-        <div className="hidden shrink-0 items-center gap-3 lg:flex">
-          <PhoneCall size={36} strokeWidth={1.75} className="text-brand" aria-hidden />
-          <div className="leading-tight">
-            <a href={site.phone.href} className="block text-lg font-bold hover:text-brand">
+        <div className="hidden shrink-0 items-center gap-3 whitespace-nowrap lg:flex">
+          <a
+            href={site.phone.href}
+            tabIndex={-1}
+            aria-hidden
+            className={`${circle} size-11`}
+          >
+            <PhoneCall size={20} strokeWidth={2} aria-hidden />
+          </a>
+          <div>
+            <a href={site.phone.href} className="block text-lg font-semibold leading-tight text-ink hover:text-brand">
               {site.phone.label}
             </a>
-            <a href={`mailto:${site.email}`} className="block whitespace-nowrap text-sm text-muted hover:text-brand">
+            <a
+              href={`mailto:${site.email}`}
+              className="mt-0.5 flex items-center gap-1.5 text-[13px] leading-tight text-muted hover:text-brand"
+            >
+              <Mail size={13} aria-hidden />
               {site.email}
             </a>
           </div>
