@@ -19,7 +19,7 @@ const CloseContext = createContext<() => void>(() => {});
 export const usePopoverClose = () => useContext(CloseContext);
 
 const chipBase =
-  "inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-[10px] bg-white px-3.5 text-[13px] shadow-[0_1px_2px_rgba(16,24,40,0.06),0_2px_8px_rgba(16,24,40,0.08)] ring-1 ring-line";
+  "inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[10px] bg-white px-3 text-[13px] shadow-[0_1px_2px_rgba(16,24,40,0.06),0_2px_8px_rgba(16,24,40,0.08)] ring-1 ring-line";
 const chipDisabled = "cursor-not-allowed bg-surface text-faint shadow-none";
 const chipEnabled = "text-ink hover:ring-brand/40";
 
@@ -50,7 +50,7 @@ export function CheckChip({
   return (
     <label
       title={title}
-      className={`${chipBase} ${disabled ? chipDisabled : `cursor-pointer ${chipEnabled}`} ${
+      className={`${chipBase} px-2.5 ${disabled ? chipDisabled : `cursor-pointer ${chipEnabled}`} ${
         checked ? "ring-brand" : ""
       }`}
     >
@@ -164,7 +164,7 @@ export function Dropdown({
           </span>
         ) : null}
         <ChevronDown
-          size={16}
+          size={14}
           aria-hidden="true"
           className={`${disabled ? "text-faint" : "text-muted"} motion-safe:transition-transform ${open ? "rotate-180" : ""}`}
         />

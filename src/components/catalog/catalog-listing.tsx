@@ -82,27 +82,25 @@ export function CatalogListing({ products, sidebar = false, query: urlQuery = ""
 
   return (
     <div>
-      <div
-        role="group"
-        aria-label="Фильтры"
-        className="no-scrollbar -mx-4 mb-4 flex items-center gap-2 overflow-x-auto px-4 py-1.5 md:mx-0 md:flex-wrap md:overflow-visible md:px-0"
-      >
-        <CheckChip
-          label="Новинки"
-          checked={filters.isNew}
-          onChange={(v) => update({ isNew: v })}
-          disabled={!hasNew && !filters.isNew}
-          title={!hasNew ? "Новинок в этом разделе пока нет" : undefined}
-        />
-        <CheckChip label="Акции" checked={false} onChange={() => {}} disabled title={OASIS_HINT} />
-        <CheckChip label="В наличии" checked={filters.inStock} onChange={(v) => update({ inStock: v })} />
+      <FilterRow>
+        <div className="flex shrink-0 items-center gap-1">
+          <CheckChip
+            label="Новинки"
+            checked={filters.isNew}
+            onChange={(v) => update({ isNew: v })}
+            disabled={!hasNew && !filters.isNew}
+            title={!hasNew ? "Новинок в этом разделе пока нет" : undefined}
+          />
+          <CheckChip label="Акции" checked={false} onChange={() => {}} disabled title={OASIS_HINT} />
+          <CheckChip label="В наличии" checked={filters.inStock} onChange={(v) => update({ inStock: v })} />
+        </div>
         <Dropdown label="Цена" count={priceOn ? 1 : 0}>
           <PricePopover min={filters.min} max={filters.max} onApply={(min, max) => update({ min, max })} />
         </Dropdown>
         {groups.slice(0, 3).map(listDropdown)}
-        <Dropdown label="Вид нанесения" disabled title={OASIS_HINT} />
+        <Dropdown label="Нанесение" disabled title={`Вид нанесения. ${OASIS_HINT}`} />
         {listDropdown(groups[3])}
-      </div>
+      </FilterRow>
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
@@ -178,6 +176,43 @@ export function CatalogListing({ products, sidebar = false, query: urlQuery = ""
           />
         </Drawer>
       ) : null}
+    </div>
+  );
+}
+
+/** Строка фильтров в одну линию; при нехватке места прокручивается с затуханием справа. */
+function FilterRow({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [fade, setFade] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const check = () => setFade(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    el.addEventListener("scroll", check, { passive: true });
+    return () => {
+      ro.disconnect();
+      el.removeEventListener("scroll", check);
+    };
+  }, []);
+  return (
+    <div className="relative -mx-4 mb-3 md:mx-0">
+      <div
+        ref={ref}
+        role="group"
+        aria-label="Фильтры"
+        className="no-scrollbar flex items-center gap-1.5 overflow-x-auto px-4 py-1.5 md:px-0.5"
+      >
+        {children}
+      </div>
+      <div
+        aria-hidden="true"
+        className={`pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white to-transparent transition-opacity ${
+          fade ? "opacity-100" : "opacity-0"
+        }`}
+      />
     </div>
   );
 }
