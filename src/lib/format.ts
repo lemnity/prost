@@ -17,3 +17,6 @@ export function pluralRu(n: number, [one, few, many]: readonly [string, string, 
 
 export const productsLabel = (n: number) =>
   `${priceNumber.format(n)} ${pluralRu(n, ["товар", "товара", "товаров"])}`;
+
+/** Количество с тонким пробелом между разрядами: «18 267». */
+export const formatQty = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, "\u2009");

@@ -10,6 +10,8 @@ export type Product = {
   url: string;
   stock: number;
   isNew?: boolean;
+  /** Нет остатка, но есть поставка под заказ. */
+  preorder?: boolean;
 };
 
 export type Category = {
@@ -34,5 +36,5 @@ export type ListingProduct = Product & {
   materials: string[];
   // Появятся с провайдером склада Oasis (URL: promo, print).
   promo?: boolean;
-  prints?: string[];
+  prints: string[];
 };

@@ -5,6 +5,7 @@ import raw from "@/data/catalog-products.json";
 import { catalogTree, newProducts, newYearPicks, saleProducts } from "./static-data";
 import { deriveColors } from "./colors";
 import { getProductDetails, normalizeMaterials } from "./details";
+import { getStock, normalizePrints, summarizeStock } from "./stock";
 import type { CatalogNode, Product } from "./types";
 
 export type ProductVariant = {
@@ -36,6 +37,10 @@ export type CatalogProduct = {
   /** Поставщик (specs.supplier карточки) и материалы — из описаний, при загрузке. */
   supplier: string;
   materials: string[];
+  /** Нормализованные виды нанесения. */
+  prints: string[];
+  /** Поставка под заказ при нулевом остатке. */
+  preorder: boolean;
 };
 
 /** Виртуальные подборки из навигации (не входят в дерево категорий). */
@@ -85,6 +90,8 @@ function fromStatic(p: Product, popularity: number): CatalogProduct {
     colors: [],
     supplier: "",
     materials: [],
+    prints: [],
+    preorder: false,
   };
 }
 
@@ -115,6 +122,14 @@ function load(): CatalogProduct[] {
     const d = getProductDetails(p.url);
     p.supplier = d?.specs.supplier?.trim() ?? "";
     p.materials = normalizeMaterials(d);
+    const st = getStock(p.url);
+    p.prints = normalizePrints(st);
+    p.preorder = false;
+    const sum = summarizeStock(st);
+    if (sum) {
+      p.stock = sum.free;
+      p.preorder = sum.preorder;
+    }
   }
   cache = list;
   return list;
@@ -236,6 +251,7 @@ export function toCard(p: CatalogProduct): Product {
     url: p.url,
     stock: p.stock,
     isNew: p.isNew,
+    ...(p.preorder ? { preorder: true } : {}),
   };
 }
 

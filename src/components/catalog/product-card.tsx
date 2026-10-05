@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Heart } from "lucide-react";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
-import { formatPriceValue } from "@/lib/format";
+import { formatPriceValue, formatQty } from "@/lib/format";
 import type { Product } from "@/lib/catalog/types";
 
 export function ProductCard({ product }: { product: Product }) {
@@ -58,6 +58,11 @@ export function ProductCard({ product }: { product: Product }) {
           </span>
         ) : null}
       </p>
+      {product.stock > 0 ? (
+        <p className="mt-1 text-[12px] text-muted">На складе: {formatQty(product.stock)} шт.</p>
+      ) : product.preorder ? (
+        <p className="mt-1 text-[12px] text-muted">Под заказ</p>
+      ) : null}
       <AddToCartButton
         product={{
           id: product.id,

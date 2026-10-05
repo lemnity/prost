@@ -43,6 +43,7 @@ const BASES = {
   suppliers: (p: ListingProduct) => [p.supplier],
   materials: (p: ListingProduct) => p.materials,
   brands: (p: ListingProduct) => [p.brand],
+  prints: (p: ListingProduct) => p.prints,
   colors: (p: ListingProduct) => p.colors,
 } as const;
 
@@ -64,6 +65,7 @@ export function CatalogListing({
       suppliers: valueOptions(products, BASES.suppliers),
       materials: valueOptions(products, BASES.materials),
       colors: colorOptions(products),
+      prints: valueOptions(products, BASES.prints),
       brands: valueOptions(products, BASES.brands),
     }),
     [products],
@@ -80,6 +82,7 @@ export function CatalogListing({
       def("suppliers", "Поставщик", "Нет данных о поставщиках в этом разделе"),
       def("materials", "Материал", "Нет данных о материалах в этом разделе"),
       def("colors", "Цвет", "Нет данных о цвете в этом разделе"),
+      def("prints", "Нанесение", "Нет данных о видах нанесения в этом разделе"),
       def("brands", "Бренд", "Нет данных о брендах в этом разделе"),
     ];
   }, [products, filters, base]);
@@ -100,8 +103,8 @@ export function CatalogListing({
   const chips = useMemo<Chip[]>(() => {
     const out: Chip[] = [];
     const labelOf = (key: Group["key"], v: string) => base[key].find((o) => o.value === v)?.label ?? v;
-    const names = { suppliers: "Поставщик", materials: "Материал", colors: "Цвет", brands: "Бренд" } as const;
-    for (const key of ["suppliers", "materials", "colors", "brands"] as const) {
+    const names = { suppliers: "Поставщик", materials: "Материал", colors: "Цвет", prints: "Нанесение", brands: "Бренд" } as const;
+    for (const key of ["suppliers", "materials", "colors", "prints", "brands"] as const) {
       for (const v of filters[key]) {
         out.push({
           id: `${key}:${v}`,

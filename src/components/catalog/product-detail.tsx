@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { Check, Copy, Minus, Plus, Ruler } from "lucide-react";
 import { addToCart } from "@/lib/cart/store";
 import { asset } from "@/lib/asset";
-import { formatPriceValue } from "@/lib/format";
+import { formatPriceValue, formatQty } from "@/lib/format";
 
 export type VariantView = {
   key: string;
@@ -19,11 +19,13 @@ export type VariantView = {
   sku: string;
   /** null — наличие неизвестно (по запросу). */
   stock: number | null;
+  /** Строки остатков (размеры); null — нет данных. */
+  info: { size: string; stock: number; free: number; remote: number }[] | null;
   price: number;
 };
 
-const stockNumber = new Intl.NumberFormat("ru-RU");
 const MAX_QTY = 99999;
+const maxOf = (v: VariantView) => (v.stock != null && v.stock > 0 ? Math.min(MAX_QTY, v.stock) : MAX_QTY);
 
 export function ProductDetail({
   title,
@@ -90,16 +92,6 @@ export function ProductDetail({
               <CopyButton text={v.sku} />
             </dd>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <dt className="sr-only">Наличие</dt>
-            <dd className={v.stock ? "font-medium text-new-text" : "font-medium text-muted"}>
-              {v.stock == null
-                ? "Наличие уточняйте у менеджера"
-                : v.stock > 0
-                  ? `В наличии: ${stockNumber.format(v.stock)} шт.`
-                  : "Под заказ"}
-            </dd>
-          </div>
           {brand ? (
             <div className="flex flex-wrap items-center gap-2">
               <dt className="text-muted">Поставщик:</dt>
@@ -107,6 +99,8 @@ export function ProductDetail({
             </div>
           ) : null}
         </dl>
+
+        <StockCard v={v} />
 
         <p className="mt-5 text-[28px] font-bold leading-none">
           <span className="text-[16px] font-normal">от </span>
@@ -157,6 +151,72 @@ export function ProductDetail({
   );
 }
 
+const SHOWN_SIZES = 3;
+const REMOTE_HINT = "Поставка под заказ, срок уточняйте у менеджера";
+
+function StockCard({ v }: { v: VariantView }) {
+  const [all, setAll] = useState(false);
+  const note = "mt-4 text-[14px] font-medium text-muted";
+  if (v.info == null) {
+    return (
+      <p className={note}>
+        {v.stock == null
+          ? "Наличие уточняйте у менеджера"
+          : v.stock > 0
+            ? `В наличии: ${formatQty(v.stock)} шт.`
+            : "Под заказ"}
+      </p>
+    );
+  }
+  const rows = v.info;
+  const hasRemote = rows.some((r) => r.remote > 0);
+  if (!hasRemote && rows.every((r) => r.stock <= 0 && r.free <= 0)) {
+    return <p className={note}>Под заказ — срок уточняйте у менеджера</p>;
+  }
+  const sized = rows.length > 1;
+  const shown = all || rows.length <= SHOWN_SIZES ? rows : rows.slice(0, SHOWN_SIZES);
+  const th = "px-4 py-2.5 text-[13px] font-semibold text-ink";
+  const td = "px-4 py-2.5 text-[16px] font-semibold tabular-nums text-brand";
+  return (
+    <div className="mt-4 max-w-[520px] overflow-hidden rounded-[14px] border border-line bg-white shadow-sm">
+      <table className="w-full border-collapse text-left">
+        <thead>
+          <tr className="border-b border-line">
+            {sized ? <th scope="col" className={th}>Размер</th> : null}
+            <th scope="col" className={th}>На складе</th>
+            <th scope="col" className={th}>Доступно</th>
+            {hasRemote ? (
+              <th scope="col" className={th} title={REMOTE_HINT}>
+                Удалённый склад
+              </th>
+            ) : null}
+          </tr>
+        </thead>
+        <tbody>
+          {shown.map((r, i) => (
+            <tr key={`${r.size}-${i}`} className="border-b border-line last:border-b-0">
+              {sized ? <th scope="row" className="px-4 py-2.5 text-[14px] font-medium text-ink">{r.size || "—"}</th> : null}
+              <td className={td}>{formatQty(r.stock)}</td>
+              <td className={td}>{formatQty(r.free)}</td>
+              {hasRemote ? <td className={td}>{formatQty(r.remote)}</td> : null}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {shown.length < rows.length ? (
+        <button
+          type="button"
+          onClick={() => setAll(true)}
+          className="w-full border-t border-line px-4 py-2.5 text-left text-[13px] font-medium text-brand hover:text-brand-hover"
+        >
+          Показать все размеры ({rows.length})
+        </button>
+      ) : null}
+      {hasRemote ? <p className="border-t border-line bg-surface px-4 py-2 text-[12px] text-muted">{REMOTE_HINT}</p> : null}
+    </div>
+  );
+}
+
 function CopyButton({ text }: { text: string }) {
   const [done, setDone] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -191,7 +251,8 @@ function BuyBox({ variant: v }: { variant: VariantView }) {
   const [added, setAdded] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
-  const clamp = (n: number) => Math.min(MAX_QTY, Math.max(1, Math.floor(n) || 1));
+  const max = maxOf(v);
+  const clamp = (n: number) => Math.min(max, Math.max(1, Math.floor(n) || 1));
 
   if (v.stock == null || v.stock <= 0) {
     return (
@@ -223,7 +284,7 @@ function BuyBox({ variant: v }: { variant: VariantView }) {
           }}
           className="h-full w-16 min-w-0 bg-transparent text-center text-[14px] font-semibold tabular-nums outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"
         />
-        <button type="button" aria-label="Увеличить количество" disabled={qty >= MAX_QTY} onClick={() => setQty((q) => clamp(q + 1))} className={btn}>
+        <button type="button" aria-label="Увеличить количество" disabled={qty >= max} onClick={() => setQty((q) => clamp(q + 1))} className={btn}>
           <Plus size={16} aria-hidden="true" />
         </button>
       </div>

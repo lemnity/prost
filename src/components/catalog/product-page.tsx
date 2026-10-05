@@ -7,6 +7,7 @@ import { SectionHeader } from "@/components/ui/section-header";
 import { ProductCard } from "./product-card";
 import { ProductDetail, type VariantView } from "./product-detail";
 import { ProductTabs } from "./product-tabs";
+import { getStock, normalizePrints, type StockInfo } from "@/lib/catalog/stock";
 import { buildSpecRows, getProductDetails } from "@/lib/catalog/details";
 import { asset } from "@/lib/asset";
 import { applications } from "@/content/home";
@@ -61,6 +62,12 @@ function skuFromUrl(product: CatalogProduct, url: string): string {
   });
 }
 
+/** Остатки для клиента: только нужные поля. */
+function stockView(url: string): VariantView["info"] {
+  const s: StockInfo | null = getStock(url);
+  return s ? s.rows.map((r) => ({ size: r.size, stock: r.stock, free: r.free, remote: r.remote })) : null;
+}
+
 function buildVariants(product: CatalogProduct): { variants: VariantView[]; initial: number } {
   const self: VariantView = {
     key: product.url,
@@ -71,6 +78,7 @@ function buildVariants(product: CatalogProduct): { variants: VariantView[]; init
     title: product.title,
     sku: product.sku,
     stock: product.stock,
+    info: stockView(product.url),
     price: product.price,
   };
   const seen = new Set<string>();
@@ -94,6 +102,7 @@ function buildVariants(product: CatalogProduct): { variants: VariantView[]; init
             title: match.title,
             sku: match.sku,
             stock: match.stock,
+            info: stockView(match.url),
             price: match.price,
           }
         : // Вариант без данных в выгрузке: фото и артикул (из адреса), наличие — по запросу.
@@ -104,6 +113,7 @@ function buildVariants(product: CatalogProduct): { variants: VariantView[]; init
             image: v.image,
             sku: v.sku ?? skuFromUrl(product, v.url),
             stock: null,
+            info: null,
           },
     );
   });
@@ -117,6 +127,7 @@ export function ProductPage({ product }: { product: CatalogProduct }) {
     ? getSubcategories(product.category).find((s) => s.slug === product.subcategory)
     : undefined;
   const { variants, initial } = buildVariants(product);
+  const prints = normalizePrints(getStock(product.url));
   const similar = getSimilarProducts(product);
   const details = getProductDetails(product.url);
   const paragraphs = (details?.description ?? "")
@@ -143,12 +154,21 @@ export function ProductPage({ product }: { product: CatalogProduct }) {
           <section aria-labelledby="apps-title" className="mt-8 border-t border-line pt-6">
             <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
               <h2 id="apps-title" className="text-[17px] font-semibold">
-                Виды нанесения
+                {prints.length ? "Доступные виды нанесения" : "Виды нанесения"}
               </h2>
               <Link href={applications.link.href} className="text-[13px] font-medium text-brand hover:text-brand-hover">
                 {applications.link.label}
               </Link>
             </div>
+            {prints.length ? (
+              <ul className="flex flex-wrap gap-2">
+                {prints.map((n) => (
+                  <li key={n} className="inline-flex h-9 items-center rounded-full bg-surface px-3.5 text-[13px] text-ink">
+                    {n}
+                  </li>
+                ))}
+              </ul>
+            ) : (
             <ul className="flex flex-wrap gap-2">
               {applications.items.map((a) => (
                 <li key={a.id}>
@@ -162,6 +182,7 @@ export function ProductPage({ product }: { product: CatalogProduct }) {
                 </li>
               ))}
             </ul>
+            )}
           </section>
         </ProductDetail>
       </Container>

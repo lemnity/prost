@@ -4,7 +4,7 @@ import { CheckRow, FilterGroup, OptionList, PriceFields } from "./filter-control
 import { OASIS_HINT, type Filters, type ListFilterKey, type Option } from "./catalog-filters";
 
 export type Group = {
-  key: Exclude<ListFilterKey, "prints">;
+  key: ListFilterKey;
   label: string;
   /** Варианты с фасетными счётчиками. */
   options: Option[];
@@ -67,11 +67,7 @@ export function FilterPanel({
         </p>
         <PriceFields min={filters.min} max={filters.max} onApply={(min, max) => onChange({ min, max })} />
       </fieldset>
-      {groups.slice(0, 3).map(group)}
-      <div className={divider}>
-        <FilterGroup label="Нанесение" defaultOpen={false} disabled hint={OASIS_HINT} />
-      </div>
-      {group(groups[3])}
+      {groups.map(group)}
       {active ? (
         <div className={`${divider} pt-3`}>
           <button

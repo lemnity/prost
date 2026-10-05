@@ -29,6 +29,7 @@ export function ListingPage({
     supplier: p.supplier,
     colors: p.colors,
     materials: p.materials,
+    prints: p.prints,
   }));
   const nav = sections ? <SectionSidebar items={sections} /> : null;
   const select = sections ? <SectionSelect items={sections} /> : null;
