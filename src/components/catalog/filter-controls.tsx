@@ -1,27 +1,11 @@
 "use client";
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useId,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
+import { useId, useState } from "react";
 import { ChevronDown, Search } from "lucide-react";
 import { num, type Option } from "./catalog-filters";
 
-/** Закрыть текущий поповер (с возвратом фокуса на кнопку). */
-const CloseContext = createContext<() => void>(() => {});
-export const usePopoverClose = () => useContext(CloseContext);
-
-const chipBase =
-  "inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[10px] bg-white px-3 text-[13px] shadow-[0_1px_2px_rgba(16,24,40,0.06),0_2px_8px_rgba(16,24,40,0.08)] ring-1 ring-line";
-const chipDisabled = "cursor-not-allowed bg-surface text-faint shadow-none";
-const chipEnabled = "text-ink hover:ring-brand/40";
+const VISIBLE = 6;
+const SEARCH_FROM = 10;
 
 export function Swatch({ bg }: { bg: string }) {
   return (
@@ -33,8 +17,8 @@ export function Swatch({ bg }: { bg: string }) {
   );
 }
 
-/** Чекбокс-«чипс» в строке фильтров. */
-export function CheckChip({
+/** Чекбокс-строка (быстрые переключатели). */
+export function CheckRow({
   label,
   checked,
   onChange,
@@ -50,167 +34,79 @@ export function CheckChip({
   return (
     <label
       title={title}
-      className={`${chipBase} px-2.5 ${disabled ? chipDisabled : `cursor-pointer ${chipEnabled}`} ${
-        checked ? "ring-brand" : ""
+      className={`flex items-center gap-2.5 rounded-md px-1.5 py-1.5 text-[14px] ${
+        disabled ? "cursor-not-allowed text-faint" : "cursor-pointer text-ink hover:bg-surface"
       }`}
     >
       <input
         type="checkbox"
         checked={checked}
         disabled={disabled}
-        aria-disabled={disabled || undefined}
         onChange={(e) => onChange(e.target.checked)}
-        className="size-4 accent-brand disabled:cursor-not-allowed"
+        className="size-4 shrink-0 accent-brand disabled:cursor-not-allowed"
       />
       {label}
     </label>
   );
 }
 
-/** Кнопка-выпадашка с поповером (клик, Esc, клик вне, возврат фокуса). */
-export function Dropdown({
+/** Сворачиваемая группа (кнопка + aria-expanded). */
+export function FilterGroup({
   label,
   count = 0,
+  defaultOpen,
   disabled,
-  title,
+  hint,
   children,
 }: {
   label: string;
   count?: number;
+  defaultOpen: boolean;
   disabled?: boolean;
-  title?: string;
-  children?: ReactNode;
+  hint?: string;
+  children?: React.ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState<{ top: number; left: number; maxHeight: number } | null>(null);
-  const btn = useRef<HTMLButtonElement>(null);
-  const pop = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(defaultOpen);
   const id = useId();
-
-  const close = useCallback((refocus = true) => {
-    setOpen(false);
-    setPos(null);
-    if (refocus) btn.current?.focus();
-  }, []);
-
-  // Поповер fixed: строка фильтров прокручивается по горизонтали и обрезала бы его.
-  useLayoutEffect(() => {
-    if (!open) return;
-    const place = () => {
-      const r = btn.current?.getBoundingClientRect();
-      if (!r) return;
-      const w = Math.min(300, window.innerWidth - 16);
-      const top = r.bottom + 8;
-      setPos({
-        top,
-        left: Math.max(8, Math.min(r.left, window.innerWidth - w - 8)),
-        maxHeight: Math.max(160, window.innerHeight - top - 8),
-      });
-    };
-    place();
-    window.addEventListener("resize", place);
-    window.addEventListener("scroll", place, true);
-    return () => {
-      window.removeEventListener("resize", place);
-      window.removeEventListener("scroll", place, true);
-    };
-  }, [open]);
-
-  // Фокус в поповер — после позиционирования (до него он скрыт).
-  const placed = pos !== null;
-  useEffect(() => {
-    if (open && placed) pop.current?.querySelector<HTMLElement>("input, button")?.focus();
-  }, [open, placed]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.stopPropagation();
-        close();
-      }
-    };
-    const onDown = (e: PointerEvent) => {
-      const t = e.target as Node;
-      if (!pop.current?.contains(t) && !btn.current?.contains(t)) close(false);
-    };
-    document.addEventListener("keydown", onKey);
-    document.addEventListener("pointerdown", onDown);
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.removeEventListener("pointerdown", onDown);
-    };
-  }, [open, close]);
-
+  const expanded = open && !disabled;
   return (
-    <>
+    <div className="py-1">
       <button
-        ref={btn}
         type="button"
-        title={title}
+        aria-expanded={disabled ? undefined : expanded}
+        aria-controls={disabled ? undefined : id}
         aria-disabled={disabled || undefined}
-        aria-haspopup={disabled ? undefined : "dialog"}
-        aria-expanded={disabled ? undefined : open}
-        aria-controls={open ? id : undefined}
+        title={disabled ? hint : undefined}
         onClick={() => !disabled && setOpen((o) => !o)}
-        className={`${chipBase} ${disabled ? chipDisabled : chipEnabled} ${
-          count || open ? "ring-brand" : ""
+        className={`flex w-full items-center gap-2 rounded-md px-1.5 py-2 text-left text-[14px] font-semibold ${
+          disabled ? "cursor-not-allowed text-faint" : "text-ink hover:text-brand"
         }`}
       >
-        {label}
+        <span className="min-w-0 flex-1">{label}</span>
         {count ? (
           <span className="grid h-5 min-w-5 place-items-center rounded-full bg-brand px-1 text-[11px] font-bold text-white">
             {count}
           </span>
         ) : null}
         <ChevronDown
-          size={14}
+          size={16}
           aria-hidden="true"
-          className={`${disabled ? "text-faint" : "text-muted"} motion-safe:transition-transform ${open ? "rotate-180" : ""}`}
+          className={`shrink-0 ${disabled ? "text-faint" : "text-muted"} motion-safe:transition-transform ${
+            expanded ? "rotate-180" : ""
+          }`}
         />
       </button>
-      {open && children ? (
-        <div
-          ref={pop}
-          id={id}
-          role="dialog"
-          aria-label={label}
-          onBlur={(e) => {
-            const t = e.relatedTarget as Node | null;
-            if (t && !pop.current?.contains(t) && !btn.current?.contains(t)) close(false);
-          }}
-          style={pos ?? { visibility: "hidden" }}
-          className="fixed z-[46] w-[min(300px,calc(100vw-16px))] overflow-y-auto overscroll-contain rounded-[12px] bg-white p-3 text-ink shadow-[0_8px_30px_rgba(16,24,40,0.16)] ring-1 ring-line"
-        >
-          <CloseContext.Provider value={close}>{children}</CloseContext.Provider>
+      {disabled && hint ? <p className="px-1.5 pb-1 text-[12px] leading-snug text-faint">{hint}</p> : null}
+      {expanded ? (
+        <div id={id} role="group" aria-label={label} className="pb-1">
+          {children}
         </div>
       ) : null}
-    </>
-  );
-}
-
-function Actions({ onApply, onReset }: { onApply: () => void; onReset: () => void }) {
-  return (
-    <div className="mt-3 flex gap-2 border-t border-line pt-3">
-      <button
-        type="button"
-        onClick={onApply}
-        className="inline-flex h-9 flex-1 items-center justify-center rounded-lg bg-brand text-[13px] font-semibold text-white hover:bg-brand-hover"
-      >
-        Применить
-      </button>
-      <button
-        type="button"
-        onClick={onReset}
-        className="inline-flex h-9 flex-1 items-center justify-center rounded-lg border border-line text-[13px] font-medium text-ink hover:border-brand hover:text-brand"
-      >
-        Сбросить
-      </button>
     </div>
   );
 }
 
-/** Список чекбоксов (с поиском при > 8 вариантах). */
+/** Список чекбоксов: первые 6, «Показать все», поиск при > 10 вариантах. */
 export function OptionList({
   options,
   selected,
@@ -223,10 +119,17 @@ export function OptionList({
   name: string;
 }) {
   const [q, setQ] = useState("");
-  const shown = q ? options.filter((o) => o.label.toLowerCase().includes(q.toLowerCase())) : options;
+  const [all, setAll] = useState(false);
+  const query = q.trim().toLowerCase();
+  const shown = query
+    ? options.filter((o) => o.label.toLowerCase().includes(query))
+    : all
+      ? options
+      : options.filter((o, i) => i < VISIBLE || selected.includes(o.value));
+  const more = !query && !all && options.length > shown.length;
   return (
     <>
-      {options.length > 8 ? (
+      {options.length > SEARCH_FROM ? (
         <div className="relative mb-2">
           <Search size={15} aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 text-faint" />
           <input
@@ -239,92 +142,89 @@ export function OptionList({
           />
         </div>
       ) : null}
-      <ul className="max-h-[260px] space-y-0.5 overflow-y-auto overscroll-contain pr-1">
-        {shown.map((o) => {
-          const on = selected.includes(o.value);
-          return (
-            <li key={o.value}>
-              <label className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1.5 text-[13px] hover:bg-surface">
-                <input
-                  type="checkbox"
-                  aria-label={o.label}
-                  checked={on}
-                  onChange={(e) => onToggle(o.value, e.target.checked)}
-                  className="size-4 shrink-0 accent-brand"
-                />
-                {o.swatch ? <Swatch bg={o.swatch} /> : null}
-                <span className="min-w-0 flex-1 truncate">{o.label}</span>
-                <span aria-hidden="true" className="text-[12px] text-faint">{o.count}</span>
-              </label>
-            </li>
-          );
-        })}
-        {shown.length === 0 ? <li className="px-1.5 py-2 text-[13px] text-muted">Ничего не найдено</li> : null}
+      <ul className="space-y-0.5">
+        {shown.map((o) => (
+          <li key={o.value}>
+            <label className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1.5 text-[13px] hover:bg-surface">
+              <input
+                type="checkbox"
+                checked={selected.includes(o.value)}
+                onChange={(e) => onToggle(o.value, e.target.checked)}
+                className="size-4 shrink-0 accent-brand"
+              />
+              {o.swatch ? <Swatch bg={o.swatch} /> : null}
+              <span className="min-w-0 flex-1 truncate">{o.label}</span>
+              <span className="text-[12px] tabular-nums text-faint">
+                <span className="sr-only">товаров: </span>
+                {o.count}
+              </span>
+            </label>
+          </li>
+        ))}
+        {shown.length === 0 ? <li className="px-1.5 py-1 text-[13px] text-muted">Ничего не найдено</li> : null}
       </ul>
+      {more ? (
+        <button
+          type="button"
+          onClick={() => setAll(true)}
+          className="mt-1 rounded-md px-1.5 py-1.5 text-[13px] font-medium text-brand hover:text-brand-hover"
+        >
+          Показать все ({options.length})
+        </button>
+      ) : null}
+      {all && !query && options.length > VISIBLE ? (
+        <button
+          type="button"
+          onClick={() => setAll(false)}
+          className="mt-1 rounded-md px-1.5 py-1.5 text-[13px] font-medium text-brand hover:text-brand-hover"
+        >
+          Свернуть
+        </button>
+      ) : null}
     </>
   );
 }
 
-/** Содержимое поповера со списком: черновик + «Применить»/«Сбросить». */
-export function OptionsPopover({
-  name,
-  options,
-  selected,
-  onApply,
-}: {
-  name: string;
-  options: Option[];
-  selected: string[];
-  onApply: (values: string[]) => void;
-}) {
-  const close = usePopoverClose();
-  const [draft, setDraft] = useState(selected);
-  return (
-    <>
-      <OptionList
-        name={name}
-        options={options}
-        selected={draft}
-        onToggle={(v, on) => setDraft((d) => (on ? [...d, v] : d.filter((x) => x !== v)))}
-      />
-      <Actions
-        onApply={() => {
-          onApply(draft);
-          close();
-        }}
-        onReset={() => {
-          onApply([]);
-          close();
-        }}
-      />
-    </>
-  );
-}
-
+/** Цена от/до: применяется при уходе фокуса из блока и по Enter. */
 export function PriceFields({
   min,
   max,
-  onMin,
-  onMax,
-  onEnter,
+  onApply,
 }: {
-  min: string;
-  max: string;
-  onMin: (v: string) => void;
-  onMax: (v: string) => void;
-  onEnter?: () => void;
+  min: number | null;
+  max: number | null;
+  onApply: (min: number | null, max: number | null) => void;
 }) {
   const id = useId();
+  const [a, setA] = useState(min?.toString() ?? "");
+  const [b, setB] = useState(max?.toString() ?? "");
+  const [seen, setSeen] = useState(`${min}|${max}`);
+  // Синхронизация с URL (сброс, чипы).
+  if (seen !== `${min}|${max}`) {
+    setSeen(`${min}|${max}`);
+    setA(min?.toString() ?? "");
+    setB(max?.toString() ?? "");
+  }
+  const commit = () => {
+    const lo = num(a || null);
+    const hi = num(b || null);
+    if (lo !== min || hi !== max) onApply(lo, hi);
+  };
   const field =
     "h-9 w-full min-w-0 rounded-lg border border-line bg-white px-3 text-[13px] text-ink placeholder:text-faint hover:border-brand";
   const key = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && onEnter) {
+    if (e.key === "Enter") {
       e.preventDefault();
-      onEnter();
+      commit();
     }
   };
   return (
-    <div className="flex items-center gap-2">
+    <div
+      className="flex items-center gap-2 px-1.5"
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) commit();
+      }}
+    >
       <label htmlFor={`${id}-min`} className="sr-only">
         Цена от
       </label>
@@ -332,8 +232,8 @@ export function PriceFields({
         id={`${id}-min`}
         inputMode="numeric"
         placeholder="от"
-        value={min}
-        onChange={(e) => onMin(e.target.value.replace(/\D/g, ""))}
+        value={a}
+        onChange={(e) => setA(e.target.value.replace(/\D/g, ""))}
         onKeyDown={key}
         className={field}
       />
@@ -347,43 +247,11 @@ export function PriceFields({
         id={`${id}-max`}
         inputMode="numeric"
         placeholder="до"
-        value={max}
-        onChange={(e) => onMax(e.target.value.replace(/\D/g, ""))}
+        value={b}
+        onChange={(e) => setB(e.target.value.replace(/\D/g, ""))}
         onKeyDown={key}
         className={field}
       />
     </div>
   );
 }
-
-export function PricePopover({
-  min,
-  max,
-  onApply,
-}: {
-  min: number | null;
-  max: number | null;
-  onApply: (min: number | null, max: number | null) => void;
-}) {
-  const close = usePopoverClose();
-  const [a, setA] = useState(min?.toString() ?? "");
-  const [b, setB] = useState(max?.toString() ?? "");
-  const apply = () => {
-    onApply(num(a || null), num(b || null));
-    close();
-  };
-  return (
-    <>
-      <p className="mb-2 text-[13px] font-semibold">Цена, ₽</p>
-      <PriceFields min={a} max={b} onMin={setA} onMax={setB} onEnter={apply} />
-      <Actions
-        onApply={apply}
-        onReset={() => {
-          onApply(null, null);
-          close();
-        }}
-      />
-    </>
-  );
-}
-

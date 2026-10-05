@@ -1,34 +1,37 @@
 "use client";
 
-import { startTransition, useCallback, useEffect, useMemo, useOptimistic, useRef, useState } from "react";
+import { startTransition, useCallback, useEffect, useMemo, useOptimistic, useRef, useState, type ReactNode } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SlidersHorizontal, X } from "lucide-react";
 import { ProductCard } from "./product-card";
 import {
   EMPTY_FILTERS,
-  OASIS_HINT,
   SORTS,
   activeCount,
   apply,
-  valueOptions,
-  type ListFilterKey,
   colorOptions,
   parse,
   serialize,
+  valueOptions,
+  withCounts,
   type Filters,
-  type Option,
   type Sort,
 } from "./catalog-filters";
-import { CheckChip, Dropdown, OptionList, OptionsPopover, PriceFields, PricePopover } from "./filter-controls";
+import { FilterPanel, type Group } from "./filter-panel";
 import type { ListingProduct } from "@/lib/catalog/types";
 import { productsLabel } from "@/lib/format";
 
 const PAGE = 24;
 
-/** sidebar: рядом есть колонка разделов — сетка на колонку уже. */
-type Props = { products: ListingProduct[]; sidebar?: boolean };
+type Props = {
+  products: ListingProduct[];
+  /** Серверный блок «Разделы» для сайдбара (lg+). */
+  sectionsNav?: ReactNode;
+  /** Выбор раздела для <lg. */
+  sectionsSelect?: ReactNode;
+};
 
-type Group = { key: Exclude<ListFilterKey, "prints">; label: string; options: Option[]; empty: string };
+type Chip = { id: string; label: string; clear: Partial<Filters> };
 
 /** Островок с фильтрами: читает состояние из URL. */
 export function CatalogListingIsland(props: Props) {
@@ -36,24 +39,50 @@ export function CatalogListingIsland(props: Props) {
   return <CatalogListing {...props} query={sp.toString()} />;
 }
 
-/** Листинг: строка фильтров, тулбар и сетка. Без query — статичный рендер (SSR/SEO). */
-export function CatalogListing({ products, sidebar = false, query: urlQuery = "" }: Props & { query?: string }) {
+const BASES = {
+  suppliers: (p: ListingProduct) => [p.supplier],
+  materials: (p: ListingProduct) => p.materials,
+  brands: (p: ListingProduct) => [p.brand],
+  colors: (p: ListingProduct) => p.colors,
+} as const;
+
+/** Листинг: сайдбар (разделы + фильтры), заголовок результатов, чипы и сетка. Без query — статичный рендер. */
+export function CatalogListing({
+  products,
+  sectionsNav,
+  sectionsSelect,
+  query: urlQuery = "",
+}: Props & { query?: string }) {
   const router = useRouter();
   const pathname = usePathname();
   // Мгновенный отклик контролов, пока URL обновляется.
   const [query, setQuery] = useOptimistic(urlQuery);
   const filters = useMemo(() => parse(query), [query]);
   const list = useMemo(() => apply(products, filters), [products, filters]);
-  const colors = useMemo(() => colorOptions(products), [products]);
-  const groups = useMemo<Group[]>(
-    () => [
-      { key: "suppliers", label: "Поставщик", options: valueOptions(products, (p) => [p.supplier]), empty: "Нет данных о поставщиках в этом разделе" },
-      { key: "materials", label: "Материал", options: valueOptions(products, (p) => p.materials), empty: "Нет данных о материалах в этом разделе" },
-      { key: "colors", label: "Цвет", options: colors, empty: "Нет данных о цвете в этом разделе" },
-      { key: "brands", label: "Бренд", options: valueOptions(products, (p) => [p.brand]), empty: "Нет данных о брендах в этом разделе" },
-    ],
-    [products, colors],
+  const base = useMemo(
+    () => ({
+      suppliers: valueOptions(products, BASES.suppliers),
+      materials: valueOptions(products, BASES.materials),
+      colors: colorOptions(products),
+      brands: valueOptions(products, BASES.brands),
+    }),
+    [products],
   );
+  const groups = useMemo<Group[]>(() => {
+    const def = (key: Group["key"], label: string, empty: string): Group => ({
+      key,
+      label,
+      hasData: base[key].length > 0,
+      options: withCounts(products, filters, key, base[key], BASES[key]),
+      empty,
+    });
+    return [
+      def("suppliers", "Поставщик", "Нет данных о поставщиках в этом разделе"),
+      def("materials", "Материал", "Нет данных о материалах в этом разделе"),
+      def("colors", "Цвет", "Нет данных о цвете в этом разделе"),
+      def("brands", "Бренд", "Нет данных о брендах в этом разделе"),
+    ];
+  }, [products, filters, base]);
   const hasNew = useMemo(() => products.some((p) => p.isNew), [products]);
   const [sheet, setSheet] = useState(false);
   const closeSheet = useCallback(() => setSheet(false), []);
@@ -67,90 +96,111 @@ export function CatalogListing({ products, sidebar = false, query: urlQuery = ""
     });
   }
   const reset = () => update(EMPTY_FILTERS);
-  const listDropdown = (g: Group) => (
-    <ListDropdown
-      key={g.key}
-      label={g.label}
-      options={g.options}
-      selected={filters[g.key]}
-      onApply={(v) => update({ [g.key]: v })}
-      emptyTitle={g.empty}
+
+  const chips = useMemo<Chip[]>(() => {
+    const out: Chip[] = [];
+    const labelOf = (key: Group["key"], v: string) => base[key].find((o) => o.value === v)?.label ?? v;
+    const names = { suppliers: "Поставщик", materials: "Материал", colors: "Цвет", brands: "Бренд" } as const;
+    for (const key of ["suppliers", "materials", "colors", "brands"] as const) {
+      for (const v of filters[key]) {
+        out.push({
+          id: `${key}:${v}`,
+          label: `${names[key]}: ${labelOf(key, v)}`,
+          clear: { [key]: filters[key].filter((x) => x !== v) },
+        });
+      }
+    }
+    if (filters.min != null || filters.max != null) {
+      const lo = filters.min != null ? filters.min : null;
+      const hi = filters.max != null ? filters.max : null;
+      const label = lo != null && hi != null ? `${lo}–${hi} ₽` : lo != null ? `от ${lo} ₽` : `до ${hi} ₽`;
+      out.push({ id: "price", label: `Цена: ${label}`, clear: { min: null, max: null } });
+    }
+    if (filters.isNew) out.push({ id: "new", label: "Новинки", clear: { isNew: false } });
+    if (filters.inStock) out.push({ id: "stock", label: "В наличии", clear: { inStock: false } });
+    return out;
+  }, [filters, base]);
+
+  const panel = (
+    <FilterPanel
+      filters={filters}
+      groups={groups}
+      hasNew={hasNew}
+      active={active}
+      onChange={update}
+      onReset={reset}
     />
   );
 
-  const priceOn = filters.min != null || filters.max != null;
-
   return (
-    <div>
-      <FilterRow>
-        <div className="flex shrink-0 items-center gap-1">
-          <CheckChip
-            label="Новинки"
-            checked={filters.isNew}
-            onChange={(v) => update({ isNew: v })}
-            disabled={!hasNew && !filters.isNew}
-            title={!hasNew ? "Новинок в этом разделе пока нет" : undefined}
-          />
-          <CheckChip label="Акции" checked={false} onChange={() => {}} disabled title={OASIS_HINT} />
-          <CheckChip label="В наличии" checked={filters.inStock} onChange={(v) => update({ inStock: v })} />
-        </div>
-        <Dropdown label="Цена" count={priceOn ? 1 : 0}>
-          <PricePopover min={filters.min} max={filters.max} onApply={(min, max) => update({ min, max })} />
-        </Dropdown>
-        {groups.slice(0, 3).map(listDropdown)}
-        <Dropdown label="Нанесение" disabled title={`Вид нанесения. ${OASIS_HINT}`} />
-        {listDropdown(groups[3])}
-      </FilterRow>
-
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          <p role="status" className="text-[13px] text-muted">
-            Найдено <span className="font-semibold text-ink">{productsLabel(list.length)}</span>
-          </p>
+    <Layout
+      nav={sectionsNav}
+      select={sectionsSelect}
+      panel={products.length ? <div className="rounded-[14px] border border-line bg-white p-3">{panel}</div> : null}
+    >
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <p role="status" className="w-full text-[14px] text-muted lg:w-auto lg:flex-1">
+          Найдено <span className="font-semibold text-ink">{productsLabel(list.length)}</span>
+        </p>
+        <button
+          type="button"
+          onClick={() => setSheet(true)}
+          className="inline-flex h-10 items-center gap-2 rounded-lg border border-line bg-white px-3.5 text-[14px] font-medium text-ink hover:border-brand lg:hidden"
+        >
+          <SlidersHorizontal size={16} aria-hidden="true" />
+          Фильтры
           {active ? (
+            <span className="grid size-5 place-items-center rounded-full bg-brand text-[11px] font-bold text-white">
+              {active}
+            </span>
+          ) : null}
+        </button>
+        <label className="sr-only" htmlFor="catalog-sort">
+          Сортировка
+        </label>
+        <select
+          id="catalog-sort"
+          value={filters.sort}
+          onChange={(e) => update({ sort: e.target.value as Sort })}
+          className="ml-auto h-10 rounded-lg border border-line bg-white px-2.5 text-[14px] text-ink hover:border-brand lg:ml-0"
+        >
+          {SORTS.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {chips.length ? (
+        <ul aria-label="Выбранные фильтры" className="mb-4 flex flex-wrap items-center gap-2">
+          {chips.map((c) => (
+            <li key={c.id}>
+              <button
+                type="button"
+                onClick={() => update(c.clear)}
+                aria-label={`Убрать фильтр: ${c.label}`}
+                className="inline-flex h-8 items-center gap-1.5 rounded-full bg-brand-soft pl-3 pr-2 text-[13px] font-medium text-brand hover:bg-brand hover:text-white"
+              >
+                {c.label}
+                <X size={14} aria-hidden="true" />
+              </button>
+            </li>
+          ))}
+          <li>
             <button
               type="button"
               onClick={reset}
-              className="text-[13px] font-medium text-brand underline-offset-2 hover:text-brand-hover hover:underline"
+              className="px-1 text-[13px] font-medium text-muted underline-offset-2 hover:text-brand hover:underline"
             >
               Сбросить всё
             </button>
-          ) : null}
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setSheet(true)}
-            className="inline-flex h-9 items-center gap-2 rounded-lg border border-line bg-white px-3 text-[13px] font-medium text-ink hover:border-brand md:hidden"
-          >
-            <SlidersHorizontal size={15} aria-hidden="true" />
-            Фильтры
-            {active ? (
-              <span className="grid size-5 place-items-center rounded-full bg-brand text-[11px] font-bold text-white">
-                {active}
-              </span>
-            ) : null}
-          </button>
-          <label className="sr-only" htmlFor="catalog-sort">
-            Сортировка
-          </label>
-          <select
-            id="catalog-sort"
-            value={filters.sort}
-            onChange={(e) => update({ sort: e.target.value as Sort })}
-            className="h-9 rounded-lg border border-line bg-white px-2 text-[13px] text-ink hover:border-brand"
-          >
-            {SORTS.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+          </li>
+        </ul>
+      ) : null}
 
       {list.length ? (
-        <ProductGrid key={query} products={list} sidebar={sidebar} />
+        <ProductGrid key={query} products={list} />
       ) : (
         <div className="rounded-[10px] bg-surface p-8 text-center">
           <p className="text-[15px] font-semibold">Ничего не найдено</p>
@@ -167,84 +217,46 @@ export function CatalogListing({ products, sidebar = false, query: urlQuery = ""
 
       {sheet ? (
         <Drawer onClose={closeSheet} count={list.length}>
-          <SheetFilters
-            filters={filters}
-            groups={groups}
-            hasNew={hasNew}
-            onChange={update}
-            onReset={reset}
-          />
+          {panel}
         </Drawer>
       ) : null}
-    </div>
+    </Layout>
   );
 }
 
-/** Строка фильтров в одну линию; при нехватке места прокручивается с затуханием справа. */
-function FilterRow({ children }: { children: React.ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [fade, setFade] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const check = () => setFade(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
-    check();
-    const ro = new ResizeObserver(check);
-    ro.observe(el);
-    el.addEventListener("scroll", check, { passive: true });
-    return () => {
-      ro.disconnect();
-      el.removeEventListener("scroll", check);
-    };
-  }, []);
-  return (
-    <div className="relative -mx-4 mb-3 md:mx-0">
-      <div
-        ref={ref}
-        role="group"
-        aria-label="Фильтры"
-        className="no-scrollbar flex items-center gap-1.5 overflow-x-auto px-4 py-1.5 md:px-0.5"
-      >
-        {children}
-      </div>
-      <div
-        aria-hidden="true"
-        className={`pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white to-transparent transition-opacity ${
-          fade ? "opacity-100" : "opacity-0"
-        }`}
-      />
-    </div>
-  );
-}
-
-function ListDropdown({
-  label,
-  options,
-  selected,
-  onApply,
-  emptyTitle,
+/** Две колонки на lg+: сайдбар (разделы + фильтры) и контент. */
+function Layout({
+  nav,
+  select,
+  panel,
+  children,
 }: {
-  label: string;
-  options: Option[];
-  selected: string[];
-  onApply: (v: string[]) => void;
-  emptyTitle: string;
+  nav?: ReactNode;
+  select?: ReactNode;
+  panel: ReactNode;
+  children: ReactNode;
 }) {
-  const empty = options.length === 0;
   return (
-    <Dropdown label={label} count={selected.length} disabled={empty} title={empty ? emptyTitle : undefined}>
-      <OptionsPopover name={label} options={options} selected={selected} onApply={onApply} />
-    </Dropdown>
+    <div className="lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start lg:gap-8">
+      <aside className="hidden self-stretch lg:block">
+        <div className="sticky top-24 max-h-[calc(100vh-112px)] space-y-3 overflow-y-auto overscroll-contain">
+          {nav}
+          {panel}
+        </div>
+      </aside>
+      {select ? <div className="mb-3 lg:hidden">{select}</div> : null}
+      <div className="min-w-0">{children}</div>
+    </div>
   );
 }
 
-function ProductGrid({ products, sidebar }: { products: ListingProduct[]; sidebar: boolean }) {
+function ProductGrid({ products }: { products: ListingProduct[] }) {
   const [shown, setShown] = useState(PAGE);
   const rest = products.length - shown;
   return (
     <>
       <ul
-        className={`grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 ${sidebar ? "2xl:grid-cols-4" : "lg:grid-cols-4"}`}
+        className={`grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 2xl:grid-cols-4`}
       >
         {products.slice(0, shown).map((p) => (
           <li key={p.url} className="grid">
@@ -267,80 +279,6 @@ function ProductGrid({ products, sidebar }: { products: ListingProduct[]; sideba
   );
 }
 
-/** Все группы фильтров для мобильного листа (применяются сразу). */
-function SheetFilters({
-  filters,
-  groups,
-  hasNew,
-  onChange,
-  onReset,
-}: {
-  filters: Filters;
-  groups: Group[];
-  hasNew: boolean;
-  onChange: (f: Partial<Filters>) => void;
-  onReset: () => void;
-}) {
-  const [min, setMin] = useState(filters.min?.toString() ?? "");
-  const [max, setMax] = useState(filters.max?.toString() ?? "");
-  const commitPrice = () => onChange({ min: min ? Number(min) : null, max: max ? Number(max) : null });
-  const toggle = (key: Group["key"]) => (v: string, on: boolean) =>
-    onChange({ [key]: on ? [...filters[key], v] : filters[key].filter((x) => x !== v) });
-  const check = "flex items-center gap-2 text-[13px]";
-  return (
-    <div className="space-y-5">
-      <fieldset onBlur={commitPrice}>
-        <legend className="mb-2 text-[13px] font-semibold">Цена, ₽</legend>
-        <PriceFields min={min} max={max} onMin={setMin} onMax={setMax} onEnter={commitPrice} />
-      </fieldset>
-      <div className="space-y-3">
-        <label className={`${check} ${hasNew ? "cursor-pointer" : "text-faint"}`}>
-          <input
-            type="checkbox"
-            checked={filters.isNew}
-            disabled={!hasNew && !filters.isNew}
-            onChange={(e) => onChange({ isNew: e.target.checked })}
-            className="size-4 accent-brand"
-          />
-          Новинки
-        </label>
-        <label className={`${check} text-faint`} title={OASIS_HINT}>
-          <input type="checkbox" disabled aria-disabled="true" className="size-4" />
-          Акции
-        </label>
-        <label className={`${check} cursor-pointer`}>
-          <input
-            type="checkbox"
-            checked={filters.inStock}
-            onChange={(e) => onChange({ inStock: e.target.checked })}
-            className="size-4 accent-brand"
-          />
-          Только в наличии
-        </label>
-      </div>
-      {groups.map((g) =>
-        g.options.length ? (
-          <fieldset key={g.key}>
-            <legend className="mb-2 text-[13px] font-semibold">{g.label}</legend>
-            <OptionList name={g.label} options={g.options} selected={filters[g.key]} onToggle={toggle(g.key)} />
-          </fieldset>
-        ) : null,
-      )}
-      <div aria-disabled="true" title={OASIS_HINT} className="text-[13px] text-faint">
-        <p className="font-semibold">Вид нанесения</p>
-        <p className="mt-0.5 text-[12px]">{OASIS_HINT}</p>
-      </div>
-      <button
-        type="button"
-        onClick={onReset}
-        className="inline-flex h-9 w-full items-center justify-center rounded-lg border border-line text-[13px] font-medium text-ink hover:border-brand hover:text-brand"
-      >
-        Сбросить всё
-      </button>
-    </div>
-  );
-}
-
 function Drawer({
   children,
   onClose,
@@ -358,6 +296,24 @@ function Drawer({
     ref.current?.querySelector<HTMLElement>("button, input")?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
+      if (e.key === "Tab" && ref.current) {
+        const f = [
+          ...ref.current.querySelectorAll<HTMLElement>(
+            'button:not([disabled]), input:not([disabled]), select, a[href], [tabindex]:not([tabindex="-1"])',
+          ),
+        ].filter((el) => el.offsetParent !== null);
+        if (!f.length) return;
+        const first = f[0];
+        const last = f[f.length - 1];
+        const cur = document.activeElement;
+        if (e.shiftKey && (cur === first || !ref.current.contains(cur))) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && (cur === last || !ref.current.contains(cur))) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
     document.addEventListener("keydown", onKey);
     return () => {
@@ -367,7 +323,7 @@ function Drawer({
     };
   }, [onClose]);
   return (
-    <div className="fixed inset-0 z-[60] md:hidden">
+    <div className="fixed inset-0 z-[60] lg:hidden">
       <div aria-hidden="true" onClick={onClose} className="absolute inset-0 bg-black/40" />
       <div
         ref={ref}

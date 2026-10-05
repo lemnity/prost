@@ -30,6 +30,8 @@ export function ListingPage({
     colors: p.colors,
     materials: p.materials,
   }));
+  const nav = sections ? <SectionSidebar items={sections} /> : null;
+  const select = sections ? <SectionSelect items={sections} /> : null;
   return (
     <main id="main">
       <Container className="pt-4 md:pt-6">
@@ -37,34 +39,20 @@ export function ListingPage({
         <h1 className="mt-4 text-[30px] font-bold leading-[1.12] tracking-tight md:text-[36px]">{title}</h1>
       </Container>
 
-      <Container
-        className={`py-6 md:py-8 ${sections ? "lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start lg:gap-8" : ""}`}
-      >
-        {sections ? (
-          <>
-            <aside className="hidden self-stretch lg:block">
-              <SectionSidebar items={sections} />
-            </aside>
-            <div className="mb-3 lg:hidden">
-              <SectionSelect items={sections} />
-            </div>
-          </>
-        ) : null}
-        <div className="min-w-0">
-          {items.length ? (
-            <Suspense fallback={<CatalogListing products={items} sidebar={!!sections} />}>
-              <CatalogListingIsland products={items} sidebar={!!sections} />
-            </Suspense>
-          ) : (
-            <div className="rounded-[10px] bg-surface px-6 py-12 text-center">
-              <p className="text-[18px] font-semibold">Товары скоро появятся</p>
-              <p className="mt-2 text-sm text-muted">
-                Мы пополняем каталог. Оставьте заявку — подберём товары под вашу задачу.
-              </p>
-              <SubscribeBlock />
-            </div>
-          )}
-        </div>
+      <Container className="py-6 md:py-8">
+        {items.length ? (
+          <Suspense fallback={<CatalogListing products={items} sectionsNav={nav} sectionsSelect={select} />}>
+            <CatalogListingIsland products={items} sectionsNav={nav} sectionsSelect={select} />
+          </Suspense>
+        ) : (
+          <div className="rounded-[10px] bg-surface px-6 py-12 text-center">
+            <p className="text-[18px] font-semibold">Товары скоро появятся</p>
+            <p className="mt-2 text-sm text-muted">
+              Мы пополняем каталог. Оставьте заявку — подберём товары под вашу задачу.
+            </p>
+            <SubscribeBlock />
+          </div>
+        )}
       </Container>
       {items.length ? null : <ConsultationCta />}
     </main>

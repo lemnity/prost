@@ -148,4 +148,20 @@ export function valueOptions(products: ListingProduct[], get: (p: ListingProduct
     .map(([value, count]) => ({ value, label: value, count }));
 }
 
+/** Фасетные счётчики: сколько товаров даст вариант при остальных активных фильтрах. */
+export function withCounts(
+  products: ListingProduct[],
+  f: Filters,
+  key: ListFilterKey,
+  base: Option[],
+  get: (p: ListingProduct) => string[],
+): Option[] {
+  const rest = apply(products, { ...f, sort: "popular", [key]: [] });
+  const counts = new Map<string, number>();
+  for (const p of rest) for (const v of new Set(get(p).map((x) => x.trim()))) counts.set(v, (counts.get(v) ?? 0) + 1);
+  return base
+    .map((o) => ({ ...o, count: counts.get(o.value) ?? 0 }))
+    .filter((o) => o.count > 0 || f[key].includes(o.value));
+}
+
 export const OASIS_HINT = "Появится после подключения склада Oasis";

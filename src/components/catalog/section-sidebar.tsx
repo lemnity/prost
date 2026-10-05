@@ -35,7 +35,7 @@ export function SectionSidebar({ items }: { items: SectionLink[] }) {
   return (
     <nav
       aria-label="Разделы"
-      className="sticky top-24 max-h-[calc(100vh-112px)] overflow-y-auto overscroll-contain rounded-[10px] border border-line bg-white p-3"
+      className="rounded-[14px] border border-line bg-white p-3"
     >
       <p className="px-3 pb-2 pt-1 text-[15px] font-bold">Разделы</p>
       <ul className="space-y-0.5">
