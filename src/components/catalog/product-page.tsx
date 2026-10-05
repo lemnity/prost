@@ -8,7 +8,7 @@ import { ProductCard } from "./product-card";
 import { ProductDetail, type VariantView } from "./product-detail";
 import { ProductTabs } from "./product-tabs";
 import { colorFromSlug } from "@/lib/catalog/colors";
-import { getStock, normalizePrints, sortRows, type StockInfo } from "@/lib/catalog/stock";
+import { getStock, sortRows, type StockInfo } from "@/lib/catalog/stock";
 import { buildSpecRows, getProductDetails } from "@/lib/catalog/details";
 import { asset } from "@/lib/asset";
 import { applications } from "@/content/home";
@@ -129,7 +129,6 @@ export function ProductPage({ product }: { product: CatalogProduct }) {
     ? getSubcategories(product.category).find((s) => s.slug === product.subcategory)
     : undefined;
   const { variants, initial } = buildVariants(product);
-  const prints = normalizePrints(getStock(product.url));
   const similar = getSimilarProducts(product);
   const details = getProductDetails(product.url);
   const paragraphs = (details?.description ?? "")
@@ -156,21 +155,12 @@ export function ProductPage({ product }: { product: CatalogProduct }) {
           <section aria-labelledby="apps-title" className="mt-8 border-t border-line pt-6">
             <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
               <h2 id="apps-title" className="text-[17px] font-semibold">
-                {prints.length ? "Доступные виды нанесения" : "Виды нанесения"}
+                Виды нанесения
               </h2>
               <Link href={applications.link.href} className="text-[13px] font-medium text-brand hover:text-brand-hover">
                 {applications.link.label}
               </Link>
             </div>
-            {prints.length ? (
-              <ul className="flex flex-wrap gap-2">
-                {prints.map((n) => (
-                  <li key={n} className="inline-flex h-9 items-center rounded-full bg-surface px-3.5 text-[13px] text-ink">
-                    {n}
-                  </li>
-                ))}
-              </ul>
-            ) : (
             <ul className="flex flex-wrap gap-2">
               {applications.items.map((a) => (
                 <li key={a.id}>
@@ -184,7 +174,6 @@ export function ProductPage({ product }: { product: CatalogProduct }) {
                 </li>
               ))}
             </ul>
-            )}
           </section>
         </ProductDetail>
       </Container>
