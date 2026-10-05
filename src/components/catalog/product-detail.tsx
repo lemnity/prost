@@ -32,7 +32,7 @@ export type VariantView = {
 const MAX_QTY = 99999;
 const SHOWN_SIZES = 3;
 
-type Avail = { known: boolean; free: number; remote: number };
+type Avail = { known: boolean; stock: number; free: number; remote: number };
 
 function defaultSize(v: VariantView): string {
   const rows = v.info ?? [];
@@ -40,8 +40,8 @@ function defaultSize(v: VariantView): string {
 }
 
 function availOf(v: VariantView, row: SizeRow | undefined): Avail {
-  if (row) return { known: true, free: row.free, remote: row.remote };
-  return { known: v.stock != null, free: v.stock ?? 0, remote: 0 };
+  if (row) return { known: true, stock: row.stock, free: row.free, remote: row.remote };
+  return { known: v.stock != null, stock: v.stock ?? 0, free: v.stock ?? 0, remote: 0 };
 }
 
 export function ProductDetail({
@@ -146,7 +146,7 @@ export function ProductDetail({
           <span className="w-full text-[12px] text-muted sm:ml-auto sm:w-auto">Цена без нанесения</span>
         </div>
 
-        <StockLine avail={avail} />
+        <StockPanel avail={avail} />
 
         {multi ? (
           <fieldset className="mt-5">
@@ -218,51 +218,68 @@ export function ProductDetail({
   );
 }
 
-/** Единая строка наличия для всех товаров. */
-function StockLine({ avail }: { avail: Avail }) {
-  const num = "font-semibold tabular-nums";
-  let main: React.ReactNode;
-  if (!avail.known) {
-    main = <span className="text-muted">Наличие уточняйте у менеджера</span>;
-  } else if (avail.free > 0) {
-    main = (
-      <>
-        <Dot tone="ok" />
-        <span>
-          В наличии: <span className={num}>{formatQty(avail.free)} шт.</span>
-        </span>
-      </>
-    );
-  } else if (avail.remote > 0) {
-    main = (
-      <>
-        <Dot tone="warn" />
-        <span className="text-amber-700">
-          Под заказ — удалённый склад: <span className={num}>{formatQty(avail.remote)} шт.</span>
-        </span>
-      </>
-    );
-  } else {
-    main = <span className="text-muted">Под заказ — срок уточняйте у менеджера</span>;
-  }
+/** Компактная панель наличия: фиксированной высоты, чтобы блок не «прыгал». */
+function StockPanel({ avail }: { avail: Avail }) {
+  const { known, stock, free, remote } = avail;
+  const ok = known && free > 0;
+  const warn = known && !ok && remote > 0;
+  const badge = ok ? (
+    <>
+      <Dot tone="ok" center />
+      <span className="font-medium">В наличии</span>
+    </>
+  ) : warn || known ? (
+    <>
+      <Dot tone="warn" center />
+      <span className="font-medium text-amber-700">Под заказ</span>
+    </>
+  ) : (
+    <>
+      <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-faint" />
+      <span className="font-medium text-muted">Наличие уточняйте у менеджера</span>
+    </>
+  );
+  const val = (n: number) => (known && n > 0 ? formatQty(n) : "—");
+  const reserve = known ? Math.max(0, stock - free) : 0;
+  const metric = (label: React.ReactNode, n: number) => (
+    <div className="min-w-0">
+      <dt className="h-4 truncate text-[12px] leading-4 text-muted">{label}</dt>
+      <dd className="mt-0.5 h-6 truncate text-[15px] font-semibold leading-6 tabular-nums">{val(n)}</dd>
+    </div>
+  );
   return (
-    <div className="mt-4 min-h-[3rem] space-y-1" aria-live="polite">
-      <p className="flex items-start gap-2 text-[14px]">{main}</p>
-      {avail.known && avail.free > 0 && avail.remote > 0 ? (
-        <p className="flex items-start gap-2 text-[13px] text-muted">
-          <Dot tone="warn" small />
-          <span>Удалённый склад: {formatQty(avail.remote)} шт. — поставка под заказ</span>
-        </p>
-      ) : null}
+    <div className="mt-4 rounded-[12px] bg-surface px-4 py-3" aria-live="polite">
+      <p className="flex h-5 items-center gap-2 text-[14px]">{badge}</p>
+      <dl className="mt-2 grid grid-cols-3 gap-4">
+        {metric("На складе", stock)}
+        {metric("Доступно", free)}
+        {metric(
+          <>
+            <span className="sm:hidden">Удалённый</span>
+            <span className="hidden sm:inline">Удалённый склад</span>
+          </>,
+          remote,
+        )}
+      </dl>
+      <p className="mt-1.5 h-4 truncate text-[12px] leading-4 text-muted">
+        {reserve > 0 ? (
+          <>
+            В резерве: {formatQty(reserve)} шт.
+            {remote > 0 ? " · поставка с удалённого склада под заказ" : ""}
+          </>
+        ) : remote > 0 ? (
+          "Поставка с удалённого склада под заказ"
+        ) : null}
+      </p>
     </div>
   );
 }
 
-function Dot({ tone, small = false }: { tone: "ok" | "warn"; small?: boolean }) {
+function Dot({ tone, small = false, center = false }: { tone: "ok" | "warn"; small?: boolean; center?: boolean }) {
   return (
     <span
       aria-hidden="true"
-      className={`shrink-0 rounded-full ${small ? "mt-[6px] size-1.5" : "mt-[7px] size-2"} ${
+      className={`shrink-0 rounded-full ${small ? "mt-[6px] size-1.5" : center ? "size-2" : "mt-[7px] size-2"} ${
         tone === "ok" ? "bg-new-text" : "bg-amber-500"
       }`}
     />
