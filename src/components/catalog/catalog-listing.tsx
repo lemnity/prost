@@ -1,9 +1,20 @@
 "use client";
 
-import { startTransition, useCallback, useEffect, useMemo, useOptimistic, useRef, useState, type ReactNode } from "react";
+import {
+  startTransition,
+  useCallback,
+  useEffect,
+  useMemo,
+  useOptimistic,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { SlidersHorizontal, X } from "lucide-react";
+import { Grid3x3, LayoutGrid, List, SlidersHorizontal, X } from "lucide-react";
 import { ProductCard } from "./product-card";
+import { ProductCardCompact, ProductRow } from "./product-views";
 import {
   EMPTY_FILTERS,
   SORTS,
@@ -32,6 +43,47 @@ type Props = {
 };
 
 type Chip = { id: string; label: string; clear: Partial<Filters> };
+
+// Вид листинга: URL ?view=compact|list (grid — по умолчанию, без параметра),
+// при отсутствии в URL — последний выбор из localStorage.
+const VIEWS = [
+  { id: "compact", label: "Мелкая сетка", Icon: Grid3x3 },
+  { id: "grid", label: "Крупная сетка", Icon: LayoutGrid },
+  { id: "list", label: "Списком", Icon: List },
+] as const;
+type View = (typeof VIEWS)[number]["id"];
+const VIEW_KEY = "prostyle-catalog-view";
+const VIEW_EVENT = "prostyle-catalog-view";
+const isView = (v: string | null): v is View => VIEWS.some((x) => x.id === v);
+
+function readStoredView(): View | null {
+  try {
+    const v = localStorage.getItem(VIEW_KEY);
+    return isView(v) ? v : null;
+  } catch {
+    return null;
+  }
+}
+function subscribeStoredView(cb: () => void) {
+  window.addEventListener("storage", cb);
+  window.addEventListener(VIEW_EVENT, cb);
+  return () => {
+    window.removeEventListener("storage", cb);
+    window.removeEventListener(VIEW_EVENT, cb);
+  };
+}
+function storeView(v: View) {
+  try {
+    localStorage.setItem(VIEW_KEY, v);
+  } catch {}
+  window.dispatchEvent(new Event(VIEW_EVENT));
+}
+const MD = "(min-width: 768px)";
+function subscribeMd(cb: () => void) {
+  const m = window.matchMedia(MD);
+  m.addEventListener("change", cb);
+  return () => m.removeEventListener("change", cb);
+}
 
 /** Островок с фильтрами: читает состояние из URL. */
 export function CatalogListingIsland(props: Props) {
@@ -91,12 +143,39 @@ export function CatalogListing({
   const closeSheet = useCallback(() => setSheet(false), []);
   const active = activeCount(filters);
 
-  function update(next: Partial<Filters>) {
-    const qs = serialize({ ...filters, ...next });
+  const urlView = useMemo(() => {
+    const v = new URLSearchParams(query).get("view");
+    return isView(v) ? v : null;
+  }, [query]);
+  const storedView = useSyncExternalStore(subscribeStoredView, readStoredView, () => null);
+  const view: View = urlView ?? storedView ?? "grid";
+  const isMd = useSyncExternalStore(subscribeMd, () => window.matchMedia(MD).matches, () => true);
+  // На мобильных «мелкая сетка» недоступна — показываем обычную.
+  const shownView: View = !isMd && view === "compact" ? "grid" : view;
+
+  // «Показать ещё»: сбрасывается при смене фильтров/сортировки, но не вида.
+  const filterKey = serialize(filters);
+  const [page, setPage] = useState({ key: filterKey, n: PAGE });
+  const shown = Math.min(list.length, page.key === filterKey ? page.n : PAGE);
+  const showMore = () => setPage({ key: filterKey, n: shown + PAGE });
+
+  function navigate(qs: string) {
     startTransition(() => {
       setQuery(qs);
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     });
+  }
+  const withView = (qs: string, v: View) => {
+    const sp = new URLSearchParams(qs);
+    if (v !== "grid") sp.set("view", v);
+    return sp.toString();
+  };
+  function update(next: Partial<Filters>) {
+    navigate(withView(serialize({ ...filters, ...next }), view));
+  }
+  function setView(v: View) {
+    storeView(v);
+    navigate(withView(filterKey, v));
   }
   const reset = () => update(EMPTY_FILTERS);
 
@@ -141,38 +220,42 @@ export function CatalogListing({
       select={sectionsSelect}
       panel={products.length ? <div className="rounded-[14px] border border-line bg-white p-3">{panel}</div> : null}
     >
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <p role="status" className="w-full text-[14px] text-muted lg:w-auto lg:flex-1">
-          Найдено <span className="font-semibold text-ink">{productsLabel(list.length)}</span>
+      <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[12px] bg-surface p-2">
+        <ViewSwitch value={shownView} onChange={setView} />
+        <p role="status" className="text-[13px] text-muted">
+          Показано <span className="font-semibold text-ink">{shown}</span> из{" "}
+          <span className="font-semibold text-ink">{productsLabel(list.length)}</span>
         </p>
-        <button
-          type="button"
-          onClick={() => setSheet(true)}
-          className="inline-flex h-10 items-center gap-2 rounded-lg border border-line bg-white px-3.5 text-[14px] font-medium text-ink hover:border-brand lg:hidden"
-        >
-          <SlidersHorizontal size={16} aria-hidden="true" />
-          Фильтры
-          {active ? (
-            <span className="grid size-5 place-items-center rounded-full bg-brand text-[11px] font-bold text-white">
-              {active}
-            </span>
-          ) : null}
-        </button>
-        <label className="sr-only" htmlFor="catalog-sort">
-          Сортировка
-        </label>
-        <select
-          id="catalog-sort"
-          value={filters.sort}
-          onChange={(e) => update({ sort: e.target.value as Sort })}
-          className="ml-auto h-10 rounded-lg border border-line bg-white px-2.5 text-[14px] text-ink hover:border-brand lg:ml-0"
-        >
-          {SORTS.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.label}
-            </option>
-          ))}
-        </select>
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setSheet(true)}
+            className="inline-flex h-10 items-center gap-2 rounded-lg border border-line bg-white px-3.5 text-[14px] font-medium text-ink hover:border-brand lg:hidden"
+          >
+            <SlidersHorizontal size={16} aria-hidden="true" />
+            Фильтры
+            {active ? (
+              <span className="grid size-5 place-items-center rounded-full bg-brand text-[11px] font-bold text-white">
+                {active}
+              </span>
+            ) : null}
+          </button>
+          <label className="sr-only" htmlFor="catalog-sort">
+            Сортировка
+          </label>
+          <select
+            id="catalog-sort"
+            value={filters.sort}
+            onChange={(e) => update({ sort: e.target.value as Sort })}
+            className="h-10 rounded-lg border border-line bg-white px-2.5 text-[14px] text-ink hover:border-brand"
+          >
+            {SORTS.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {chips.length ? (
@@ -203,7 +286,7 @@ export function CatalogListing({
       ) : null}
 
       {list.length ? (
-        <ProductGrid key={query} products={list} />
+        <ProductList products={list} view={shownView} shown={shown} onMore={showMore} />
       ) : (
         <div className="rounded-[10px] bg-surface p-8 text-center">
           <p className="text-[15px] font-semibold">Ничего не найдено</p>
@@ -253,25 +336,100 @@ function Layout({
   );
 }
 
-function ProductGrid({ products }: { products: ListingProduct[] }) {
-  const [shown, setShown] = useState(PAGE);
+function ViewSwitch({ value, onChange }: { value: View; onChange: (v: View) => void }) {
+  const refs = useRef<(HTMLButtonElement | null)[]>([]);
+  const move = (i: number, dir: number) => {
+    // На мобильных кнопка «мелкая сетка» скрыта — пропускаем невидимые.
+    for (let k = 1; k <= VIEWS.length; k++) {
+      const n = (i + dir * k + VIEWS.length) % VIEWS.length;
+      const el = refs.current[n];
+      if (el && el.offsetParent !== null) {
+        el.focus();
+        onChange(VIEWS[n].id);
+        return;
+      }
+    }
+  };
+  return (
+    <div role="radiogroup" aria-label="Вид списка товаров" className="flex items-center gap-1.5">
+      {VIEWS.map((v, i) => {
+        const on = v.id === value;
+        return (
+          <button
+            key={v.id}
+            ref={(el) => {
+              refs.current[i] = el;
+            }}
+            type="button"
+            role="radio"
+            aria-checked={on}
+            aria-label={v.label}
+            title={v.label}
+            tabIndex={on ? 0 : -1}
+            onClick={() => onChange(v.id)}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowRight" || e.key === "ArrowDown") move(i, 1);
+              else if (e.key === "ArrowLeft" || e.key === "ArrowUp") move(i, -1);
+              else return;
+              e.preventDefault();
+            }}
+            className={`grid size-10 place-items-center rounded-[10px] transition-colors ${
+              v.id === "compact" ? "max-md:hidden" : ""
+            } ${on ? "bg-brand text-white" : "bg-white text-ink hover:text-brand"}`}
+          >
+            <v.Icon size={18} aria-hidden="true" />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function ProductList({
+  products,
+  view,
+  shown,
+  onMore,
+}: {
+  products: ListingProduct[];
+  view: View;
+  shown: number;
+  onMore: () => void;
+}) {
+  const items = products.slice(0, shown);
   const rest = products.length - shown;
   return (
     <>
-      <ul
-        className={`grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 2xl:grid-cols-4`}
-      >
-        {products.slice(0, shown).map((p) => (
-          <li key={p.url} className="grid">
-            <ProductCard product={p} />
-          </li>
-        ))}
-      </ul>
+      {view === "list" ? (
+        <ul className="divide-y divide-line overflow-hidden rounded-[12px] border border-line bg-white">
+          {items.map((p) => (
+            <li key={p.url}>
+              <ProductRow product={p} />
+            </li>
+          ))}
+        </ul>
+      ) : view === "compact" ? (
+        <ul className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-3 lg:grid-cols-4 xl:grid-cols-5">
+          {items.map((p) => (
+            <li key={p.url} className="grid">
+              <ProductCardCompact product={p} />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 2xl:grid-cols-4">
+          {items.map((p) => (
+            <li key={p.url} className="grid">
+              <ProductCard product={p} />
+            </li>
+          ))}
+        </ul>
+      )}
       {rest > 0 ? (
         <div className="mt-6 flex justify-center">
           <button
             type="button"
-            onClick={() => setShown((n) => n + PAGE)}
+            onClick={onMore}
             className="inline-flex h-11 items-center rounded-lg border border-brand bg-white px-6 text-sm font-semibold text-brand hover:bg-brand hover:text-white"
           >
             Показать ещё {Math.min(rest, PAGE)}

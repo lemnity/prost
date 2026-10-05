@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { Check } from "lucide-react";
+import { Check, ShoppingCart } from "lucide-react";
 import { addToCart } from "@/lib/cart/store";
 import { useCart } from "@/lib/cart/use-cart";
 import { QtyStepper } from "./qty-stepper";
@@ -17,7 +17,22 @@ export type CartProduct = {
   stock: number;
 };
 
-export function AddToCartButton({ product }: { product: CartProduct }) {
+/** card — кнопка во всю ширину карточки; icon — компактная иконка; row — для строки списка. */
+export type CartButtonVariant = "card" | "icon" | "row";
+
+const WRAP: Record<CartButtonVariant, string> = {
+  card: "mt-3",
+  icon: "",
+  row: "w-[148px]",
+};
+
+export function AddToCartButton({
+  product,
+  variant = "card",
+}: {
+  product: CartProduct;
+  variant?: CartButtonVariant;
+}) {
   const list = useCart();
   const [added, setAdded] = useState(false);
   const [announce, setAnnounce] = useState("");
@@ -46,7 +61,9 @@ export function AddToCartButton({ product }: { product: CartProduct }) {
     return (
       <Link
         href="/contact-us#callback"
-        className="mt-3 inline-flex h-9 items-center justify-center rounded-lg border border-brand bg-white text-[13px] font-semibold text-brand"
+        className={`${WRAP[variant]} inline-flex h-9 items-center justify-center rounded-lg border border-brand bg-white px-3 font-semibold text-brand ${
+          variant === "icon" ? "text-[12px]" : "text-[13px]"
+        }`}
       >
         Запросить
       </Link>
@@ -57,7 +74,10 @@ export function AddToCartButton({ product }: { product: CartProduct }) {
     <>
       {status}
       {showStepper && line ? (
-        <div ref={wrapRef} className="mt-3 flex justify-center [&>div]:w-full [&_input]:flex-1">
+        <div
+          ref={wrapRef}
+          className={`${WRAP[variant]} ${variant === "icon" ? "basis-full" : ""} flex justify-center [&>div]:w-full [&_input]:flex-1`}
+        >
           <QtyStepper id={product.id} qty={line.qty} title={product.title} />
         </div>
       ) : (
@@ -82,9 +102,18 @@ export function AddToCartButton({ product }: { product: CartProduct }) {
               setAdded(false);
             }, 1200);
           }}
-          className="mt-3 inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-brand text-[13px] font-semibold text-white hover:bg-brand-hover"
+          aria-label={variant === "icon" ? (added ? "Добавлено в корзину" : "В корзину") : undefined}
+          className={`${WRAP[variant]} inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-brand text-[13px] font-semibold text-white hover:bg-brand-hover ${
+            variant === "icon" ? "size-9 shrink-0" : ""
+          }`}
         >
-          {added ? (
+          {variant === "icon" ? (
+            added ? (
+              <Check size={16} aria-hidden="true" />
+            ) : (
+              <ShoppingCart size={16} aria-hidden="true" />
+            )
+          ) : added ? (
             <>
               Добавлено <Check size={15} aria-hidden="true" />
             </>
