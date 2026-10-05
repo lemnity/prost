@@ -12,7 +12,7 @@ export function ProductCard({ product }: { product: Product }) {
     ? Math.round((1 - product.priceFrom / oldPrice) * 100)
     : 0;
   return (
-    <article className="relative flex flex-col rounded-[10px] border border-line bg-white p-3">
+    <article className="relative flex h-full flex-col rounded-[10px] border border-line bg-white p-3">
       <div className="relative aspect-square">
         <Link href={product.url} tabIndex={-1} aria-hidden="true" className="absolute inset-0">
           <ProductImage
@@ -57,22 +57,27 @@ export function ProductCard({ product }: { product: Product }) {
           </span>
         ) : null}
       </p>
-      {product.stock > 0 ? (
-        <p className="mt-1 text-[12px] text-muted">На складе: {formatQty(product.stock)} шт.</p>
-      ) : product.preorder ? (
-        <p className="mt-1 text-[12px] text-muted">Под заказ</p>
-      ) : null}
-      <AddToCartButton
-        product={{
-          id: product.id,
-          sku: product.sku,
-          title: product.title,
-          image: product.image,
-          url: product.url,
-          priceFrom: product.priceFrom,
-          stock: product.stock,
-        }}
-      />
+      {/* Строка наличия всегда занимает место — кнопки карточек в ряду на одной линии. */}
+      <p className="mt-1 min-h-[1lh] text-[12px] leading-snug text-muted">
+        {product.stock > 0
+          ? `На складе: ${formatQty(product.stock)} шт.`
+          : product.preorder
+            ? "Под заказ"
+            : "Наличие уточняйте у менеджера"}
+      </p>
+      <div className="mt-auto flex flex-col">
+        <AddToCartButton
+          product={{
+            id: product.id,
+            sku: product.sku,
+            title: product.title,
+            image: product.image,
+            url: product.url,
+            priceFrom: product.priceFrom,
+            stock: product.stock,
+          }}
+        />
+      </div>
     </article>
   );
 }
