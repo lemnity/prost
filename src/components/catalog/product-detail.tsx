@@ -46,7 +46,7 @@ export function ProductDetail({
   const multi = variants.length > 1;
 
   return (
-    <div className="grid gap-6 md:grid-cols-2 lg:gap-10">
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-10">
       <div>
         <div className="relative aspect-square overflow-hidden rounded-[10px] border border-line bg-white">
           <Image
@@ -134,15 +134,20 @@ export function ProductDetail({
           </fieldset>
         ) : null}
 
-        <div className="mt-6">
-          <BuyBox key={v.key} variant={v} />
-          <Link
-            href="/contact-us#callback"
-            className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-[10px] border border-brand bg-white px-5 text-sm font-semibold text-brand hover:bg-brand hover:text-white"
-          >
-            <Ruler size={16} aria-hidden="true" />
-            Рассчитать стоимость нанесения
-          </Link>
+        <div className="@container mt-6">
+          <BuyBox
+            key={v.key}
+            variant={v}
+            calc={
+              <Link
+                href="/contact-us#callback"
+                className="inline-flex h-12 w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-[10px] border border-brand bg-white px-4 text-sm font-semibold text-brand hover:bg-brand hover:text-white @md:w-auto"
+              >
+                <Ruler size={16} aria-hidden="true" />
+                Рассчитать нанесение
+              </Link>
+            }
+          />
           <p className="mt-3 flex items-center gap-1.5 text-[12px] text-muted">
             <Info size={14} aria-hidden="true" className="shrink-0" />
             Минимальная сумма заказа — 10&nbsp;000&nbsp;₽
@@ -292,7 +297,7 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-function BuyBox({ variant: v }: { variant: VariantView }) {
+function BuyBox({ variant: v, calc }: { variant: VariantView; calc: React.ReactNode }) {
   const [qty, setQty] = useState(1);
   const [draft, setDraft] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
@@ -303,12 +308,15 @@ function BuyBox({ variant: v }: { variant: VariantView }) {
 
   if (v.stock == null || v.stock <= 0) {
     return (
-      <Link
-        href="/contact-us#callback"
-        className="inline-flex h-12 w-full items-center justify-center rounded-[10px] bg-brand px-8 text-sm font-semibold text-white hover:bg-brand-hover"
-      >
-        Запросить
-      </Link>
+      <div className="flex flex-wrap items-stretch gap-3">
+        <Link
+          href="/contact-us#callback"
+          className="inline-flex h-12 min-w-0 flex-1 items-center justify-center rounded-[10px] bg-brand px-4 text-sm font-semibold text-white hover:bg-brand-hover"
+        >
+          Запросить
+        </Link>
+        {calc}
+      </div>
     );
   }
 
@@ -316,8 +324,8 @@ function BuyBox({ variant: v }: { variant: VariantView }) {
   const n = draft !== null ? clamp(parseInt(draft, 10)) : qty;
   return (
     <>
-      <div className="flex items-stretch gap-3">
-      <div role="group" aria-label="Количество" className="inline-flex h-12 w-36 shrink-0 items-center rounded-[10px] border border-line bg-white">
+      <div className="flex flex-wrap items-stretch gap-3">
+      <div role="group" aria-label="Количество" className="inline-flex h-12 w-32 shrink-0 items-center rounded-[10px] border border-line bg-white">
         <button type="button" aria-label="Уменьшить количество" disabled={qty <= 1} onClick={() => setQty((q) => clamp(q - 1))} className={btn}>
           <Minus size={16} aria-hidden="true" />
         </button>
@@ -348,7 +356,7 @@ function BuyBox({ variant: v }: { variant: VariantView }) {
           clearTimeout(timer.current);
           timer.current = setTimeout(() => setAdded(false), 2500);
         }}
-        className="inline-flex h-12 flex-1 items-center justify-center gap-1.5 rounded-[10px] bg-brand px-8 text-sm font-semibold text-white hover:bg-brand-hover"
+        className="inline-flex h-12 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-[10px] bg-brand px-3 text-sm font-semibold text-white hover:bg-brand-hover"
       >
         {added ? (
           <>
@@ -358,6 +366,7 @@ function BuyBox({ variant: v }: { variant: VariantView }) {
           "В корзину"
         )}
       </button>
+      {calc}
       </div>
       <p aria-live="polite" className="mt-2 text-[13px] text-muted">
         Итого: {formatQty(n)} шт. × {formatPriceValue(v.price)} ={" "}
