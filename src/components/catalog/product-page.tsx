@@ -7,7 +7,7 @@ import { SectionHeader } from "@/components/ui/section-header";
 import { ProductCard } from "./product-card";
 import { ProductDetail, type VariantView } from "./product-detail";
 import { ProductTabs } from "./product-tabs";
-import { getStock, normalizePrints, type StockInfo } from "@/lib/catalog/stock";
+import { getStock, normalizePrints, sortRows, type StockInfo } from "@/lib/catalog/stock";
 import { buildSpecRows, getProductDetails } from "@/lib/catalog/details";
 import { asset } from "@/lib/asset";
 import { applications } from "@/content/home";
@@ -65,7 +65,7 @@ function skuFromUrl(product: CatalogProduct, url: string): string {
 /** Остатки для клиента: только нужные поля. */
 function stockView(url: string): VariantView["info"] {
   const s: StockInfo | null = getStock(url);
-  return s ? s.rows.map((r) => ({ size: r.size, stock: r.stock, free: r.free, remote: r.remote })) : null;
+  return s ? sortRows(s.rows).map((r) => ({ size: r.size, stock: r.stock, free: r.free, remote: r.remote })) : null;
 }
 
 function buildVariants(product: CatalogProduct): { variants: VariantView[]; initial: number } {

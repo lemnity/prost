@@ -86,7 +86,10 @@ export function CartView() {
                   <Link href={i.url} className="line-clamp-2 text-[14px] font-medium leading-snug text-ink hover:text-brand">
                     {i.title}
                   </Link>
-                  <p className="mt-1 text-xs text-muted">Арт. {i.sku}</p>
+                  <p className="mt-1 text-xs text-muted">
+                    Арт. {i.sku}
+                    {i.preorder ? <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">Под заказ</span> : null}
+                  </p>
                   <p className="mt-1 text-[13px] text-muted">от {formatPriceValue(i.price)}</p>
                 </div>
                 <div className="col-span-2 flex items-center justify-between gap-3 sm:col-span-1 sm:justify-end">

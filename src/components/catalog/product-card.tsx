@@ -1,6 +1,6 @@
 import { asset } from "@/lib/asset";
-import Image from "next/image";
 import Link from "next/link";
+import { ProductImage } from "@/components/ui/product-image";
 import { Heart } from "lucide-react";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { formatPriceValue, formatQty } from "@/lib/format";
@@ -15,10 +15,9 @@ export function ProductCard({ product }: { product: Product }) {
     <article className="relative flex flex-col rounded-[10px] border border-line bg-white p-3">
       <div className="relative aspect-square">
         <Link href={product.url} tabIndex={-1} aria-hidden="true" className="absolute inset-0">
-          <Image
+          <ProductImage
             src={asset(product.image)}
             alt={product.title}
-            fill
             sizes="(min-width:1280px) 15vw, (min-width:1024px) 190px, 220px"
             className="object-contain"
           />

@@ -6,6 +6,8 @@ export type CartItem = {
   url: string;
   price: number;
   qty: number;
+  /** Позиция под заказ (нет на складе). */
+  preorder?: boolean;
 };
 
 export const CART_KEY = "prostyle-cart-v1";

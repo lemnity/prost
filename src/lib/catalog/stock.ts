@@ -52,3 +52,24 @@ export function normalizePrints(s: StockInfo | null): string[] {
   if (!s) return [];
   return [...new Set(s.prints.map(normalizePrint).filter(Boolean))].sort((a, b) => a.localeCompare(b, "ru"));
 }
+
+const LETTER_SIZES = ["XXS", "XS", "S", "S/M", "M", "L", "L/XL", "XL", "2XL", "3XL", "4XL", "5XL", "6XL"];
+const ALIASES: Record<string, string> = { XXL: "2XL", XXXL: "3XL", XXXXL: "4XL" };
+
+function sizeRank(size: string): [number, number] {
+  const s = size.toUpperCase().replace(/\s+/g, "");
+  const k = ALIASES[s] ?? s;
+  const i = LETTER_SIZES.indexOf(k);
+  if (i >= 0) return [0, i];
+  const n = parseFloat(k.replace(",", "."));
+  return Number.isFinite(n) ? [1, n] : [2, 0];
+}
+
+/** Размеры в логичном порядке: XS S M L XL 2XL…, затем числовые по возрастанию. */
+export function sortRows<T extends { size: string }>(rows: T[]): T[] {
+  return [...rows].sort((a, b) => {
+    const [ga, na] = sizeRank(a.size);
+    const [gb, nb] = sizeRank(b.size);
+    return ga - gb || na - nb || a.size.localeCompare(b.size, "ru");
+  });
+}

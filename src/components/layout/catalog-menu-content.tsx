@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight, Sparkles } from "lucide-react";
+import { ProductImage } from "@/components/ui/product-image";
 import { Countdown } from "@/components/home/countdown";
 import { asset } from "@/lib/asset";
 import type { MenuData } from "@/lib/catalog/menu";
@@ -78,10 +78,9 @@ export function CatalogPanes({
                       </p>
                     </div>
                     <div className="relative min-h-[96px] w-full max-h-[220px] flex-1 basis-[220px] overflow-hidden rounded-[12px] bg-surface">
-                      <Image
+                      <ProductImage
                         src={asset(p.image)}
                         alt={p.title}
-                        fill
                         sizes="280px"
                         className="object-contain p-3 mix-blend-multiply"
                       />
