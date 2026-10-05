@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { Check, Copy, Minus, Plus, Ruler } from "lucide-react";
+import { Check, Copy, Info, Minus, Plus, Ruler } from "lucide-react";
 import { addToCart } from "@/lib/cart/store";
 import { asset } from "@/lib/asset";
 import { formatPriceValue, formatQty } from "@/lib/format";
@@ -84,28 +84,29 @@ export function ProductDetail({
       <div className="min-w-0">
         <h1 className="text-[24px] font-bold leading-tight tracking-tight md:text-[30px]">{title}</h1>
 
-        <dl className="mt-4 space-y-2 text-[14px]">
-          <div className="flex flex-wrap items-center gap-2">
-            <dt className="text-muted">Артикул:</dt>
-            <dd className="flex items-center gap-1 font-medium">
-              {v.sku}
-              <CopyButton text={v.sku} />
-            </dd>
-          </div>
+        <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-muted">
+          <span className="inline-flex items-center gap-1">
+            Арт. {v.sku}
+            <CopyButton text={v.sku} />
+          </span>
           {brand ? (
-            <div className="flex flex-wrap items-center gap-2">
-              <dt className="text-muted">Поставщик:</dt>
-              <dd className="font-medium">{brand}</dd>
-            </div>
+            <>
+              <span aria-hidden="true">·</span>
+              <span>Поставщик: {brand}</span>
+            </>
           ) : null}
-        </dl>
-
-        <StockCard v={v} />
-
-        <p className="mt-5 text-[28px] font-bold leading-none">
-          <span className="text-[16px] font-normal">от </span>
-          {formatPriceValue(v.price)}
         </p>
+
+        <div className="mt-4 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+          <p className="text-[32px] font-bold leading-none">
+            <span className="text-[16px] font-normal">от </span>
+            {formatPriceValue(v.price)}
+          </p>
+          <span className="text-[14px] text-muted">за шт.</span>
+          <span className="w-full text-[12px] text-muted sm:ml-auto sm:w-auto">Цена без нанесения</span>
+        </div>
+
+        <StockStatus v={v} />
 
         {multi ? (
           <fieldset className="mt-5">
@@ -133,16 +134,19 @@ export function ProductDetail({
           </fieldset>
         ) : null}
 
-        <div className="mt-6 flex flex-wrap items-stretch gap-3">
+        <div className="mt-6">
           <BuyBox key={v.key} variant={v} />
-
           <Link
             href="/contact-us#callback"
-            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-[10px] border border-brand bg-white px-5 text-sm font-semibold text-brand hover:bg-brand hover:text-white sm:w-auto"
+            className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-[10px] border border-brand bg-white px-5 text-sm font-semibold text-brand hover:bg-brand hover:text-white"
           >
             <Ruler size={16} aria-hidden="true" />
-            Рассчитать нанесение
+            Рассчитать стоимость нанесения
           </Link>
+          <p className="mt-3 flex items-center gap-1.5 text-[12px] text-muted">
+            <Info size={14} aria-hidden="true" className="shrink-0" />
+            Минимальная сумма заказа — 10&nbsp;000&nbsp;₽
+          </p>
         </div>
 
         {children}
@@ -154,67 +158,110 @@ export function ProductDetail({
 const SHOWN_SIZES = 3;
 const REMOTE_HINT = "Поставка под заказ, срок уточняйте у менеджера";
 
-function StockCard({ v }: { v: VariantView }) {
-  const [all, setAll] = useState(false);
-  const note = "mt-4 text-[14px] font-medium text-muted";
-  if (v.info == null) {
-    return (
-      <p className={note}>
-        {v.stock == null
-          ? "Наличие уточняйте у менеджера"
-          : v.stock > 0
-            ? `В наличии: ${formatQty(v.stock)} шт.`
-            : "Под заказ"}
-      </p>
-    );
-  }
-  const rows = v.info;
-  const hasRemote = rows.some((r) => r.remote > 0);
-  if (!hasRemote && rows.every((r) => r.stock <= 0 && r.free <= 0)) {
-    return <p className={note}>Под заказ — срок уточняйте у менеджера</p>;
-  }
-  const sized = rows.length > 1;
-  const shown = all || rows.length <= SHOWN_SIZES ? rows : rows.slice(0, SHOWN_SIZES);
-  const th = "px-4 py-2.5 text-[13px] font-semibold text-ink";
-  const td = "px-4 py-2.5 text-[16px] font-semibold tabular-nums text-brand";
+function Dot({ tone }: { tone: "ok" | "warn" }) {
   return (
-    <div className="mt-4 max-w-[520px] overflow-hidden rounded-[14px] border border-line bg-white shadow-sm">
-      <table className="w-full border-collapse text-left">
-        <thead>
-          <tr className="border-b border-line">
-            {sized ? <th scope="col" className={th}>Размер</th> : null}
-            <th scope="col" className={th}>На складе</th>
-            <th scope="col" className={th}>Доступно</th>
-            {hasRemote ? (
-              <th scope="col" className={th} title={REMOTE_HINT}>
-                Удалённый склад
-              </th>
-            ) : null}
-          </tr>
-        </thead>
-        <tbody>
-          {shown.map((r, i) => (
-            <tr key={`${r.size}-${i}`} className="border-b border-line last:border-b-0">
-              {sized ? <th scope="row" className="px-4 py-2.5 text-[14px] font-medium text-ink">{r.size || "—"}</th> : null}
-              <td className={td}>{formatQty(r.stock)}</td>
-              <td className={td}>{formatQty(r.free)}</td>
-              {hasRemote ? <td className={td}>{formatQty(r.remote)}</td> : null}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {shown.length < rows.length ? (
-        <button
-          type="button"
-          onClick={() => setAll(true)}
-          className="w-full border-t border-line px-4 py-2.5 text-left text-[13px] font-medium text-brand hover:text-brand-hover"
-        >
-          Показать все размеры ({rows.length})
-        </button>
-      ) : null}
-      {hasRemote ? <p className="border-t border-line bg-surface px-4 py-2 text-[12px] text-muted">{REMOTE_HINT}</p> : null}
-    </div>
+    <span
+      aria-hidden="true"
+      className={`mt-[7px] size-2 shrink-0 rounded-full ${tone === "ok" ? "bg-new-text" : "bg-amber-500"}`}
+    />
   );
+}
+
+function StockStatus({ v }: { v: VariantView }) {
+  const [all, setAll] = useState(false);
+  const rows = v.info;
+  const line = "flex items-start gap-2 text-[14px]";
+  const num = "font-semibold tabular-nums";
+  let body: React.ReactNode;
+  if (rows == null) {
+    body =
+      v.stock == null ? (
+        <p className="text-[14px] text-muted">Наличие уточняйте у менеджера</p>
+      ) : v.stock > 0 ? (
+        <p className={line}>
+          <Dot tone="ok" />
+          <span>
+            В наличии: <span className={num}>{formatQty(v.stock)} шт.</span>
+          </span>
+        </p>
+      ) : (
+        <p className="text-[14px] text-muted">Под заказ — срок уточняйте у менеджера</p>
+      );
+  } else if (rows.length > 1) {
+    const hasRemote = rows.some((r) => r.remote > 0);
+    const shown = all || rows.length <= SHOWN_SIZES ? rows : rows.slice(0, SHOWN_SIZES);
+    const th = "px-3 py-2 text-left text-[12px] font-semibold text-muted";
+    const td = "px-3 py-2 text-[14px] font-semibold tabular-nums";
+    body = (
+      <div className="max-w-[460px] rounded-[12px] bg-surface p-1">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr>
+              <th scope="col" className={th}>Размер</th>
+              <th scope="col" className={th}>Доступно</th>
+              {hasRemote ? <th scope="col" className={th} title={REMOTE_HINT}>Удалённый склад</th> : null}
+            </tr>
+          </thead>
+          <tbody>
+            {shown.map((r, i) => (
+              <tr key={`${r.size}-${i}`} className="border-t border-line/70">
+                <th scope="row" className="px-3 py-2 text-left text-[14px] font-medium">{r.size || "—"}</th>
+                <td className={td}>{formatQty(r.free)}</td>
+                {hasRemote ? <td className={`${td} text-muted`}>{formatQty(r.remote)}</td> : null}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {shown.length < rows.length ? (
+          <button
+            type="button"
+            onClick={() => setAll(true)}
+            className="w-full rounded-lg px-3 py-2 text-left text-[13px] font-medium text-brand hover:text-brand-hover"
+          >
+            Показать все размеры ({rows.length})
+          </button>
+        ) : null}
+        {hasRemote ? <p className="px-3 pb-2 pt-1 text-[12px] text-muted">{REMOTE_HINT}</p> : null}
+      </div>
+    );
+  } else {
+    const r = rows[0];
+    if (r.free > 0) {
+      body = (
+        <>
+          <p className={line}>
+            <Dot tone="ok" />
+            <span>
+              В наличии: <span className={num}>{formatQty(r.free)} шт.</span>
+            </span>
+          </p>
+          {r.stock !== r.free ? (
+            <p className="pl-4 text-[13px] text-muted">
+              На складе {formatQty(r.stock)} · доступно {formatQty(r.free)}
+            </p>
+          ) : null}
+          {r.remote > 0 ? (
+            <p className="flex items-start gap-2 pl-0.5 text-[13px] text-muted">
+              <span aria-hidden="true" className="mt-[6px] size-1.5 shrink-0 rounded-full bg-amber-500" />
+              <span>Удалённый склад: {formatQty(r.remote)} шт. — поставка под заказ</span>
+            </p>
+          ) : null}
+        </>
+      );
+    } else if (r.remote > 0) {
+      body = (
+        <p className={line}>
+          <Dot tone="warn" />
+          <span className="text-amber-700">
+            Под заказ (удалённый склад: <span className={num}>{formatQty(r.remote)} шт.</span>)
+          </span>
+        </p>
+      );
+    } else {
+      body = <p className="text-[14px] text-muted">Под заказ — срок уточняйте у менеджера</p>;
+    }
+  }
+  return <div className="mt-4 space-y-1">{body}</div>;
 }
 
 function CopyButton({ text }: { text: string }) {
@@ -258,17 +305,19 @@ function BuyBox({ variant: v }: { variant: VariantView }) {
     return (
       <Link
         href="/contact-us#callback"
-        className="inline-flex h-12 w-full items-center justify-center rounded-[10px] bg-brand px-8 text-sm font-semibold text-white hover:bg-brand-hover sm:w-auto"
+        className="inline-flex h-12 w-full items-center justify-center rounded-[10px] bg-brand px-8 text-sm font-semibold text-white hover:bg-brand-hover"
       >
         Запросить
       </Link>
     );
   }
 
-  const btn = "grid size-12 shrink-0 place-items-center text-ink hover:text-brand disabled:text-faint";
+  const btn = "grid size-11 shrink-0 place-items-center text-ink hover:text-brand disabled:text-faint";
+  const n = draft !== null ? clamp(parseInt(draft, 10)) : qty;
   return (
     <>
-      <div role="group" aria-label="Количество" className="inline-flex h-12 items-center rounded-[10px] border border-line bg-white">
+      <div className="flex items-stretch gap-3">
+      <div role="group" aria-label="Количество" className="inline-flex h-12 w-36 shrink-0 items-center rounded-[10px] border border-line bg-white">
         <button type="button" aria-label="Уменьшить количество" disabled={qty <= 1} onClick={() => setQty((q) => clamp(q - 1))} className={btn}>
           <Minus size={16} aria-hidden="true" />
         </button>
@@ -282,7 +331,7 @@ function BuyBox({ variant: v }: { variant: VariantView }) {
             if (draft !== null) setQty(clamp(parseInt(draft, 10)));
             setDraft(null);
           }}
-          className="h-full w-16 min-w-0 bg-transparent text-center text-[14px] font-semibold tabular-nums outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"
+          className="h-full w-0 min-w-0 flex-1 bg-transparent text-center text-[14px] font-semibold tabular-nums outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"
         />
         <button type="button" aria-label="Увеличить количество" disabled={qty >= max} onClick={() => setQty((q) => clamp(q + 1))} className={btn}>
           <Plus size={16} aria-hidden="true" />
@@ -299,7 +348,7 @@ function BuyBox({ variant: v }: { variant: VariantView }) {
           clearTimeout(timer.current);
           timer.current = setTimeout(() => setAdded(false), 2500);
         }}
-        className="inline-flex h-12 flex-1 items-center justify-center gap-1.5 rounded-[10px] bg-brand px-8 text-sm font-semibold text-white hover:bg-brand-hover sm:flex-none"
+        className="inline-flex h-12 flex-1 items-center justify-center gap-1.5 rounded-[10px] bg-brand px-8 text-sm font-semibold text-white hover:bg-brand-hover"
       >
         {added ? (
           <>
@@ -309,11 +358,16 @@ function BuyBox({ variant: v }: { variant: VariantView }) {
           "В корзину"
         )}
       </button>
+      </div>
+      <p aria-live="polite" className="mt-2 text-[13px] text-muted">
+        Итого: {formatQty(n)} шт. × {formatPriceValue(v.price)} ={" "}
+        <span className="font-semibold text-ink">{formatPriceValue(Math.round(v.price * n * 100) / 100)}</span>
+      </p>
       <span role="status" className="sr-only">
         {added ? "Добавлено в корзину" : ""}
       </span>
       {added ? (
-        <Link href="/cart" className="order-last basis-full text-[13px] font-medium text-brand hover:text-brand-hover">
+        <Link href="/cart" className="mt-1 inline-block text-[13px] font-medium text-brand hover:text-brand-hover">
           Перейти в корзину
         </Link>
       ) : null}
