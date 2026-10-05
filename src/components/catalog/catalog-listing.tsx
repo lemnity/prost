@@ -25,7 +25,8 @@ import { productsLabel } from "@/lib/format";
 
 const PAGE = 24;
 
-type Props = { products: ListingProduct[] };
+/** sidebar: рядом есть колонка разделов — сетка на колонку уже. */
+type Props = { products: ListingProduct[]; sidebar?: boolean };
 
 type Group = { key: Exclude<ListFilterKey, "prints">; label: string; options: Option[]; empty: string };
 
@@ -36,7 +37,7 @@ export function CatalogListingIsland(props: Props) {
 }
 
 /** Листинг: строка фильтров, тулбар и сетка. Без query — статичный рендер (SSR/SEO). */
-export function CatalogListing({ products, query: urlQuery = "" }: Props & { query?: string }) {
+export function CatalogListing({ products, sidebar = false, query: urlQuery = "" }: Props & { query?: string }) {
   const router = useRouter();
   const pathname = usePathname();
   // Мгновенный отклик контролов, пока URL обновляется.
@@ -151,7 +152,7 @@ export function CatalogListing({ products, query: urlQuery = "" }: Props & { que
       </div>
 
       {list.length ? (
-        <ProductGrid key={query} products={list} />
+        <ProductGrid key={query} products={list} sidebar={sidebar} />
       ) : (
         <div className="rounded-[10px] bg-surface p-8 text-center">
           <p className="text-[15px] font-semibold">Ничего не найдено</p>
@@ -202,12 +203,14 @@ function ListDropdown({
   );
 }
 
-function ProductGrid({ products }: { products: ListingProduct[] }) {
+function ProductGrid({ products, sidebar }: { products: ListingProduct[]; sidebar: boolean }) {
   const [shown, setShown] = useState(PAGE);
   const rest = products.length - shown;
   return (
     <>
-      <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
+      <ul
+        className={`grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 ${sidebar ? "2xl:grid-cols-4" : "lg:grid-cols-4"}`}
+      >
         {products.slice(0, shown).map((p) => (
           <li key={p.url} className="grid">
             <ProductCard product={p} />

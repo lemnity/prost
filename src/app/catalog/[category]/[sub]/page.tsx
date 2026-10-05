@@ -48,7 +48,7 @@ export default async function SubcategoryPage({ params }: { params: Promise<Para
 
   const products = getProductsByCategory(category, sub);
   const chips = [
-    { title: "Все", href: node.href, active: false },
+    { title: "Все товары", href: node.href, active: false, count: getProductsByCategory(category).length },
     ...subs.map((s) => ({ title: s.title, href: s.href, active: s.slug === sub, count: s.count })),
   ];
   return (

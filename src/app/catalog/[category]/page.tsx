@@ -50,7 +50,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
 
   const products = getProductsByCategory(category);
   const chips = [
-    { title: "Все", href: `/catalog/${category}`, active: true, count: products.length },
+    { title: "Все товары", href: `/catalog/${category}`, active: true, count: products.length },
     ...getSubcategories(category).map((s) => ({ title: s.title, href: s.href, active: false, count: s.count })),
   ];
   return <ListingPage title={title} crumbs={crumbs} chips={chips} products={products} />;
