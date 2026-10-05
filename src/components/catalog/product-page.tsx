@@ -8,9 +8,10 @@ import { ProductCard } from "./product-card";
 import { ProductDetail, type VariantView } from "./product-detail";
 import { ProductTabs } from "./product-tabs";
 import { colorFromSlug } from "@/lib/catalog/colors";
-import { getStock, sortRows, type StockInfo } from "@/lib/catalog/stock";
+import { getStock, normalizePrints, sortRows, type StockInfo } from "@/lib/catalog/stock";
 import { buildSpecRows, getProductDetails } from "@/lib/catalog/details";
 import { asset } from "@/lib/asset";
+import { BrandMark } from "@/components/ui/product-image";
 import { applications } from "@/content/home";
 import {
   getCategoryNode,
@@ -61,6 +62,24 @@ function skuFromUrl(product: CatalogProduct, url: string): string {
     const c = tail[k++];
     return ch === ch.toUpperCase() ? c.toUpperCase() : c.toLowerCase();
   });
+}
+
+/** Группа нанесения → id в applications (content/home). */
+function applicationId(group: string): string | null {
+  const g = group.toLowerCase();
+  if (g === "тампопечать") return "pad-press";
+  if (g === "шелкография") return "silk-press";
+  if (g === "лазерная гравировка") return "laser-engraving";
+  if (g === "уф-печать") return "uv-press";
+  if (g === "вышивка") return "embroidery";
+  if (g === "трансфер") return "thermal-transfer";
+  if (g === "сублимация") return "sublime-press";
+  if (g === "наклейка") return "dome-stickers";
+  if (g === "цифровая печать") return "digital-press";
+  if (g === "деколь") return "decal";
+  if (g.startsWith("тиснение")) return "embrossing";
+  if (g.includes("dtg")) return "dtg";
+  return null;
 }
 
 /** Остатки для клиента: только нужные поля. */
@@ -129,6 +148,11 @@ export function ProductPage({ product }: { product: CatalogProduct }) {
     ? getSubcategories(product.category).find((s) => s.slug === product.subcategory)
     : undefined;
   const { variants, initial } = buildVariants(product);
+  const groups = normalizePrints(getStock(product.url));
+  const ids = new Set(groups.map(applicationId).filter((x): x is string => !!x));
+  const apps = applications.items.filter((a) => ids.has(a.id));
+  const other = groups.filter((g) => !applicationId(g));
+  const chip = "inline-flex h-9 items-center gap-2 rounded-full bg-surface pl-1 pr-3 text-[13px] text-ink hover:text-brand";
   const similar = getSimilarProducts(product);
   const details = getProductDetails(product.url);
   const paragraphs = (details?.description ?? "")
@@ -161,19 +185,35 @@ export function ProductPage({ product }: { product: CatalogProduct }) {
                 {applications.link.label}
               </Link>
             </div>
-            <ul className="flex flex-wrap gap-2">
-              {applications.items.map((a) => (
-                <li key={a.id}>
-                  <Link
-                    href={a.href}
-                    className="inline-flex h-9 items-center gap-2 rounded-full bg-surface pl-1 pr-3 text-[13px] text-ink hover:text-brand"
-                  >
-                    <Image src={asset(a.image)} alt="" width={28} height={28} sizes="28px" className="size-7 rounded-full bg-white object-contain" />
-                    {a.title}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            {apps.length || other.length ? (
+              <ul className="flex flex-wrap gap-2">
+                {apps.map((a) => (
+                  <li key={a.id}>
+                    <Link href={a.href} className={chip}>
+                      <Image src={asset(a.image)} alt="" width={28} height={28} sizes="28px" className="size-7 rounded-full bg-white object-contain" />
+                      {a.title}
+                    </Link>
+                  </li>
+                ))}
+                {other.map((g) => (
+                  <li key={g}>
+                    <Link href={applications.link.href} className={chip}>
+                      <span className="grid size-7 place-items-center rounded-full bg-white">
+                        <BrandMark className="size-4 opacity-40" />
+                      </span>
+                      {g}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-[13px] text-muted">
+                Подберём способ нанесения под ваш тираж — уточните у менеджера.{" "}
+                <Link href="/contact-us#callback" className="font-medium text-brand hover:text-brand-hover">
+                  Рассчитать нанесение
+                </Link>
+              </p>
+            )}
           </section>
         </ProductDetail>
       </Container>
