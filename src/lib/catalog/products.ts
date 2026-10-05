@@ -95,11 +95,20 @@ function fromStatic(p: Product, popularity: number): CatalogProduct {
   };
 }
 
+/** Фото prostyle.gifts без параметра size часто не отдаются: добавляем size=2. */
+function withSize(url: string): string {
+  return url.startsWith("https://prostyle.gifts/content/") && !url.includes("?") ? `${url}?size=2` : url;
+}
+
 let cache: CatalogProduct[] | null = null;
 
 function load(): CatalogProduct[] {
   if (cache) return cache;
-  const list = (raw as unknown as CatalogProduct[]).map((p) => ({ ...p }));
+  const list = (raw as unknown as CatalogProduct[]).map((p) => ({
+    ...p,
+    image: withSize(p.image),
+    variants: p.variants.map((v) => ({ ...v, image: withSize(v.image) })),
+  }));
   const byUrl = new Map(list.map((p) => [p.url, p]));
   // Товары с главной (новинки, распродажа, новогодняя подборка): дополняем
   // флаги у совпавших и добавляем отсутствующие в выгрузке.

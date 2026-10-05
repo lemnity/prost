@@ -49,7 +49,7 @@ export function ProductImage({
       onError={fail}
       ref={(el) => {
         // Ошибка могла случиться до гидрации.
-        if (el && el.complete && el.naturalWidth === 0 && el.currentSrc) fail();
+        if (el && el.loading !== "lazy" && el.complete && el.naturalWidth === 0 && el.currentSrc) fail();
       }}
     />
   );

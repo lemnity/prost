@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Check, Copy, Info, Minus, Plus, Ruler } from "lucide-react";
 import { addToCart } from "@/lib/cart/store";
@@ -13,6 +14,8 @@ type SizeRow = { size: string; stock: number; free: number; remote: number };
 export type VariantView = {
   key: string;
   label: string;
+  /** Страница варианта, если он есть в каталоге (переход вместо локального переключения). */
+  href?: string;
   image: string;
   /** Данные позиции для корзины и карточки. */
   id: string;
@@ -55,7 +58,14 @@ export function ProductDetail({
   /** Слот под ценой (ссылки на нанесение и т. п.). */
   children?: React.ReactNode;
 }) {
+  const router = useRouter();
   const [index, setIndex] = useState(initial);
+  const select = (i: number) => {
+    setIndex(i);
+    const href = variants[i]?.href;
+    if (href && i !== initial) router.push(href, { scroll: false });
+  };
+  const thumb = (u: string) => u.replace("size=2", "size=1");
   const [pick, setPick] = useState<{ key: string; size: string } | null>(null);
   const [bad, setBad] = useState<ReadonlySet<string>>(new Set());
   const v = variants[index] ?? variants[0];
@@ -89,7 +99,7 @@ export function ProductDetail({
                 <li key={x.key} className="shrink-0">
                   <button
                     type="button"
-                    onClick={() => setIndex(i)}
+                    onClick={() => select(i)}
                     aria-label={`Фото: ${x.label}`}
                     aria-pressed={i === index}
                     className={`relative block size-16 overflow-hidden rounded-lg border bg-white md:size-[72px] ${
@@ -97,7 +107,7 @@ export function ProductDetail({
                     }`}
                   >
                     <ProductImage
-                      src={asset(x.image)}
+                      src={asset(thumb(x.image))}
                       alt=""
                       sizes="72px"
                       className="object-contain p-1"
@@ -140,7 +150,7 @@ export function ProductDetail({
 
         {multi ? (
           <fieldset className="mt-5">
-            <legend className="mb-2 text-[13px] font-semibold">
+            <legend className="mb-2 h-5 max-w-full truncate text-[13px] font-semibold">
               Вариант: <span className="font-normal text-muted">{v.label}</span>
             </legend>
             <div role="radiogroup" aria-label="Вариант товара" className="flex flex-wrap gap-2">
@@ -151,14 +161,14 @@ export function ProductDetail({
                   role="radio"
                   aria-checked={i === index}
                   title={x.label}
-                  onClick={() => setIndex(i)}
+                  onClick={() => select(i)}
                   className={`relative size-12 overflow-hidden rounded-lg border bg-white ${
                     i === index ? "border-brand ring-1 ring-brand" : "border-line hover:border-brand"
                   }`}
                 >
                   <span className="sr-only">{x.label}</span>
                   <ProductImage
-                    src={asset(x.image)}
+                    src={asset(thumb(x.image))}
                     alt=""
                     sizes="48px"
                     fallback="mini"
@@ -236,7 +246,7 @@ function StockLine({ avail }: { avail: Avail }) {
     main = <span className="text-muted">Под заказ — срок уточняйте у менеджера</span>;
   }
   return (
-    <div className="mt-4 space-y-1" aria-live="polite">
+    <div className="mt-4 min-h-[3rem] space-y-1" aria-live="polite">
       <p className="flex items-start gap-2 text-[14px]">{main}</p>
       {avail.known && avail.free > 0 && avail.remote > 0 ? (
         <p className="flex items-start gap-2 text-[13px] text-muted">

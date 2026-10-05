@@ -7,6 +7,7 @@ import { SectionHeader } from "@/components/ui/section-header";
 import { ProductCard } from "./product-card";
 import { ProductDetail, type VariantView } from "./product-detail";
 import { ProductTabs } from "./product-tabs";
+import { colorFromSlug } from "@/lib/catalog/colors";
 import { getStock, normalizePrints, sortRows, type StockInfo } from "@/lib/catalog/stock";
 import { buildSpecRows, getProductDetails } from "@/lib/catalog/details";
 import { asset } from "@/lib/asset";
@@ -96,6 +97,7 @@ function buildVariants(product: CatalogProduct): { variants: VariantView[]; init
         ? {
             key: v.url,
             label: variantLabel(match.title),
+            href: match.url,
             image: v.image || match.image,
             id: match.id,
             url: match.url,
@@ -109,7 +111,7 @@ function buildVariants(product: CatalogProduct): { variants: VariantView[]; init
           {
             ...self,
             key: v.url,
-            label: v.title || `Вариант ${i + 1}`,
+            label: v.title || colorFromSlug(v.url) || `Цвет ${i + 1}`,
             image: v.image,
             sku: v.sku ?? skuFromUrl(product, v.url),
             stock: null,
@@ -150,7 +152,7 @@ export function ProductPage({ product }: { product: CatalogProduct }) {
       </Container>
 
       <Container className="py-6 md:py-8">
-        <ProductDetail title={product.title} brand={product.supplier} variants={variants} initial={initial}>
+        <ProductDetail key={product.url} title={product.title} brand={product.supplier} variants={variants} initial={initial}>
           <section aria-labelledby="apps-title" className="mt-8 border-t border-line pt-6">
             <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
               <h2 id="apps-title" className="text-[17px] font-semibold">

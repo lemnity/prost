@@ -11,7 +11,8 @@ const nextConfig: NextConfig = {
   images: {
     formats: ["image/avif", "image/webp"],
     // Фото товаров каталога (временный источник — prostyle.gifts).
-    remotePatterns: [new URL("https://prostyle.gifts/content/**")],
+    // Без поля search: допускаются любые query (?size=…).
+    remotePatterns: [{ protocol: "https", hostname: "prostyle.gifts", pathname: "/content/**" }],
     ...(pages ? { unoptimized: true } : {}),
   },
   turbopack: { root: path.resolve(__dirname) },

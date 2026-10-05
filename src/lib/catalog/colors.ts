@@ -58,3 +58,37 @@ export function deriveColors(texts: string[]): string[] {
   }
   return out;
 }
+
+// Цвет по транслитерированному адресу варианта («…-sun-ray-klas-sinij-10034501»).
+const SLUG_COLORS: [RegExp, string][] = [
+  [/(?:^|-)temno-sin/, "темно-синий"],
+  [/(?:^|-)klas-sin/, "синий классический"],
+  [/(?:^|-)chern/, "черный"],
+  [/(?:^|-)bel(?:yj|aya|oe|ye)(?:-|$)/, "белый"],
+  [/(?:^|-)ser(?:yj|aya|oe|ye)(?:-|$)/, "серый"],
+  [/(?:^|-)serebr/, "серебристый"],
+  [/(?:^|-)zolot/, "золотистый"],
+  [/(?:^|-)krasn/, "красный"],
+  [/(?:^|-)bordov/, "бордовый"],
+  [/(?:^|-)rozov/, "розовый"],
+  [/(?:^|-)oranzhev/, "оранжевый"],
+  [/(?:^|-)zhelt/, "желтый"],
+  [/(?:^|-)salatov/, "салатовый"],
+  [/(?:^|-)zelen/, "зеленый"],
+  [/(?:^|-)biryuzov/, "бирюзовый"],
+  [/(?:^|-)golub/, "голубой"],
+  [/(?:^|-)sin(?:ij|yaya|ee|ie)(?:-|$)/, "синий"],
+  [/(?:^|-)fiolet/, "фиолетовый"],
+  [/(?:^|-)korichnev/, "коричневый"],
+  [/(?:^|-)bezhev/, "бежевый"],
+  [/(?:^|-)prozrachn/, "прозрачный"],
+  [/(?:^|-)natural/, "натуральный"],
+  [/(?:^|-)haki(?:-|$)/, "хаки"],
+];
+
+/** Название цвета по адресу товара-варианта; null, если не распознан. */
+export function colorFromSlug(url: string): string | null {
+  const slug = (url.split("/").pop() ?? "").replace(/^item-/, "");
+  for (const [re, label] of SLUG_COLORS) if (re.test(slug)) return label;
+  return null;
+}
