@@ -1,5 +1,6 @@
 import { asset } from "@/lib/asset";
 import { site } from "@/content/site";
+import { buttonClass } from "@/components/ui/button";
 
 /** Подписка на Telegram-канал (блок рядом с «Похожими товарами»). */
 export function TelegramBox({ className = "" }: { className?: string }) {
@@ -13,7 +14,7 @@ export function TelegramBox({ className = "" }: { className?: string }) {
         href={tg?.url ?? "https://t.me/"}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex h-11 items-center justify-center gap-2 rounded-[10px] bg-[#419FD9] px-5 text-sm font-semibold text-white hover:bg-[#3590c9]"
+        className={`${buttonClass({ variant: "plain", size: "md" })} bg-[#419FD9] text-white hover:bg-[#3590c9]`}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={asset("/images/social/telegram.svg")} alt="" width={20} height={20} className="size-5" />

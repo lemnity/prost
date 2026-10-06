@@ -8,6 +8,7 @@ import { asset } from "@/lib/asset";
 import type { MenuData } from "@/lib/catalog/menu";
 import type { SaleRemaining } from "@/lib/sale";
 import { categoryIcon } from "./catalog-icons";
+import { buttonClass } from "@/components/ui/button";
 
 /** Правая область десктоп-панели: подкатегории и «Товар дня». */
 export function CatalogPanes({
@@ -91,7 +92,7 @@ export function CatalogPanes({
                     </p>
                     <Link
                       href={p.url}
-                      className="flex h-10 shrink-0 items-center justify-center rounded-[10px] bg-brand text-sm font-semibold text-white hover:bg-brand-hover"
+                      className={`${buttonClass({ size: "md" })} shrink-0`}
                     >
                       Подробнее
                     </Link>

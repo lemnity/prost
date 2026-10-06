@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { popularCategories } from "@/lib/catalog/static-data";
+import { buttonClass } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "Страница не найдена — ProStyle",
@@ -28,13 +29,13 @@ export default function NotFound() {
         <div className="mt-8 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
           <Link
             href="/catalog"
-            className="inline-flex h-12 items-center justify-center rounded-lg bg-brand px-8 text-[15px] font-semibold text-white hover:bg-brand-hover"
+            className={buttonClass({ size: "lg", px: "px-8" })}
           >
             В каталог
           </Link>
           <Link
             href="/"
-            className="inline-flex h-12 items-center justify-center rounded-lg border border-brand bg-white px-8 text-[15px] font-semibold text-brand hover:bg-brand hover:text-white"
+            className={buttonClass({ variant: "outline", size: "lg", px: "px-8" })}
           >
             На главную
           </Link>

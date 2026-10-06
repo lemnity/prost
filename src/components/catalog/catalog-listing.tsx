@@ -31,6 +31,7 @@ import {
 import { FilterPanel, type Group } from "./filter-panel";
 import type { ListingProduct } from "@/lib/catalog/types";
 import { productsLabel } from "@/lib/format";
+import { buttonClass } from "@/components/ui/button";
 
 const PAGE = 24;
 
@@ -294,7 +295,7 @@ export function CatalogListing({
           <button
             type="button"
             onClick={reset}
-            className="mt-4 inline-flex h-10 items-center rounded-lg bg-brand px-5 text-sm font-semibold text-white hover:bg-brand-hover"
+            className={`${buttonClass({ size: "md" })} mt-4`}
           >
             Сбросить фильтры
           </button>
@@ -430,7 +431,7 @@ function ProductList({
           <button
             type="button"
             onClick={onMore}
-            className="inline-flex h-11 items-center rounded-lg border border-brand bg-white px-6 text-sm font-semibold text-brand hover:bg-brand hover:text-white"
+            className={buttonClass({ variant: "outline", size: "md", px: "px-6" })}
           >
             Показать ещё {Math.min(rest, PAGE)}
           </button>
@@ -509,7 +510,7 @@ function Drawer({
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-brand text-sm font-semibold text-white hover:bg-brand-hover"
+            className={buttonClass({ size: "md", full: true })}
           >
             Показать {productsLabel(count)}
           </button>

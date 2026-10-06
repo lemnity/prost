@@ -13,6 +13,7 @@ import {
   getApplicationCard,
   getApplicationType,
 } from "@/lib/application-types";
+import { buttonClass } from "@/components/ui/button";
 
 export const dynamicParams = false;
 
@@ -84,7 +85,7 @@ export default async function ApplicationTypePage({ params }: Props) {
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
                 href="/contact-us#callback"
-                className="inline-flex h-12 items-center justify-center rounded-lg bg-brand px-7 text-[15px] font-semibold text-white transition-colors hover:bg-brand-hover"
+                className={buttonClass({ size: "lg", px: "px-7" })}
               >
                 Рассчитать нанесение
               </Link>

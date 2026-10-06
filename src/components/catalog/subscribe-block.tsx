@@ -15,7 +15,7 @@ export function SubscribeBlock() {
       <ul className="mx-auto mt-4 flex max-w-[620px] flex-col gap-3 sm:flex-row sm:justify-center">
         {socials.map((s) => {
           const cls =
-            "inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-(--c) bg-white px-5 text-sm font-semibold text-(--c) motion-safe:transition-colors hover:bg-(--c)/10 focus-visible:outline-(--c)";
+            "inline-flex h-11 w-full items-center justify-center gap-2 rounded-[10px] border border-(--c) bg-white px-5 text-sm font-semibold text-(--c) motion-safe:transition-colors hover:bg-(--c)/10 focus-visible:outline-(--c)";
           const body = (
             <>
               <img

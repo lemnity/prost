@@ -2,6 +2,7 @@ import { asset } from "@/lib/asset";
 import Image from "next/image";
 import Link from "next/link";
 import { Container } from "@/components/ui/container";
+import { buttonClass } from "@/components/ui/button";
 
 export function ConsultationCta() {
   return (
@@ -28,7 +29,7 @@ export function ConsultationCta() {
         </div>
         <Link
           href="/contact-us#callback"
-          className="inline-flex h-[52px] items-center justify-center rounded-lg bg-brand px-10 text-[15px] font-semibold text-white transition-colors hover:bg-brand-hover"
+          className={buttonClass({ size: "lg", px: "px-10" })}
         >
           Получить консультацию
         </Link>

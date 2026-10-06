@@ -8,6 +8,7 @@ import { addToCart } from "@/lib/cart/store";
 import { asset } from "@/lib/asset";
 import { formatPriceValue, formatQty } from "@/lib/format";
 import { ProductImage } from "@/components/ui/product-image";
+import { buttonClass } from "@/components/ui/button";
 
 type SizeRow = { size: string; stock: number; free: number; remote: number };
 
@@ -199,7 +200,7 @@ export function ProductDetail({
             calc={
               <Link
                 href="/contact-us#callback"
-                className="inline-flex h-12 w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-[10px] border border-brand bg-white px-4 text-sm font-semibold text-brand hover:bg-brand hover:text-white @md:w-auto"
+                className={`${buttonClass({ variant: "outline", size: "lg", px: "px-4", full: true })} shrink-0 @md:w-auto!`}
               >
                 <Ruler size={16} aria-hidden="true" />
                 Рассчитать нанесение
@@ -469,7 +470,7 @@ function BuyBox({
             clearTimeout(timer.current);
             timer.current = setTimeout(() => setAdded(false), 2500);
           }}
-          className="inline-flex h-12 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-[10px] bg-brand px-3 text-sm font-semibold text-white hover:bg-brand-hover"
+          className={`${buttonClass({ size: "lg", px: "px-3" })} min-w-0 flex-1`}
         >
           {added ? (
             <>

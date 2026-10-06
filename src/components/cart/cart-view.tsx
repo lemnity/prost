@@ -11,11 +11,10 @@ import { MIN_ORDER, cartCount, cartTotal, clearCart, removeFromCart, type CartIt
 import { useCart, useHydrated } from "@/lib/cart/use-cart";
 import { MinOrderProgress, minOrderHint } from "./min-order-progress";
 import { QtyStepper } from "./qty-stepper";
+import { buttonClass } from "@/components/ui/button";
 
-const btnPrimary =
-  "inline-flex h-[52px] items-center justify-center rounded-lg bg-brand px-8 text-[15px] font-semibold text-white transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:bg-faint disabled:hover:bg-faint";
-const btnOutline =
-  "inline-flex h-12 items-center justify-center rounded-lg border border-brand bg-white px-6 text-[15px] font-semibold text-brand hover:bg-brand hover:text-white";
+const btnPrimary = buttonClass({ size: "lg", px: "px-8" });
+const btnOutline = buttonClass({ variant: "outline", size: "lg" });
 
 export function CartView() {
   const items = useCart();

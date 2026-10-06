@@ -11,6 +11,7 @@ import { company, requisites } from "@/content/company";
 import { applications } from "@/content/home";
 import { site } from "@/content/site";
 import { getPopularCategories } from "@/lib/catalog";
+import { buttonClass } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "О компании — ProStyle",
@@ -103,7 +104,7 @@ export default async function AboutPage() {
                 href={yandexMapUrl}
                 target="_blank"
                 rel="noopener"
-                className="mt-4 inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-brand px-6 text-sm font-semibold text-brand transition-colors hover:bg-brand hover:text-white"
+                className={`${buttonClass({ variant: "outline", size: "md", px: "px-6" })} mt-4`}
               >
                 <MapPin size={18} aria-hidden="true" />
                 Открыть на карте

@@ -9,6 +9,7 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import { site } from "@/content/site";
 import { SocialLinks } from "@/components/layout/social-links";
 import { offices, type CityId, type Office } from "@/content/company";
+import { buttonClass } from "@/components/ui/button";
 
 const ids = offices.map((o) => o.id);
 const formCities = offices.filter((o) => !o.soon);
@@ -160,7 +161,7 @@ export function ContactsSection() {
                         key={c.id}
                         type="button"
                         onClick={() => select(c.id)}
-                        className="inline-flex h-10 items-center rounded-lg border border-brand px-5 text-sm font-semibold text-brand transition-colors hover:bg-brand hover:text-white"
+                        className={buttonClass({ variant: "outline", size: "md" })}
                       >
                         {c.city}
                       </button>
@@ -248,7 +249,7 @@ export function ContactsSection() {
               <div className="sm:col-span-2">
                 <button
                   type="submit"
-                  className="inline-flex h-[52px] w-full items-center justify-center rounded-lg bg-brand px-10 text-[15px] font-semibold text-white transition-colors hover:bg-brand-hover sm:w-auto"
+                  className={`${buttonClass({ size: "lg", px: "px-10", full: true })} sm:w-auto!`}
                 >
                   Отправить заявку
                 </button>
