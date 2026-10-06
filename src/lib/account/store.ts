@@ -9,6 +9,9 @@ import type { CartItem } from "@/lib/cart/store";
 
 export type Profile = {
   name: string;
+  /** Фамилия и отчество — необязательные (в старых кабинетах полей может не быть). */
+  lastName?: string;
+  middleName?: string;
   email: string;
   phone: string;
   company: string;
@@ -20,6 +23,12 @@ export type Profile = {
   /** Когда согласие дано (ISO) — нужно для подтверждения по 38-ФЗ «О рекламе». */
   marketingAt?: string;
 };
+
+/** «Фамилия Имя Отчество» из заполненных частей. */
+export const fullName = (p: Profile) => [p.lastName, p.name, p.middleName].filter(Boolean).join(" ");
+
+/** Обращение: «Имя Отчество». */
+export const greetName = (p: Profile) => [p.name, p.middleName].filter(Boolean).join(" ");
 
 export type SavedOrder = {
   number: string;

@@ -40,7 +40,7 @@ function ProfileFormInner({ initial }: { initial: Profile }) {
     const first = ORDER.find((k) => errs[k]);
     if (first) return document.getElementById(`f-${first}`)?.focus();
     updateProfile({
-      name: d.name.trim(), phone: d.phone.trim(), company: d.company.trim(), inn: d.inn,
+      name: d.name.trim(), lastName: (d.lastName ?? "").trim(), middleName: (d.middleName ?? "").trim(), phone: d.phone.trim(), company: d.company.trim(), inn: d.inn,
       city: d.city.trim(), address: d.address.trim(), marketing: d.marketing,
     });
     setSaved(true);
@@ -54,9 +54,17 @@ function ProfileFormInner({ initial }: { initial: Profile }) {
       <section aria-labelledby="p-contacts" className={card}>
         <h2 id="p-contacts" className="text-[18px] font-bold">Контактные данные</h2>
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
-          <Field name="name" label="Имя" required error={errors.name}>
-            {(p) => <input {...p} type="text" autoComplete="name" value={d.name} onChange={(e) => set("name", e.target.value)} className={field} />}
-          </Field>
+          <div className="grid gap-4 sm:col-span-2 sm:grid-cols-3">
+            <Field name="lastName" label="Фамилия">
+              {(p) => <input {...p} type="text" autoComplete="family-name" value={d.lastName ?? ""} onChange={(e) => set("lastName", e.target.value)} className={field} />}
+            </Field>
+            <Field name="name" label="Имя" required error={errors.name}>
+              {(p) => <input {...p} type="text" autoComplete="given-name" value={d.name} onChange={(e) => set("name", e.target.value)} className={field} />}
+            </Field>
+            <Field name="middleName" label="Отчество">
+              {(p) => <input {...p} type="text" autoComplete="additional-name" value={d.middleName ?? ""} onChange={(e) => set("middleName", e.target.value)} className={field} />}
+            </Field>
+          </div>
           <Field name="phone" label="Телефон" required error={errors.phone}>
             {(p) => <PhoneInput {...p} value={d.phone} onValueChange={(v) => set("phone", v)} className={field} />}
           </Field>

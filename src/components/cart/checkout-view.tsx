@@ -22,7 +22,7 @@ import {
   type Payment,
 } from "@/lib/cart/order-text";
 import { buttonClass } from "@/components/ui/button";
-import { saveOrder } from "@/lib/account/store";
+import { fullName, saveOrder } from "@/lib/account/store";
 import { useSession } from "@/lib/account/use-account";
 
 const field =
@@ -308,7 +308,7 @@ export function CheckoutView() {
     const pr = session.profile;
     setD((p) => ({
       ...p,
-      name: p.name || pr.name,
+      name: p.name || fullName(pr),
       phone: p.phone || pr.phone,
       email: p.email || pr.email,
       company: p.company || pr.company,
@@ -421,7 +421,7 @@ export function CheckoutView() {
               <div className="flex flex-col gap-3 rounded-[14px] bg-brand-soft p-4 sm:flex-row sm:items-center">
                 <UserRound size={28} strokeWidth={1.5} aria-hidden="true" className="shrink-0 text-brand" />
                 <p className="text-[14px] sm:flex-1">
-                  <span className="font-semibold text-ink">Вы вошли как {session.profile.name}.</span>
+                  <span className="font-semibold text-ink">Вы вошли как {fullName(session.profile)}.</span>
                   <span className="text-muted"> Данные из кабинета подставлены, заказ сохранится в истории.</span>
                 </p>
                 <Link href="/account/profile" className="text-[14px] font-semibold text-brand hover:text-brand-hover">Изменить профиль</Link>

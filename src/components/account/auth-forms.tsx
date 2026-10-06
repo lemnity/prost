@@ -99,14 +99,14 @@ const REG_ORDER: RegKey[] = ["name", "company", "inn", "phone", "email", "passwo
 
 export function RegisterForm() {
   const router = useRouter();
-  const [d, setD] = useState({ name: "", company: "", inn: "", phone: "", email: "", password: "" });
+  const [d, setD] = useState({ lastName: "", name: "", middleName: "", company: "", inn: "", phone: "", email: "", password: "" });
   const [consent, setConsent] = useState(false);
   const [marketing, setMarketing] = useState(false);
   const [errors, setErrors] = useState<RegErrors>({});
   const [busy, setBusy] = useState(false);
   const set = (k: keyof typeof d, v: string) => {
     setD((p) => ({ ...p, [k]: v }));
-    setErrors((p) => (p[k] ? { ...p, [k]: undefined } : p));
+    setErrors((p) => (k in p ? { ...p, [k]: undefined } : p));
   };
 
   async function submit(e: FormEvent<HTMLFormElement>) {
@@ -124,7 +124,7 @@ export function RegisterForm() {
     if (focusFirst(REG_ORDER, errs)) return;
     setBusy(true);
     const res = await signUp(
-      { name: d.name.trim(), company: d.company.trim(), inn: d.inn, phone: d.phone.trim(), email: d.email, city: "", address: "", marketing },
+      { name: d.name.trim(), lastName: d.lastName.trim(), middleName: d.middleName.trim(), company: d.company.trim(), inn: d.inn, phone: d.phone.trim(), email: d.email, city: "", address: "", marketing },
       d.password,
     );
     setBusy(false);
@@ -138,9 +138,17 @@ export function RegisterForm() {
 
   return (
     <form noValidate onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
-      <Field name="name" label="Имя" required error={errors.name} wide>
-        {(p) => <input {...p} type="text" autoComplete="name" value={d.name} onChange={(e) => set("name", e.target.value)} className={field} />}
-      </Field>
+      <div className="grid gap-4 sm:col-span-2 sm:grid-cols-3">
+        <Field name="lastName" label="Фамилия">
+          {(p) => <input {...p} type="text" autoComplete="family-name" value={d.lastName} onChange={(e) => set("lastName", e.target.value)} className={field} />}
+        </Field>
+        <Field name="name" label="Имя" required error={errors.name}>
+          {(p) => <input {...p} type="text" autoComplete="given-name" value={d.name} onChange={(e) => set("name", e.target.value)} className={field} />}
+        </Field>
+        <Field name="middleName" label="Отчество">
+          {(p) => <input {...p} type="text" autoComplete="additional-name" value={d.middleName} onChange={(e) => set("middleName", e.target.value)} className={field} />}
+        </Field>
+      </div>
       <Field name="company" label="Компания" error={errors.company}>
         {(p) => <input {...p} type="text" autoComplete="organization" value={d.company} onChange={(e) => set("company", e.target.value)} className={field} />}
       </Field>

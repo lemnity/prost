@@ -8,6 +8,7 @@ import { cartTotal } from "@/lib/cart/store";
 import { useCart } from "@/lib/cart/use-cart";
 import { useFavorites } from "@/lib/favorites/use-favorites";
 import { FAVORITES_HREF } from "@/lib/favorites/store";
+import { greetName } from "@/lib/account/store";
 import { useSession } from "@/lib/account/use-account";
 import { MinOrderProgress, minOrderHint } from "@/components/cart/min-order-progress";
 import { EmptyOrders, OrderCard, formatDate } from "./orders";
@@ -40,7 +41,7 @@ export function AccountOverview() {
   return (
     <div className="grid gap-6">
       <p className="text-[17px]">
-        Здравствуйте, <strong>{s.profile.name}</strong>!
+        Здравствуйте, <strong>{greetName(s.profile)}</strong>!
         <span className="text-muted"> Кабинет создан {formatDate(s.createdAt)}</span>
       </p>
 

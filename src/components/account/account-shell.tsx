@@ -7,7 +7,7 @@ import { Container } from "@/components/ui/container";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { buttonClass } from "@/components/ui/button";
 import { useHydrated } from "@/lib/cart/use-cart";
-import { signOut } from "@/lib/account/store";
+import { fullName, signOut } from "@/lib/account/store";
 import { useSession } from "@/lib/account/use-account";
 import { FAVORITES_HREF } from "@/lib/favorites/store";
 
@@ -63,7 +63,7 @@ export function AccountShell({ section, children }: { section: AccountSection; c
           <div className="grid items-start gap-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-8">
             <nav aria-label="Разделы кабинета" className="min-w-0 rounded-[14px] bg-surface p-3 lg:sticky lg:top-24">
               <div className="hidden border-b border-line px-3 pb-3 pt-1 lg:block">
-                <p className="truncate text-[15px] font-semibold">{session.profile.name}</p>
+                <p className="truncate text-[15px] font-semibold">{fullName(session.profile)}</p>
                 <p className="truncate text-[13px] text-muted">{session.profile.company || session.profile.email}</p>
               </div>
               <ul className="no-scrollbar flex gap-1 overflow-x-auto lg:mt-2 lg:flex-col">
