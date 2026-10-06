@@ -66,7 +66,7 @@ export function MarketingCheckbox({
         className="mt-0.5 size-4 shrink-0 accent-[#D02E31] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
       />
       <span>
-        Согласен получать рекламные рассылки ProStyle — новинки, акции и подборки подарков по email, SMS и в мессенджерах.
+        Согласен получать рекламные рассылки ProStyle — новинки, акции и подборки подарков по email и в мессенджерах.
         Отписаться можно в любой момент в личном кабинете.
       </span>
     </label>
