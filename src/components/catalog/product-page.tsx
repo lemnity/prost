@@ -3,10 +3,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { Container } from "@/components/ui/container";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
-import { SectionHeader } from "@/components/ui/section-header";
 import { ProductCard } from "./product-card";
 import { ProductDetail, type VariantView } from "./product-detail";
 import { ProductTabs } from "./product-tabs";
+import { SimilarCarousel } from "./similar-carousel";
+import { TelegramBox } from "./telegram-box";
 import { colorFromSlug } from "@/lib/catalog/colors";
 import { getStock, normalizePrints, sortRows, type StockInfo } from "@/lib/catalog/stock";
 import { buildSpecRows, getProductDetails } from "@/lib/catalog/details";
@@ -258,20 +259,22 @@ export function ProductPage({ product }: { product: CatalogProduct }) {
       </Container>
 
       {similar.length ? (
-        <section aria-labelledby="similar-title" className="py-6 md:py-8">
-          <Container>
-            <SectionHeader
-              id="similar-title"
-              title="Похожие товары"
-              link={sub ? { label: "Смотреть все", href: sub.href } : node ? { label: "Смотреть все", href: node.href } : undefined}
+        <section aria-labelledby="similar-title" className="bg-surface py-10">
+          <Container className="lg:grid lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-10">
+            <div className="flex flex-col">
+              <h2 id="similar-title" className="mb-5 text-[22px] font-bold md:text-[26px] lg:mb-0">
+                Похожие товары
+              </h2>
+              <TelegramBox className="mt-auto hidden lg:flex" />
+            </div>
+            <SimilarCarousel
+              label="Похожие товары"
+              items={similar.map((p) => ({
+                key: p.url,
+                node: <ProductCard product={toCard(p)} />,
+              }))}
             />
-            <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
-              {similar.map((p) => (
-                <li key={p.url} className="grid">
-                  <ProductCard product={toCard(p)} />
-                </li>
-              ))}
-            </ul>
+            <TelegramBox className="mt-6 lg:hidden" />
           </Container>
         </section>
       ) : null}
