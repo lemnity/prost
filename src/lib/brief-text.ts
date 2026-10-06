@@ -3,6 +3,7 @@ import { MAILTO_LIMIT } from "@/lib/cart/order-text";
 
 export type BriefData = {
   company: string;
+  website: string;
   name: string;
   phone: string;
   email: string;
@@ -32,6 +33,7 @@ export function buildBrief(d: BriefData): { text: string; href: string | null; s
     [
       "Контакты:",
       `Компания: ${d.company}`,
+      ...opt("Сайт", d.website),
       `Контактное лицо: ${d.name}`,
       `Телефон: ${d.phone}`,
       ...opt("Email", d.email),

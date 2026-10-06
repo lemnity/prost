@@ -19,10 +19,10 @@ const btnOutline =
 
 type Key = keyof BriefData | "consent";
 type Errors = Partial<Record<Key, string>>;
-const ORDER: Key[] = ["company", "name", "phone", "email", "kinds", "qty", "idea", "consent"];
+const ORDER: Key[] = ["company", "website", "name", "phone", "email", "kinds", "qty", "idea", "consent"];
 
 const INITIAL: BriefData = {
-  company: "", name: "", phone: "", email: "", city: CITIES[0],
+  company: "", website: "", name: "", phone: "", email: "", city: CITIES[0],
   kinds: [], qty: "", budget: "", deadline: "", occasion: "",
   idea: "", prints: [], brandbook: "",
 };
@@ -30,6 +30,7 @@ const INITIAL: BriefData = {
 function validate(d: BriefData, consent: boolean): Errors {
   const e: Errors = {};
   if (!d.company.trim()) e.company = "Укажите компанию";
+  if (d.website && !/^(https?:\/\/)?([a-zа-яё0-9-]+\.)+[a-zа-яё]{2,}(:\d+)?([/?#]\S*)?$/i.test(d.website)) e.website = "Проверьте адрес сайта, например prostyle.gifts";
   if (!d.name.trim()) e.name = "Укажите контактное лицо";
   if (!d.phone.trim()) e.phone = "Укажите телефон";
   else if (!isPhoneComplete(d.phone)) e.phone = "Введите номер полностью";
@@ -147,7 +148,7 @@ export function BriefForm() {
 
   function submit(e: FormEvent) {
     e.preventDefault();
-    const clean = { ...d, company: d.company.trim(), name: d.name.trim(), qty: d.qty.trim(), idea: d.idea.trim(), occasion: d.occasion.trim() };
+    const clean = { ...d, company: d.company.trim(), website: d.website.trim(), name: d.name.trim(), qty: d.qty.trim(), idea: d.idea.trim(), occasion: d.occasion.trim() };
     const errs = validate(clean, consent);
     setErrors(errs);
     const first = ORDER.find((k) => errs[k]);
@@ -190,6 +191,9 @@ export function BriefForm() {
       <Card n={1} title="Контакты">
         <Field name="company" label="Компания" required error={errors.company}>
           {(p) => <input {...p} type="text" autoComplete="organization" value={d.company} onChange={(e) => set("company", e.target.value)} className={field} />}
+        </Field>
+        <Field name="website" label="Сайт компании" error={errors.website}>
+          {(p) => <input {...p} type="text" inputMode="url" autoComplete="url" placeholder="например, prostyle.gifts" value={d.website} onChange={(e) => set("website", e.target.value)} className={field} />}
         </Field>
         <Field name="name" label="Контактное лицо" required error={errors.name}>
           {(p) => <input {...p} type="text" autoComplete="name" value={d.name} onChange={(e) => set("name", e.target.value)} className={field} />}
