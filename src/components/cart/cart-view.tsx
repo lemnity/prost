@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ShoppingCart, Trash2 } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { asset } from "@/lib/asset";
@@ -122,13 +122,6 @@ export function CartView() {
               </li>
             ))}
           </ul>
-          <button
-            type="button"
-            onClick={() => clearCart()}
-            className="mt-4 text-[13px] font-medium text-muted underline hover:text-brand"
-          >
-            Очистить корзину
-          </button>
         </div>
 
         <Summary items={items} />
@@ -142,7 +135,8 @@ function Summary({ items }: { items: readonly CartItem[] }) {
   const count = cartCount(items);
   const reached = total >= MIN_ORDER;
   return (
-    <aside aria-label="Итого" className="rounded-[14px] bg-surface p-5 md:p-6 lg:sticky lg:top-28">
+    <div className="lg:sticky lg:top-28">
+    <aside aria-label="Итого" className="rounded-[14px] bg-surface p-5 md:p-6">
       <div aria-live="polite" aria-atomic="true">
         <p className="text-sm text-muted">Товаров: {count}</p>
         <p className="mt-1 text-[22px] font-bold md:text-[26px]">Итого: от {formatPriceValue(total)}</p>
@@ -168,5 +162,40 @@ function Summary({ items }: { items: readonly CartItem[] }) {
         </>
       )}
     </aside>
+    <ClearCart />
+    </div>
+  );
+}
+
+function ClearCart() {
+  const [asking, setAsking] = useState(false);
+  useEffect(() => {
+    if (!asking) return;
+    const t = setTimeout(() => setAsking(false), 4000);
+    return () => clearTimeout(t);
+  }, [asking]);
+  return (
+    <div className="mt-4 flex min-h-9 items-center justify-center text-[13px]">
+      {asking ? (
+        <div role="group" aria-label="Подтверждение очистки корзины" className="flex items-center gap-3">
+          <span className="text-muted">Точно очистить?</span>
+          <button type="button" onClick={() => clearCart()} className="font-semibold text-brand hover:underline">
+            Да
+          </button>
+          <button type="button" onClick={() => setAsking(false)} className="font-semibold text-muted hover:text-ink">
+            Нет
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setAsking(true)}
+          className="inline-flex items-center gap-1.5 font-medium text-muted hover:text-brand"
+        >
+          <Trash2 size={15} aria-hidden="true" />
+          Очистить корзину
+        </button>
+      )}
+    </div>
   );
 }
