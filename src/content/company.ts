@@ -27,3 +27,39 @@ export const requisites: Requisite[] = [
   { label: "Эл. почта", value: site.email },
   { label: "Директор", value: null },
 ];
+
+export type CityId = "tyumen" | "moscow" | "ekaterinburg";
+
+export type Office = {
+  id: CityId;
+  city: string;
+  soon?: boolean;
+  address?: string;
+  hours?: string;
+  phone?: { label: string; href: string };
+  email?: string;
+  /** "lon,lat" — геокодировано один раз (OSM). */
+  point?: string;
+};
+
+export const offices: Office[] = [
+  {
+    id: "tyumen",
+    city: "Тюмень",
+    address: site.address,
+    hours: site.hours,
+    phone: site.phone,
+    email: site.email,
+    point: "65.535297,57.128887",
+  },
+  {
+    id: "moscow",
+    city: "Москва",
+    address: "Москва, Волховский переулок, 21/23, пом. 1, к. 5",
+    hours: "Пн–пт с 08:00 до 18:00",
+    phone: { label: "+7 (495) 374-88-44", href: "tel:+74953748844" },
+    email: "info@moscowsuvenir.ru",
+    point: "37.685479,55.770363",
+  },
+  { id: "ekaterinburg", city: "Екатеринбург", soon: true },
+];
