@@ -80,15 +80,15 @@ export default function SalePage() {
               </dl>
             </div>
             {collage.length ? (
-              <ul aria-hidden="true" className="hidden grid-cols-2 gap-3 lg:grid">
+              <ul aria-hidden="true" className="hidden grid-cols-[2fr_1fr] gap-3 lg:grid">
                 {collage.map((p, i) => (
                   <li
                     key={p.id}
-                    className={`relative overflow-hidden rounded-[16px] bg-white shadow-[0_8px_24px_rgba(0,0,0,0.06)] ${
-                      i === 0 ? "row-span-2" : "aspect-square"
+                    className={`relative aspect-square overflow-hidden rounded-[16px] bg-[#f2f2f2] shadow-[0_8px_24px_rgba(0,0,0,0.06)] ${
+                      i === 0 ? "row-span-2" : ""
                     }`}
                   >
-                    <ProductImage src={asset(p.image)} alt="" sizes="220px" className="object-contain p-4" />
+                    <ProductImage src={asset(p.image)} alt="" sizes={i === 0 ? "280px" : "140px"} className="object-cover" />
                     <span className="absolute left-3 top-3 rounded-full bg-brand px-2 py-0.5 text-[12px] font-bold text-white">
                       −{discountOf(p.priceFrom, p.oldPrice)}%
                     </span>
