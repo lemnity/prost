@@ -1,10 +1,10 @@
 "use client";
 
-import { useId, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 
 const noop = () => () => {};
 
-export type Tab = { id: string; label: string; content: ReactNode };
+export type Tab = { id: string; label: string; count?: number; content: ReactNode };
 
 /** Вкладки (WAI-ARIA tabs). Без JS обе панели видны друг под другом. */
 export function ProductTabs({ tabs }: { tabs: Tab[] }) {
@@ -12,6 +12,22 @@ export function ProductTabs({ tabs }: { tabs: Tab[] }) {
   const [active, setActive] = useState(0);
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
   const uid = useId();
+  const listRef = useRef<HTMLDivElement>(null);
+  const ids = tabs.map((t) => t.id).join("|");
+
+  // Глубокая ссылка: #files открывает вкладку «Файлы».
+  useEffect(() => {
+    const open = (scroll: boolean) => {
+      const i = ids.split("|").indexOf(window.location.hash.slice(1));
+      if (i < 0) return;
+      setActive(i);
+      if (scroll) listRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+    };
+    const onHash = () => open(true);
+    open(true);
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, [ids, hydrated]);
 
   if (!hydrated) {
     return (
@@ -20,6 +36,7 @@ export function ProductTabs({ tabs }: { tabs: Tab[] }) {
           <section key={t.id} aria-labelledby={`${uid}-h-${t.id}`}>
             <h2 id={`${uid}-h-${t.id}`} className="mb-4 text-[20px] font-bold">
               {t.label}
+              {t.count ? <span className="ml-1.5 text-[15px] font-medium text-muted">{t.count}</span> : null}
             </h2>
             {t.content}
           </section>
@@ -36,7 +53,7 @@ export function ProductTabs({ tabs }: { tabs: Tab[] }) {
 
   return (
     <div>
-      <div role="tablist" aria-label="Информация о товаре" className="flex gap-6 border-b border-line">
+      <div ref={listRef} role="tablist" aria-label="Информация о товаре" className="flex scroll-mt-24 gap-6 overflow-x-auto border-b border-line">
         {tabs.map((t, i) => (
           <button
             key={t.id}
@@ -58,11 +75,12 @@ export function ProductTabs({ tabs }: { tabs: Tab[] }) {
               else return;
               e.preventDefault();
             }}
-            className={`-mb-px border-b-2 pb-3 text-[16px] font-semibold md:text-[18px] ${
+            className={`-mb-px shrink-0 border-b-2 pb-3 text-[16px] font-semibold md:text-[18px] ${
               i === active ? "border-brand text-ink" : "border-transparent text-muted hover:text-ink"
             }`}
           >
             {t.label}
+            {t.count ? <span className="ml-1.5 text-[13px] font-medium text-muted">{t.count}</span> : null}
           </button>
         ))}
       </div>

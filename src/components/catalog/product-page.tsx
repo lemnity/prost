@@ -6,6 +6,8 @@ import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { ProductCard } from "./product-card";
 import { ProductDetail, type VariantView } from "./product-detail";
 import { ProductTabs } from "./product-tabs";
+import { ProductFiles } from "./product-files";
+import { getProductFiles } from "@/lib/catalog/files";
 import { SimilarCarousel } from "./similar-carousel";
 import { TelegramBox } from "./telegram-box";
 import { colorFromSlug } from "@/lib/catalog/colors";
@@ -149,6 +151,7 @@ export function ProductPage({ product }: { product: CatalogProduct }) {
     ? getSubcategories(product.category).find((s) => s.slug === product.subcategory)
     : undefined;
   const { variants, initial } = buildVariants(product);
+  const files = getProductFiles(product.url, product.sku);
   const groups = normalizePrints(getStock(product.url));
   const ids = new Set(groups.map(applicationId).filter((x): x is string => !!x));
   const apps = applications.items.filter((a) => ids.has(a.id));
@@ -215,6 +218,14 @@ export function ProductPage({ product }: { product: CatalogProduct }) {
                 </Link>
               </p>
             )}
+            {files.length ? (
+              <p className="mt-3 text-[13px] text-muted">
+                Макеты для нанесения — во вкладке{" "}
+                <a href="#files" className="font-medium text-brand hover:text-brand-hover">
+                  «Файлы»
+                </a>
+              </p>
+            ) : null}
           </section>
         </ProductDetail>
       </Container>
@@ -254,6 +265,9 @@ export function ProductPage({ product }: { product: CatalogProduct }) {
                 </dl>
               ),
             },
+            ...(files.length
+              ? [{ id: "files", label: "Файлы", count: files.length, content: <ProductFiles files={files} /> }]
+              : []),
           ]}
         />
       </Container>
