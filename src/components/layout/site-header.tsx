@@ -35,7 +35,7 @@ const actions: { label: string; href: string; Icon: typeof User; mobile: boolean
 
 const menu = [
   ...site.topbar.links,
-  { label: "Распродажа недели", href: "/#weekly-sale" },
+  { label: "Распродажа недели", href: "/sale" },
 ];
 
 export function SiteHeader() {

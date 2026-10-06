@@ -15,7 +15,7 @@ export async function WeeklySale() {
           id="weekly-sale-title"
           title="Распродажа недели"
           aside={<Countdown initial={initial} />}
-          link={{ label: "Все скидки", href: "/catalog/sale" }}
+          link={{ label: "Все скидки", href: "/sale" }}
         />
         <div className="no-scrollbar -mx-4 scroll-px-4 md:scroll-px-8 lg:scroll-px-0 flex snap-x gap-3 overflow-x-auto px-4 md:-mx-8 md:px-8 lg:mx-0 lg:grid lg:grid-cols-6 lg:overflow-visible lg:px-0">
           {products.map((p) => (

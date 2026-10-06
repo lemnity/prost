@@ -24,11 +24,14 @@ export function Countdown({
   initial,
   target = "week",
   compact = false,
+  large = false,
 }: {
   initial: SaleRemaining;
   target?: SaleTarget;
   /** Компактная «таблетка» вместо ячеек (для карточки товара). */
   compact?: boolean;
+  /** Крупные ячейки (баннер страницы распродажи). */
+  large?: boolean;
 }) {
   // Серверный/первый клиентский рендер == initial (из сборки); дальше —
   // общий тикер. Таймер в скрытой панели (display:none) не подписывается.
@@ -88,21 +91,25 @@ export function Countdown({
       role="group"
       aria-label={`До конца распродажи ${c.days} ${plural("d", c.days)} ${c.hours} ${plural("h", c.hours)} ${c.minutes} ${plural("m", c.minutes)}`}
     >
-      <div aria-hidden="true" className="flex items-center gap-3">
-        <div className="text-xs text-muted">До конца распродажи</div>
-        <div className="flex items-start gap-1">
+      <div aria-hidden="true" className={large ? "flex flex-col gap-2" : "flex items-center gap-3"}>
+        <div className={large ? "text-[13px] font-medium text-muted" : "text-xs text-muted"}>До конца распродажи</div>
+        <div className={`flex items-start ${large ? "gap-1.5" : "gap-1"}`}>
           {cells.map((x, i) => (
-            <div key={x.label} className="flex items-start gap-1">
+            <div key={x.label} className={`flex items-start ${large ? "gap-1.5" : "gap-1"}`}>
               {i > 0 ? (
-                <span className="py-1 text-base font-bold leading-none text-ink">
+                <span className={`font-bold leading-none text-ink ${large ? "py-2.5 text-[24px] md:text-[28px]" : "py-1 text-base"}`}>
                   :
                 </span>
               ) : null}
               <div className="flex flex-col items-center gap-0.5">
-                <div className="min-w-[34px] rounded-[6px] bg-ink px-2 py-1 text-center text-base font-bold leading-none tabular-nums text-white">
+                <div
+                  className={`rounded-[6px] bg-ink text-center font-bold leading-none tabular-nums text-white ${
+                    large ? "min-w-[52px] rounded-[10px] px-2.5 py-2.5 text-[24px] md:min-w-[60px] md:text-[28px]" : "min-w-[34px] px-2 py-1 text-base"
+                  }`}
+                >
                   {x.n}
                 </div>
-                <div className="text-[10px] leading-tight text-muted">
+                <div className={`leading-tight text-muted ${large ? "mt-0.5 text-[12px]" : "text-[10px]"}`}>
                   {x.label}
                 </div>
               </div>
