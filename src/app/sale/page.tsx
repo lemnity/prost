@@ -2,12 +2,10 @@ import type { Metadata } from "next";
 import { CalendarClock, Info, Package, Palette } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
-import { ProductImage } from "@/components/ui/product-image";
 import { ProductCard } from "@/components/catalog/product-card";
 import { SubscribeBlock } from "@/components/catalog/subscribe-block";
 import { Countdown } from "@/components/home/countdown";
 import { ConsultationCta } from "@/components/home/consultation-cta";
-import { asset } from "@/lib/asset";
 import { formatQty } from "@/lib/format";
 import { plural } from "@/lib/plural";
 import { getSaleRemaining } from "@/lib/sale";
@@ -34,68 +32,51 @@ export default function SalePage() {
     .sort((a, b) => discountOf(b.priceFrom, b.oldPrice) - discountOf(a.priceFrom, a.oldPrice));
   const maxDiscount = Math.max(0, ...products.map((p) => discountOf(p.priceFrom, p.oldPrice)));
   const stock = products.reduce((s, p) => s + Math.max(0, p.stock), 0);
-  const collage = products.slice(0, 3);
 
   return (
     <main id="main">
       <Container className="pt-4 md:pt-6">
         <Breadcrumbs items={[{ label: "Главная", href: "/" }, { label: "Распродажа недели" }]} />
 
-        <section aria-labelledby="sale-title" className="relative mt-4 overflow-hidden rounded-[20px] bg-brand-soft md:mt-6">
-          <div className="relative z-10 grid gap-6 p-5 md:p-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)] lg:items-center lg:p-10">
-            <div>
-              {maxDiscount ? (
-                <span className="inline-flex rounded-full bg-brand px-3 py-1 text-[13px] font-bold text-white">
-                  Скидки до {maxDiscount}%
-                </span>
-              ) : null}
-              <h1 id="sale-title" className="mt-3 text-[32px] font-bold leading-[1.08] tracking-tight md:text-[48px]">
-                Распродажа недели
-              </h1>
-              <p className="mt-3 max-w-[560px] text-[15px] text-muted md:text-[16px]">
-                Сувениры и подарки со склада по сниженным ценам. Каждую неделю — новая подборка, цены действуют до воскресенья.
-              </p>
-              <div className="mt-6">
-                <Countdown initial={getSaleRemaining(new Date())} large />
-              </div>
-              <dl className="mt-6 flex flex-wrap gap-x-8 gap-y-3">
-                <div>
-                  <dt className="text-[12px] text-muted">В подборке</dt>
-                  <dd className="text-[20px] font-bold">
-                    {products.length} {plural("item", products.length)}
-                  </dd>
-                </div>
-                {maxDiscount ? (
-                  <div>
-                    <dt className="text-[12px] text-muted">Максимальная скидка</dt>
-                    <dd className="text-[20px] font-bold text-brand">−{maxDiscount}%</dd>
-                  </div>
-                ) : null}
-                {stock ? (
-                  <div>
-                    <dt className="text-[12px] text-muted">На складе</dt>
-                    <dd className="text-[20px] font-bold">{formatQty(stock)} шт.</dd>
-                  </div>
-                ) : null}
-              </dl>
-            </div>
-            {collage.length ? (
-              <ul aria-hidden="true" className="hidden grid-cols-[2fr_1fr] gap-3 lg:grid">
-                {collage.map((p, i) => (
-                  <li
-                    key={p.id}
-                    className={`relative aspect-square overflow-hidden rounded-[16px] bg-[#f2f2f2] shadow-[0_8px_24px_rgba(0,0,0,0.06)] ${
-                      i === 0 ? "row-span-2" : ""
-                    }`}
-                  >
-                    <ProductImage src={asset(p.image)} alt="" sizes={i === 0 ? "280px" : "140px"} className="object-cover" />
-                    <span className="absolute left-3 top-3 rounded-full bg-brand px-2 py-0.5 text-[12px] font-bold text-white">
-                      −{discountOf(p.priceFrom, p.oldPrice)}%
-                    </span>
-                  </li>
-                ))}
-              </ul>
+        <section
+          aria-labelledby="sale-title"
+          className="mt-4 grid gap-6 rounded-[20px] bg-brand-soft p-5 md:mt-6 md:p-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-10 lg:p-10"
+        >
+          <div>
+            {maxDiscount ? (
+              <span className="inline-flex rounded-full bg-brand px-3 py-1 text-[13px] font-bold text-white">
+                Скидки до {maxDiscount}%
+              </span>
             ) : null}
+            <h1 id="sale-title" className="mt-3 text-[32px] font-bold leading-[1.08] tracking-tight md:text-[48px]">
+              Распродажа недели
+            </h1>
+            <p className="mt-3 max-w-[560px] text-[15px] text-muted md:text-[16px]">
+              Сувениры и подарки со склада по сниженным ценам. Каждую неделю — новая подборка, цены действуют до воскресенья.
+            </p>
+          </div>
+          <div className="rounded-[16px] bg-white p-5 shadow-[0_8px_24px_rgba(0,0,0,0.05)] md:p-6">
+            <Countdown initial={getSaleRemaining(new Date())} large />
+            <dl className="mt-5 grid grid-cols-3 gap-4 border-t border-line pt-4">
+              <div>
+                <dt className="text-[12px] text-muted">В подборке</dt>
+                <dd className="mt-0.5 whitespace-nowrap text-[18px] font-bold md:text-[20px]">
+                  {products.length} {plural("item", products.length)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[12px] text-muted">Скидка</dt>
+                <dd className="mt-0.5 whitespace-nowrap text-[18px] font-bold text-brand md:text-[20px]">
+                  {maxDiscount ? `до −${maxDiscount}%` : "—"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[12px] text-muted">На складе</dt>
+                <dd className="mt-0.5 whitespace-nowrap text-[18px] font-bold md:text-[20px]">
+                  {stock ? `${formatQty(stock)} шт.` : "—"}
+                </dd>
+              </div>
+            </dl>
           </div>
         </section>
       </Container>
