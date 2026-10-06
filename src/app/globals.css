@@ -58,7 +58,7 @@ html {
 }
 
 /* --zoom mirrors the html zoom of the active step (used to size viewport-bound panels). */
-:root {
+:where(:root) {
   --zoom: 1;
   --menu-max-h: max(200px, calc(100dvh / var(--zoom) - 250px));
 }

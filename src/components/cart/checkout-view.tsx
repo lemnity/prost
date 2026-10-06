@@ -2,11 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Gift, ShoppingCart, X } from "lucide-react";
 import { PhoneInput, isPhoneComplete } from "@/components/ui/phone-input";
 import { Container } from "@/components/ui/container";
 import { asset } from "@/lib/asset";
+import { plural } from "@/lib/plural";
 import { formatPriceValue } from "@/lib/format";
 import { site } from "@/content/site";
 import { MIN_ORDER, cartCount, cartTotal, clearCart, setPromo, type CartItem } from "@/lib/cart/store";
@@ -20,13 +21,12 @@ import {
   type OrderData,
   type Payment,
 } from "@/lib/cart/order-text";
+import { buttonClass } from "@/components/ui/button";
 
 const field =
   "mt-1.5 block w-full rounded-lg border border-line bg-white px-3.5 py-3 text-[15px] text-ink placeholder:text-faint focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand aria-[invalid=true]:border-brand";
-const btnPrimary =
-  "inline-flex h-[52px] items-center justify-center rounded-lg bg-brand px-8 text-[15px] font-semibold text-white transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:bg-faint disabled:hover:bg-faint";
-const btnOutline =
-  "inline-flex h-12 items-center justify-center rounded-lg border border-brand bg-white px-6 text-[15px] font-semibold text-brand hover:bg-brand hover:text-white";
+const btnPrimary = buttonClass({ size: "lg", px: "px-8" });
+const btnOutline = buttonClass({ variant: "outline", size: "lg" });
 
 type Errors = Partial<Record<keyof OrderData | "consent", string>>;
 const ORDER: (keyof OrderData | "consent")[] = [
@@ -136,11 +136,14 @@ function Radio<T extends string>({
   );
 }
 
-function OrderLines({ items }: { items: readonly CartItem[] }) {
+function OrderLines({ items, expanded = true }: { items: readonly CartItem[]; expanded?: boolean }) {
   return (
     <ul className="grid gap-3">
-      {items.map((i) => (
-        <li key={i.id} className="grid grid-cols-[48px_1fr] items-center gap-3">
+      {items.map((i, idx) => (
+        <li
+          key={i.id}
+          className={`grid grid-cols-[48px_1fr] items-center gap-3 ${idx >= 3 && !expanded ? "max-lg:hidden" : ""}`}
+        >
           <span className="relative aspect-square rounded-md bg-white">
             <Image src={asset(i.image)} alt="" fill sizes="48px" className="object-contain" />
           </span>
@@ -151,6 +154,60 @@ function OrderLines({ items }: { items: readonly CartItem[] }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+/** Список позиций: на десктопе прокручивается внутри карточки с мягкими затуханиями, на мобильном — первые 3 + «Показать все». */
+function OrderList({ items }: { items: readonly CartItem[] }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [edge, setEdge] = useState({ top: false, bottom: false });
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const update = () =>
+      setEdge({
+        top: el.scrollTop > 2,
+        bottom: el.scrollHeight - el.clientHeight - el.scrollTop > 2,
+      });
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    if (el.firstElementChild) ro.observe(el.firstElementChild);
+    return () => {
+      el.removeEventListener("scroll", update);
+      ro.disconnect();
+    };
+  }, [items.length, expanded]);
+
+  const mask = `linear-gradient(to bottom, ${edge.top ? "transparent 0, #000 20px" : "#000 0"}, ${
+    edge.bottom ? "#000 calc(100% - 20px), transparent 100%" : "#000 100%"
+  })`;
+
+  return (
+    <>
+      <div
+        ref={ref}
+        tabIndex={0}
+        aria-label="Список товаров в заказе"
+        style={edge.top || edge.bottom ? { maskImage: mask, WebkitMaskImage: mask } : undefined}
+        className="min-h-0 flex-1 overscroll-contain pr-1 outline-none focus-visible:outline-2 focus-visible:outline-brand lg:overflow-y-auto lg:[scrollbar-color:#c4c4c6_transparent] lg:[scrollbar-width:thin]"
+      >
+        <OrderLines items={items} expanded={expanded} />
+      </div>
+      {items.length > 3 ? (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          className="mt-3 text-left text-[13px] font-medium text-muted underline hover:text-brand lg:hidden"
+        >
+          {expanded ? "Свернуть" : `Показать все ${items.length} ${plural("item", items.length)}`}
+        </button>
+      ) : null}
+    </>
   );
 }
 
@@ -197,7 +254,7 @@ function PromoBox() {
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); apply(); } }}
               className="block h-11 min-w-0 flex-1 rounded-lg border border-line bg-white px-3.5 text-[15px] uppercase text-ink placeholder:normal-case placeholder:text-faint focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand aria-[invalid=true]:border-brand"
             />
-            <button type="button" onClick={apply} className={`${btnOutline} h-11 px-4 text-[14px]`}>Применить</button>
+            <button type="button" onClick={apply} className={btnOutline}>Применить</button>
           </div>
           {err ? <p id="f-promo-err" className="mt-1.5 text-[13px] text-brand">{err}</p> : null}
         </>
@@ -331,8 +388,8 @@ export function CheckoutView() {
                 <p className="mt-0.5 text-[13px] text-muted">и получайте бонусы за заказы</p>
               </div>
               <div className="flex flex-col gap-2 sm:flex-row">
-                <Link href="/account/login" className={`${btnPrimary} h-11 px-6 text-[14px]`}>Войти</Link>
-                <Link href="/account/register" className={`${btnOutline} h-11 px-6 text-[14px]`}>Создать кабинет</Link>
+                <Link href="/account/login" className={btnPrimary}>Войти</Link>
+                <Link href="/account/register" className={btnOutline}>Создать кабинет</Link>
               </div>
             </div>
             <Card n={1} title="Контактные данные">
@@ -428,17 +485,17 @@ export function CheckoutView() {
             </Card>
           </div>
 
-          <aside aria-label="Ваш заказ" className="rounded-[14px] bg-surface p-5 md:p-6 lg:sticky lg:top-24">
-            <h2 className="mb-4 text-[18px] font-bold">Ваш заказ</h2>
-            <div className="max-h-[320px] overflow-y-auto pr-1">
-              <OrderLines items={items} />
+          <aside aria-label="Ваш заказ" className="flex flex-col rounded-[14px] bg-surface p-5 md:p-6 lg:sticky lg:top-24 lg:max-h-[calc(100dvh_/_var(--zoom)_-_8rem)]">
+            <h2 className="mb-4 shrink-0 text-[18px] font-bold">Ваш заказ ({items.length})</h2>
+            <OrderList items={items} />
+            <div className="shrink-0">
+              <PromoBox />
             </div>
-            <PromoBox />
-            <div className="mt-5 border-t border-line pt-4">
+            <div className="mt-5 shrink-0 border-t border-line pt-4">
               <p className="text-sm text-muted">Товаров: {count}</p>
               <p className="mt-1 text-[22px] font-bold md:text-[26px]">Итого: от {formatPriceValue(total)}</p>
             </div>
-            <div className="mt-5">{submitBtn}</div>
+            <div className="mt-5 shrink-0">{submitBtn}</div>
             <Link href="/cart" className="mt-3 block text-center text-[13px] font-medium text-muted underline hover:text-brand">
               Изменить корзину
             </Link>
