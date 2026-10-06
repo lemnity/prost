@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { Gift, ShoppingCart, X } from "lucide-react";
+import { Gift, ShoppingCart, UserRound, X } from "lucide-react";
 import { PhoneInput, isPhoneComplete } from "@/components/ui/phone-input";
 import { Container } from "@/components/ui/container";
 import { asset } from "@/lib/asset";
@@ -22,6 +22,8 @@ import {
   type Payment,
 } from "@/lib/cart/order-text";
 import { buttonClass } from "@/components/ui/button";
+import { saveOrder } from "@/lib/account/store";
+import { useSession } from "@/lib/account/use-account";
 
 const field =
   "mt-1.5 block w-full rounded-lg border border-line bg-white px-3.5 py-3 text-[15px] text-ink placeholder:text-faint focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand aria-[invalid=true]:border-brand";
@@ -298,6 +300,23 @@ export function CheckoutView() {
   const [consent, setConsent] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [done, setDone] = useState<Done | null>(null);
+  const session = useSession();
+  const [prefilled, setPrefilled] = useState(false);
+  // Данные кабинета подставляются один раз, не перетирая уже введённое.
+  if (session && !prefilled) {
+    setPrefilled(true);
+    const pr = session.profile;
+    setD((p) => ({
+      ...p,
+      name: p.name || pr.name,
+      phone: p.phone || pr.phone,
+      email: p.email || pr.email,
+      company: p.company || pr.company,
+      inn: p.inn || pr.inn,
+      city: p.city || pr.city,
+      address: p.address || pr.address,
+    }));
+  }
 
   const total = cartTotal(items);
   const discount = cartDiscount(items);
@@ -331,7 +350,11 @@ export function CheckoutView() {
             <div className="mt-5"><CopyBlock text={done.text} /></div>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link href="/" onClick={() => clearCart()} className={btnPrimary}>Очистить корзину и вернуться на главную</Link>
-              <Link href="/catalog" className={btnOutline}>Вернуться в каталог</Link>
+              {session ? (
+                <Link href="/account/orders" className={btnOutline}>Мои заказы</Link>
+              ) : (
+                <Link href="/catalog" className={btnOutline}>Вернуться в каталог</Link>
+              )}
             </div>
           </div>
           <aside aria-label="Состав заказа" className="rounded-[14px] bg-surface p-5 md:p-6">
@@ -371,7 +394,16 @@ export function CheckoutView() {
       return;
     }
     const { text, href } = buildOrder(items, clean, promo);
-    setDone({ number: orderNumber(), text, opened: href !== null, items, total });
+    const number = orderNumber();
+    saveOrder({
+      number,
+      date: new Date().toISOString(),
+      total,
+      items: [...items],
+      delivery: deliveryLabel[clean.delivery],
+      payment: paymentLabel[clean.payment],
+    });
+    setDone({ number, text, opened: href !== null, items, total });
     if (href) window.open(href, "_self");
   }
 
@@ -385,17 +417,28 @@ export function CheckoutView() {
       <Container>
         <form noValidate onSubmit={submit} className="grid items-start gap-6 lg:grid-cols-[1fr_380px]">
           <div className="grid gap-4">
-            <div className="flex flex-col gap-4 rounded-[14px] bg-brand-soft p-4 sm:flex-row sm:items-center">
-              <Gift size={28} strokeWidth={1.5} aria-hidden="true" className="shrink-0 text-brand" />
-              <div className="sm:flex-1">
-                <p className="text-[15px] font-semibold text-ink">Войдите в личный кабинет или создайте его</p>
-                <p className="mt-0.5 text-[13px] text-muted">и получайте бонусы за заказы</p>
+            {session ? (
+              <div className="flex flex-col gap-3 rounded-[14px] bg-brand-soft p-4 sm:flex-row sm:items-center">
+                <UserRound size={28} strokeWidth={1.5} aria-hidden="true" className="shrink-0 text-brand" />
+                <p className="text-[14px] sm:flex-1">
+                  <span className="font-semibold text-ink">Вы вошли как {session.profile.name}.</span>
+                  <span className="text-muted"> Данные из кабинета подставлены, заказ сохранится в истории.</span>
+                </p>
+                <Link href="/account/profile" className="text-[14px] font-semibold text-brand hover:text-brand-hover">Изменить профиль</Link>
               </div>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Link href="/account/login" className={btnPrimary}>Войти</Link>
-                <Link href="/account/register" className={btnOutline}>Создать кабинет</Link>
+            ) : (
+              <div className="flex flex-col gap-4 rounded-[14px] bg-brand-soft p-4 sm:flex-row sm:items-center">
+                <Gift size={28} strokeWidth={1.5} aria-hidden="true" className="shrink-0 text-brand" />
+                <div className="sm:flex-1">
+                  <p className="text-[15px] font-semibold text-ink">Войдите в личный кабинет или создайте его</p>
+                  <p className="mt-0.5 text-[13px] text-muted">данные подставятся в заказ, а заказы сохранятся в истории</p>
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Link href="/account/login" className={btnPrimary}>Войти</Link>
+                  <Link href="/account/register" className={btnOutline}>Создать кабинет</Link>
+                </div>
               </div>
-            </div>
+            )}
             <Card n={1} title="Контактные данные">
               <Field name="name" label="Имя" required error={errors.name}>
                 {(p) => <input {...p} type="text" autoComplete="name" value={d.name} onChange={(e) => set("name", e.target.value)} className={field} />}

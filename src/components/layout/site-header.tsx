@@ -10,6 +10,7 @@ import {
 import { Container } from "@/components/ui/container";
 import { CartLink } from "@/components/cart/cart-badge";
 import { FavoritesLink } from "@/components/favorites/favorites-link";
+import { AccountLink } from "@/components/account/account-link";
 import { FAVORITES_HREF } from "@/lib/favorites/store";
 import { site } from "@/content/site";
 import { BrandLogo } from "./brand-logo";
@@ -136,6 +137,8 @@ export function SiteHeader() {
               <li key={href} className={`${mobile ? "" : "hidden md:block"} ${tip ? "group relative" : ""}`}>
                 {href === FAVORITES_HREF ? (
                   <FavoritesLink className={iconBtn} />
+                ) : href === "/account" ? (
+                  <AccountLink className={iconBtn} />
                 ) : (
                   <Link href={href} aria-label={label} title={tip ? undefined : label} className={iconBtn}>
                     <Icon size={22} aria-hidden />
