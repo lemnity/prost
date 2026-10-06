@@ -23,9 +23,12 @@ import { plural } from "@/lib/plural";
 export function Countdown({
   initial,
   target = "week",
+  compact = false,
 }: {
   initial: SaleRemaining;
   target?: SaleTarget;
+  /** Компактная «таблетка» вместо ячеек (для карточки товара). */
+  compact?: boolean;
 }) {
   // Серверный/первый клиентский рендер == initial (из сборки); дальше —
   // общий тикер. Таймер в скрытой панели (display:none) не подписывается.
@@ -54,8 +57,8 @@ export function Countdown({
 
   const pad = (n: number) => String(n).padStart(2, "0");
 
-  if (target === "day") {
-    const hm = `${c.hours} ${plural("h", c.hours)} ${c.minutes} ${plural("m", c.minutes)}`;
+  if (target === "day" || compact) {
+    const hm = `${c.days ? `${c.days} ${plural("d", c.days)} ` : ""}${c.hours} ${plural("h", c.hours)} ${c.minutes} ${plural("m", c.minutes)}`;
     return (
       <div
         ref={ref}
@@ -65,6 +68,7 @@ export function Countdown({
       >
         <Clock size={12} aria-hidden />
         <span aria-hidden="true">
+          {c.days ? `${c.days}д ` : ""}
           {pad(c.hours)}:{pad(c.minutes)}:{pad(c.seconds)}
         </span>
       </div>

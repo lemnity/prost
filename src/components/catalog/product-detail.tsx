@@ -7,6 +7,8 @@ import { Check, Copy, Info, Minus, Plus, Ruler } from "lucide-react";
 import { addToCart } from "@/lib/cart/store";
 import { asset } from "@/lib/asset";
 import { formatPriceValue, formatQty } from "@/lib/format";
+import { Countdown } from "@/components/home/countdown";
+import type { SaleRemaining } from "@/lib/sale";
 import { ProductImage } from "@/components/ui/product-image";
 import { buttonClass } from "@/components/ui/button";
 
@@ -28,6 +30,8 @@ export type VariantView = {
   /** Строки остатков (размеры), отсортированы; null — нет данных. */
   info: SizeRow[] | null;
   price: number;
+  /** Цена до скидки (распродажа). */
+  oldPrice?: number;
 };
 
 const MAX_QTY = 99999;
@@ -50,8 +54,10 @@ export function ProductDetail({
   brand,
   variants,
   initial,
+  saleInitial,
   children,
 }: {
+  saleInitial?: SaleRemaining;
   title: string;
   brand: string;
   variants: VariantView[];
@@ -76,6 +82,8 @@ export function ProductDetail({
   const size = sized ? (pick?.key === v.key ? pick.size : defaultSize(v)) : "";
   const row = sized ? rows.find((r) => r.size === size) : rows[0];
   const avail = availOf(v, row);
+  const onSale = !!v.oldPrice && v.oldPrice > v.price;
+  const discount = onSale ? Math.round((1 - v.price / v.oldPrice!) * 100) : 0;
   const markBad = (src: string) => setBad((prev) => (prev.has(src) ? prev : new Set(prev).add(src)));
 
   return (
@@ -139,13 +147,27 @@ export function ProductDetail({
         </p>
 
         <div className="mt-4 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-          <p className="text-[32px] font-bold leading-none">
-            <span className="text-[16px] font-normal">от </span>
+          <p className={`text-[32px] font-bold leading-none ${onSale ? "text-brand" : ""}`}>
+            <span className={`text-[16px] font-normal ${onSale ? "text-ink" : ""}`}>от </span>
             {formatPriceValue(v.price)}
           </p>
+          {onSale ? (
+            <>
+              <span className="text-[18px] text-muted line-through">{formatPriceValue(v.oldPrice!)}</span>
+              <span className="self-center rounded-full bg-brand px-2 py-0.5 text-[12px] font-bold text-white">
+                {`\u2212${discount}%`}
+              </span>
+            </>
+          ) : null}
           <span className="text-[14px] text-muted">за шт.</span>
           <span className="w-full text-[12px] text-muted sm:ml-auto sm:w-auto">Цена без нанесения</span>
         </div>
+        {onSale && saleInitial ? (
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-[13px] text-muted">
+            <span>Скидка действует до конца недели</span>
+            <Countdown initial={saleInitial} compact />
+          </div>
+        ) : null}
 
         <StockPanel avail={avail} />
 

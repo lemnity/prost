@@ -6,6 +6,7 @@ import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { ProductCard } from "./product-card";
 import { ProductDetail, type VariantView } from "./product-detail";
 import { ProductTabs } from "./product-tabs";
+import { getSaleRemaining } from "@/lib/sale";
 import { ProductFiles } from "./product-files";
 import { getProductFiles } from "@/lib/catalog/files";
 import { SimilarCarousel } from "./similar-carousel";
@@ -103,6 +104,7 @@ function buildVariants(product: CatalogProduct): { variants: VariantView[]; init
     stock: product.stock,
     info: stockView(product.url),
     price: product.price,
+    oldPrice: product.oldPrice,
   };
   const seen = new Set<string>();
   const variants: VariantView[] = [];
@@ -128,6 +130,7 @@ function buildVariants(product: CatalogProduct): { variants: VariantView[]; init
             stock: match.stock,
             info: stockView(match.url),
             price: match.price,
+            oldPrice: match.oldPrice,
           }
         : // Вариант без данных в выгрузке: фото и артикул (из адреса), наличие — по запросу.
           {
@@ -179,7 +182,7 @@ export function ProductPage({ product }: { product: CatalogProduct }) {
       </Container>
 
       <Container className="py-6 md:py-8">
-        <ProductDetail key={product.url} title={product.title} brand={product.supplier} variants={variants} initial={initial}>
+        <ProductDetail saleInitial={product.oldPrice ? getSaleRemaining(new Date()) : undefined} key={product.url} title={product.title} brand={product.supplier} variants={variants} initial={initial}>
           <section aria-labelledby="apps-title" className="mt-8 border-t border-line pt-6">
             <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
               <h2 id="apps-title" className="text-[17px] font-semibold">
