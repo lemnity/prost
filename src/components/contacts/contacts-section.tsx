@@ -9,7 +9,7 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import { site } from "@/content/site";
 import { SocialLinks } from "@/components/layout/social-links";
 import { offices, type CityId, type Office } from "@/content/company";
-import { buttonClass } from "@/components/ui/button";
+import { buttonClass, selectClass } from "@/components/ui/button";
 
 const ids = offices.map((o) => o.id);
 const formCities = offices.filter((o) => !o.soon);
@@ -208,7 +208,7 @@ export function ContactsSection() {
                   name="Город"
                   value={formCity}
                   onChange={(e) => setFormCity(e.target.value as CityId)}
-                  className={field}
+                  className={selectClass({ size: "form" })}
                 >
                   {formCities.map((c) => (
                     <option key={c.id} value={c.id}>{c.city}</option>

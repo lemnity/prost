@@ -10,7 +10,7 @@ export function SectionSelect({ items }: { items: SectionLink[] }) {
   const router = useRouter();
   const current = items.find((i) => i.active) ?? items[0];
   return (
-    <label className="relative flex h-11 items-center gap-2 rounded-[10px] bg-white px-3.5 text-[14px] shadow-[0_1px_2px_rgba(16,24,40,0.06),0_2px_8px_rgba(16,24,40,0.08)] ring-1 ring-line focus-within:ring-brand">
+    <label className="relative flex h-11 items-center gap-2 rounded-[10px] bg-white pl-3.5 pr-4 text-[14px] shadow-[0_1px_2px_rgba(16,24,40,0.06),0_2px_8px_rgba(16,24,40,0.08)] ring-1 ring-line focus-within:ring-brand">
       <span className="shrink-0 text-muted">Раздел:</span>
       <span className="min-w-0 flex-1 truncate font-semibold text-ink">{current.title}</span>
       <ChevronDown size={18} aria-hidden="true" className="shrink-0 text-muted" />

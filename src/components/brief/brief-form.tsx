@@ -9,6 +9,7 @@ import { site } from "@/content/site";
 import {
   BRANDBOOK, BUDGETS, CITIES, KINDS, buildBrief, type BriefData,
 } from "@/lib/brief-text";
+import { selectClass } from "@/components/ui/button";
 
 const field =
   "mt-1.5 block w-full rounded-lg border border-line bg-white px-3.5 py-3 text-[15px] text-ink placeholder:text-faint focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand aria-[invalid=true]:border-brand";
@@ -206,7 +207,7 @@ export function BriefForm() {
         </Field>
         <Field name="city" label="Город">
           {(p) => (
-            <select {...p} value={d.city} onChange={(e) => set("city", e.target.value)} className={field}>
+            <select {...p} value={d.city} onChange={(e) => set("city", e.target.value)} className={`${selectClass({ size: "form" })} aria-[invalid=true]:border-brand`}>
               {CITIES.map((c) => <option key={c}>{c}</option>)}
             </select>
           )}
@@ -220,7 +221,7 @@ export function BriefForm() {
         </Field>
         <Field name="budget" label="Бюджет">
           {(p) => (
-            <select {...p} value={d.budget} onChange={(e) => set("budget", e.target.value)} className={field}>
+            <select {...p} value={d.budget} onChange={(e) => set("budget", e.target.value)} className={`${selectClass({ size: "form" })} aria-[invalid=true]:border-brand`}>
               <option value="">Не выбран</option>
               {BUDGETS.map((b) => <option key={b}>{b}</option>)}
             </select>

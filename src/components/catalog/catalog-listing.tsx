@@ -31,7 +31,7 @@ import {
 import { FilterPanel, type Group } from "./filter-panel";
 import type { ListingProduct } from "@/lib/catalog/types";
 import { productsLabel } from "@/lib/format";
-import { buttonClass } from "@/components/ui/button";
+import { buttonClass, selectClass } from "@/components/ui/button";
 
 const PAGE = 24;
 
@@ -248,7 +248,7 @@ export function CatalogListing({
             id="catalog-sort"
             value={filters.sort}
             onChange={(e) => update({ sort: e.target.value as Sort })}
-            className="h-10 rounded-lg border border-line bg-white px-2.5 text-[14px] text-ink hover:border-brand"
+            className={selectClass({ size: "sm" })}
           >
             {SORTS.map((s) => (
               <option key={s.id} value={s.id}>
