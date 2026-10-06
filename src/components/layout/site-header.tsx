@@ -1,6 +1,6 @@
 import Link from "next/link";
 import {
-  FileText,
+  ClipboardList,
   Heart,
   Mail,
   PhoneCall,
@@ -24,10 +24,10 @@ const iconBtn =
 const circle =
   "grid shrink-0 place-items-center rounded-full bg-brand-soft text-brand motion-safe:transition-colors motion-safe:duration-150 hover:bg-brand hover:text-white";
 
-const actions = [
+const actions: { label: string; href: string; Icon: typeof User; mobile: boolean; tip?: boolean }[] = [
   { label: "Профиль", href: "/account", Icon: User, mobile: true },
   { label: "Избранное", href: "/account/favorites", Icon: Heart, mobile: false },
-  { label: "Презентация", href: "/presentation", Icon: FileText, mobile: false },
+  { label: "Бриф на разработку индивидуальной продукции", href: "/brief", Icon: ClipboardList, mobile: false, tip: true },
 ];
 
 const menu = [
@@ -130,11 +130,19 @@ export function SiteHeader() {
             </button>
           </form>
           <ul className="ml-auto flex items-center gap-3 md:ml-0">
-            {actions.map(({ label, href, Icon, mobile }) => (
-              <li key={href} className={mobile ? "" : "hidden md:block"}>
-                <Link href={href} aria-label={label} title={label} className={iconBtn}>
+            {actions.map(({ label, href, Icon, mobile, tip }) => (
+              <li key={href} className={`${mobile ? "" : "hidden md:block"} ${tip ? "group relative" : ""}`}>
+                <Link href={href} aria-label={label} title={tip ? undefined : label} className={iconBtn}>
                   <Icon size={22} aria-hidden />
                 </Link>
+                {tip ? (
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute right-0 top-full z-50 mt-2 w-max max-w-[260px] rounded-md bg-ink px-3 py-2 text-[12px] font-medium leading-snug text-white opacity-0 shadow-lg motion-safe:transition-opacity motion-safe:duration-150 group-focus-within:opacity-100 group-hover:opacity-100"
+                  >
+                    {label}
+                  </span>
+                ) : null}
               </li>
             ))}
             <li>

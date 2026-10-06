@@ -54,6 +54,7 @@ export const site = {
       { label: "Брендирование", href: "/application-types" },
       { label: "Отзывы", href: "/reviews" },
       { label: "Контакты", href: "/contact-us" },
+      { label: "Бриф на разработку", href: "/brief" },
     ],
   ] satisfies NavLink[][],
 } as const;
