@@ -9,6 +9,7 @@ import { asset } from "@/lib/asset";
 import { formatPriceValue } from "@/lib/format";
 import { MIN_ORDER, cartCount, cartTotal, clearCart, removeFromCart, type CartItem } from "@/lib/cart/store";
 import { useCart, useHydrated } from "@/lib/cart/use-cart";
+import { MinOrderProgress } from "./min-order-progress";
 import { QtyStepper } from "./qty-stepper";
 
 const btnPrimary =
@@ -145,12 +146,7 @@ function Summary({ items }: { items: readonly CartItem[] }) {
       <div aria-live="polite" aria-atomic="true">
         <p className="text-sm text-muted">Товаров: {count}</p>
         <p className="mt-1 text-[22px] font-bold md:text-[26px]">Итого: от {formatPriceValue(total)}</p>
-        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white" aria-hidden="true">
-          <div
-            className="h-full rounded-full bg-brand motion-safe:transition-[width]"
-            style={{ width: `${Math.min(100, (total / MIN_ORDER) * 100)}%` }}
-          />
-        </div>
+        <MinOrderProgress total={total} height={6} trackClassName="bg-white" fillClassName="bg-brand" className="mt-3" />
         <p className={`mt-2 text-[13px] ${reached ? "font-medium text-new-text" : "text-muted"}`}>
           {reached
             ? "Минимальная сумма заказа достигнута ✓"

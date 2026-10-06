@@ -138,7 +138,7 @@ export function SiteHeader() {
               </li>
             ))}
             <li>
-              <CartLink className="grid size-12 place-items-center rounded-[10px] bg-white/10 text-white hover:bg-white/20 md:flex md:h-12 md:w-auto md:items-center md:gap-2 md:px-5" />
+              <CartLink className="grid size-12 place-items-center rounded-[10px] bg-white/10 text-white hover:bg-white/20 md:flex md:h-12 md:w-[152px] md:items-center md:justify-center md:gap-2 md:px-3" />
             </li>
           </ul>
         </div>
