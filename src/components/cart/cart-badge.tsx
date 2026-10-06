@@ -9,8 +9,10 @@ import { MIN_ORDER, cartCount, cartTotal } from "@/lib/cart/store";
 import { useCart } from "@/lib/cart/use-cart";
 import { MinOrderCaption, MinOrderProgress, minOrderHint } from "./min-order-progress";
 
-const pop =
-  "inline-flex h-11 items-center justify-center whitespace-nowrap rounded-lg px-2 text-[14px] font-semibold transition-colors";
+const popBase =
+  "inline-flex w-full items-center justify-center whitespace-nowrap rounded-[10px] px-4 text-[14px] font-semibold transition-colors";
+const popPrimary = `${popBase} h-11 bg-brand text-white hover:bg-brand-hover`;
+const popOutline = `${popBase} h-10 border border-line bg-white text-ink hover:bg-surface`;
 
 /** Ссылка «Корзина» в шапке: бейдж количества, сумма и прогресс до минимального заказа. Сервер рендерит пустое состояние. */
 export function CartLink({ className }: { className: string }) {
@@ -64,7 +66,7 @@ export function CartLink({ className }: { className: string }) {
         ) : null}
       </Link>
       {n > 0 && open ? (
-        <div className="absolute right-0 top-full z-50 hidden w-[280px] pt-2 md:block">
+        <div className="absolute right-0 top-full z-50 hidden w-[300px] pt-2 md:block">
           <div className="rounded-[12px] bg-white p-4 text-ink shadow-[0_12px_32px_rgba(0,0,0,0.18)]">
             {reached ? (
               <>
@@ -76,12 +78,12 @@ export function CartLink({ className }: { className: string }) {
                 </p>
                 <p className="mt-1 text-[13px] text-muted">Можно оформлять заказ</p>
                 <MinOrderProgress total={total} height={8} className="mt-3" />
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                  <Link href="/checkout" className={`${pop} bg-brand text-white hover:bg-brand-hover`}>
+                <div className="mt-3 grid gap-2">
+                  <Link href="/checkout" className={popPrimary}>
                     Оформить заказ
                   </Link>
-                  <Link href="/cart" className={`${pop} border border-line bg-white hover:bg-surface`}>
-                    Корзина
+                  <Link href="/cart" className={popOutline}>
+                    Перейти в корзину
                   </Link>
                 </div>
               </>
@@ -94,7 +96,7 @@ export function CartLink({ className }: { className: string }) {
                 <p className="mt-1.5 text-[13px] tabular-nums text-muted">
                   <MinOrderCaption total={total} />
                 </p>
-                <Link href="/cart" className={`${pop} mt-4 w-full bg-brand text-white hover:bg-brand-hover`}>
+                <Link href="/cart" className={`${popPrimary} mt-3`}>
                   Перейти в корзину
                 </Link>
               </>
