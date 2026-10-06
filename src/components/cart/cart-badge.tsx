@@ -7,24 +7,23 @@ import { plural } from "@/lib/plural";
 import { formatPriceValue } from "@/lib/format";
 import { MIN_ORDER, cartCount, cartTotal } from "@/lib/cart/store";
 import { useCart } from "@/lib/cart/use-cart";
-import { MinOrderCaption, MinOrderProgress, minOrderRemaining } from "./min-order-progress";
+import { MinOrderCaption, MinOrderProgress, minOrderHint } from "./min-order-progress";
 
 const pop =
-  "inline-flex h-11 items-center justify-center rounded-lg px-4 text-[14px] font-semibold transition-colors";
+  "inline-flex h-11 items-center justify-center whitespace-nowrap rounded-lg px-2 text-[14px] font-semibold transition-colors";
 
 /** Ссылка «Корзина» в шапке: бейдж количества, сумма и прогресс до минимального заказа. Сервер рендерит пустое состояние. */
 export function CartLink({ className }: { className: string }) {
   const items = useCart();
   const n = cartCount(items);
   const total = cartTotal(items);
-  const left = minOrderRemaining(total);
   const reached = total >= MIN_ORDER;
   const [open, setOpen] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
 
   const label = n
     ? `Корзина, ${n} ${plural("item", n)}, на сумму ${formatPriceValue(total)}. ${
-        reached ? "Минимальная сумма заказа набрана" : `До минимального заказа осталось ${formatPriceValue(left)}`
+        reached ? "Минимальная сумма заказа набрана" : minOrderHint(total)
       }`
     : "Корзина";
 
@@ -59,6 +58,7 @@ export function CartLink({ className }: { className: string }) {
           <MinOrderProgress
             total={total}
             height={3}
+            onDark
             className="pointer-events-none absolute inset-x-3 bottom-[5px]"
           />
         ) : null}
@@ -75,7 +75,7 @@ export function CartLink({ className }: { className: string }) {
                   Минимальная сумма заказа набрана
                 </p>
                 <p className="mt-1 text-[13px] text-muted">Можно оформлять заказ</p>
-                <MinOrderProgress total={total} height={8} trackClassName="bg-line" className="mt-3" />
+                <MinOrderProgress total={total} height={8} className="mt-3" />
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   <Link href="/checkout" className={`${pop} bg-brand text-white hover:bg-brand-hover`}>
                     Оформить заказ
@@ -88,9 +88,9 @@ export function CartLink({ className }: { className: string }) {
             ) : (
               <>
                 <p className="text-[15px] font-semibold leading-snug">
-                  До минимального заказа осталось {formatPriceValue(left)}
+                  {minOrderHint(total)}
                 </p>
-                <MinOrderProgress total={total} height={8} trackClassName="bg-line" fillClassName="bg-brand" className="mt-3" />
+                <MinOrderProgress total={total} height={8} className="mt-3" />
                 <p className="mt-1.5 text-[13px] tabular-nums text-muted">
                   <MinOrderCaption total={total} />
                 </p>

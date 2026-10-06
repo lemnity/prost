@@ -193,3 +193,11 @@ html {
     transform: translateX(-100%);
   }
 }
+
+@keyframes min-order-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .min-order-pulse { animation: min-order-pulse 2s ease-in-out infinite; }
+}
