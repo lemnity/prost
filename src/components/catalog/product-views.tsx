@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ProductImage } from "@/components/ui/product-image";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
+import { FavoriteButton } from "@/components/favorites/favorite-button";
+import { favoriteItem } from "@/lib/favorites/item";
 import { asset } from "@/lib/asset";
 import { formatPriceValue, formatQty } from "@/lib/format";
 import type { ListingProduct } from "@/lib/catalog/types";
@@ -12,6 +14,7 @@ const cartProduct = (p: ListingProduct) => ({
   image: p.image,
   url: p.url,
   priceFrom: p.priceFrom,
+  oldPrice: p.oldPrice,
   stock: p.stock,
 });
 
@@ -42,6 +45,7 @@ export function ProductCardCompact({ product: p }: { product: ListingProduct }) 
             className="object-contain"
           />
         </Link>
+        <FavoriteButton item={favoriteItem(p)} className="absolute right-0 top-0" />
         {p.isNew && !p.oldPrice ? (
           <span className="absolute bottom-0 left-0 rounded-full bg-new-bg px-1.5 py-0.5 text-[10px] text-new-text">
             Новинка
@@ -93,7 +97,10 @@ export function ProductRow({ product: p }: { product: ListingProduct }) {
       </div>
       <div className="col-span-2 flex items-center justify-between gap-3 sm:col-span-1 sm:flex-col sm:items-end sm:gap-2">
         <Price p={p} size="md" />
-        <AddToCartButton product={cartProduct(p)} variant="row" />
+        <div className="flex items-center gap-1">
+          <FavoriteButton item={favoriteItem(p)} className="size-9!" />
+          <AddToCartButton product={cartProduct(p)} variant="row" />
+        </div>
       </div>
     </article>
   );

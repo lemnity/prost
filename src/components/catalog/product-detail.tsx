@@ -11,6 +11,7 @@ import { Countdown } from "@/components/home/countdown";
 import type { SaleRemaining } from "@/lib/sale";
 import { ProductImage } from "@/components/ui/product-image";
 import { buttonClass } from "@/components/ui/button";
+import { FavoriteButton } from "@/components/favorites/favorite-button";
 
 type SizeRow = { size: string; stock: number; free: number; remote: number };
 
@@ -99,6 +100,21 @@ export function ProductDetail({
             sizes="(min-width:1280px) 600px, (min-width:768px) 45vw, 100vw"
             className="object-contain p-4"
             onFail={() => markBad(v.image)}
+          />
+          <FavoriteButton
+            variant="detail"
+            className="absolute right-3 top-3"
+            item={{
+              id: v.id,
+              sku: v.sku,
+              title: v.title,
+              image: v.image,
+              url: v.url,
+              price: v.price,
+              ...(onSale ? { oldPrice: v.oldPrice } : {}),
+              stock: v.stock ?? 0,
+              ...(v.stock === 0 ? { preorder: true } : {}),
+            }}
           />
         </div>
         {multi ? (

@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { CartLink } from "@/components/cart/cart-badge";
+import { FavoritesLink } from "@/components/favorites/favorites-link";
+import { FAVORITES_HREF } from "@/lib/favorites/store";
 import { site } from "@/content/site";
 import { BrandLogo } from "./brand-logo";
 import { StickyBar } from "./sticky-bar";
@@ -26,7 +28,7 @@ const circle =
 
 const actions: { label: string; href: string; Icon: typeof User; mobile: boolean; tip?: boolean }[] = [
   { label: "Профиль", href: "/account", Icon: User, mobile: true },
-  { label: "Избранное", href: "/account/favorites", Icon: Heart, mobile: false },
+  { label: "Избранное", href: FAVORITES_HREF, Icon: Heart, mobile: true },
   { label: "Бриф на разработку индивидуальной продукции", href: "/brief", Icon: ClipboardList, mobile: false, tip: true },
 ];
 
@@ -132,9 +134,13 @@ export function SiteHeader() {
           <ul className="ml-auto flex items-center gap-3 md:ml-0">
             {actions.map(({ label, href, Icon, mobile, tip }) => (
               <li key={href} className={`${mobile ? "" : "hidden md:block"} ${tip ? "group relative" : ""}`}>
-                <Link href={href} aria-label={label} title={tip ? undefined : label} className={iconBtn}>
-                  <Icon size={22} aria-hidden />
-                </Link>
+                {href === FAVORITES_HREF ? (
+                  <FavoritesLink className={iconBtn} />
+                ) : (
+                  <Link href={href} aria-label={label} title={tip ? undefined : label} className={iconBtn}>
+                    <Icon size={22} aria-hidden />
+                  </Link>
+                )}
                 {tip ? (
                   <span
                     aria-hidden="true"

@@ -1,7 +1,8 @@
 import { asset } from "@/lib/asset";
 import Link from "next/link";
 import { ProductImage } from "@/components/ui/product-image";
-import { Heart } from "lucide-react";
+import { FavoriteButton } from "@/components/favorites/favorite-button";
+import { favoriteItem } from "@/lib/favorites/item";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { formatPriceValue, formatQty } from "@/lib/format";
 import type { Product } from "@/lib/catalog/types";
@@ -22,13 +23,7 @@ export function ProductCard({ product }: { product: Product }) {
             className="object-contain"
           />
         </Link>
-        <button
-          type="button"
-          aria-label="Добавить в избранное"
-          className="absolute right-0 top-0 inline-flex size-8 items-center justify-center text-muted hover:text-brand"
-        >
-          <Heart size={18} aria-hidden="true" />
-        </button>
+        <FavoriteButton item={favoriteItem(product)} className="absolute right-0 top-0" />
         {oldPrice ? (
           <span className="absolute left-0 top-0 rounded-full bg-brand px-2 py-0.5 text-[11px] font-bold text-white">
             {`\u2212${discount}%`}
