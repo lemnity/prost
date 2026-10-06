@@ -1,65 +1,107 @@
 import type { ReactNode } from "react";
 import type { Block, Section } from "@/lib/application-types";
 
-export function Table({ head, rows }: { head: string[]; rows: string[][] }) {
+const isNum = (s: string) => /^[\d\s.,–-]+$/.test(s) && /\d/.test(s);
+
+/** Общий хвост вида «, руб./шт.» у всех заголовков числовых колонок выносим в подпись. */
+function normalizeHead(head: string[], numericCols: boolean) {
+  let caption = "";
+  let h = head;
+  if (numericCols && head.length > 2) {
+    const m = head.slice(1).map((x) => x.match(/^(.*?),\s*(руб\.?(?:\/[^\s,]+)?)\.?$/i));
+    if (m.every(Boolean) && new Set(m.map((x) => x![2].toLowerCase())).size === 1) {
+      const unit = m[0]![2];
+      caption = /\/шт/i.test(unit) ? "Цена за 1 шт., руб." : `Цена, ${unit}`;
+      h = [head[0], ...m.map((x) => x![1].trim())];
+    }
+    const c = h.slice(1).map((x) => x.match(/^Печать в (\d+) (?:цвет|цвета|цветов)$/i));
+    if (c.every(Boolean)) {
+      h = [h[0], ...c.map((x) => {
+        const n = Number(x![1]);
+        const w = n % 10 === 1 && n % 100 !== 11 ? "цвет" : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? "цвета" : "цветов";
+        return `${n} ${w}`;
+      })];
+    }
+  }
+  return { head: h, caption };
+}
+
+export function Table({ head: rawHead, rows }: { head: string[]; rows: string[][] }) {
   // «Шапка» из одной ячейки на всю ширину: остальные ячейки пустые.
-  const spanAll = head.length > 1 && head.slice(1).every((h) => !h);
-  const numeric = (s: string) => /^[\d\s.,–-]+$/.test(s) && /\d/.test(s);
+  const spanAll = rawHead.length > 1 && rawHead.slice(1).every((h) => !h);
+  const cols = rawHead.length;
+  const numericCols = !spanAll && cols > 2 && rows.length > 0 && rows.every((r) => r.slice(1).every(isNum));
+  const { head, caption } = normalizeHead(rawHead, numericCols);
+  const n = cols - 1;
   return (
-    <div
-      tabIndex={0}
-      role="region"
-      aria-label={head[0] || "Таблица"}
-      className="overflow-x-auto rounded-[10px] border border-line"
-    >
-      <table className="w-full min-w-max border-collapse text-[14px] md:min-w-0">
-        <thead>
-          <tr className="bg-surface">
-            {spanAll ? (
-              <th scope="col" colSpan={head.length} className="px-4 py-3 text-left font-semibold">
-                {head[0]}
-              </th>
-            ) : (
-              head.map((h, i) => (
-                <th
-                  key={i}
-                  scope="col"
-                  className={`px-4 py-3 text-left align-bottom font-semibold ${
-                    i === 0 ? "sticky left-0 z-10 bg-surface" : ""
-                  }`}
-                >
-                  {h}
+    <figure>
+      {caption ? <figcaption className="mb-2 text-[13px] text-muted">{caption}</figcaption> : null}
+      <div
+        tabIndex={0}
+        role="region"
+        aria-label={rawHead[0] || "Таблица"}
+        className="overflow-x-auto rounded-[10px] border border-line"
+      >
+        <table
+          className={`w-full border-collapse text-[15px] ${numericCols ? "table-fixed" : "min-w-[520px] md:min-w-0"}`}
+          style={numericCols ? { minWidth: 120 + n * 96 } : undefined}
+        >
+          {numericCols ? (
+            <colgroup>
+              <col style={{ width: `${(1.6 / (1.6 + n)) * 100}%` }} />
+              {head.slice(1).map((_, i) => <col key={i} />)}
+            </colgroup>
+          ) : null}
+          <thead>
+            <tr className="bg-surface">
+              {spanAll ? (
+                <th scope="col" colSpan={cols} className="px-4 py-3 text-left text-[13px] font-semibold text-muted">
+                  {head[0]}
                 </th>
-              ))
-            )}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r, ri) => (
-            <tr key={ri} className="group even:bg-surface/60">
-              {r.map((c, ci) =>
-                ci === 0 ? (
+              ) : (
+                head.map((h, i) => (
                   <th
-                    key={ci}
-                    scope="row"
-                    className="sticky left-0 z-10 border-t border-line bg-white px-4 py-2.5 text-left font-semibold group-even:bg-[#f9f9f8]"
+                    key={i}
+                    scope="col"
+                    className={`px-4 py-3 align-bottom text-[13px] font-semibold text-muted ${
+                      i === 0 ? "sticky left-0 z-10 whitespace-nowrap bg-surface text-left" : numericCols ? "whitespace-nowrap text-right" : "text-left"
+                    }`}
                   >
-                    {c}
+                    {h}
                   </th>
-                ) : (
-                  <td
-                    key={ci}
-                    className={`border-t border-line px-4 py-2.5 ${numeric(c) ? "tabular-nums" : ""}`}
-                  >
-                    {c}
-                  </td>
-                ),
+                ))
               )}
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {rows.map((r, ri) => (
+              <tr key={ri} className="group even:bg-surface/60">
+                {r.map((c, ci) =>
+                  ci === 0 ? (
+                    <th
+                      key={ci}
+                      scope="row"
+                      className="sticky left-0 z-10 whitespace-nowrap border-t border-line bg-white px-4 py-3 text-left font-semibold text-ink group-even:bg-[#f9f9f8]"
+                    >
+                      {c}
+                    </th>
+                  ) : (
+                    <td
+                      key={ci}
+                      className={`border-t border-line px-4 py-3 text-ink ${
+                        isNum(c) ? "text-right tabular-nums" : ""
+                      }`}
+                    >
+                      {c}
+                    </td>
+                  ),
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </figure>
   );
 }
 
