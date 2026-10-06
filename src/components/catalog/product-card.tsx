@@ -74,6 +74,7 @@ export function ProductCard({ product }: { product: Product }) {
             image: product.image,
             url: product.url,
             priceFrom: product.priceFrom,
+            oldPrice: product.oldPrice,
             stock: product.stock,
           }}
         />

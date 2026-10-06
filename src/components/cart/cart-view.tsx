@@ -7,7 +7,7 @@ import { ShoppingCart, Trash2 } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { asset } from "@/lib/asset";
 import { formatPriceValue } from "@/lib/format";
-import { MIN_ORDER, cartCount, cartTotal, clearCart, removeFromCart, type CartItem } from "@/lib/cart/store";
+import { MIN_ORDER, cartCount, cartDiscount, cartTotal, clearCart, removeFromCart, type CartItem } from "@/lib/cart/store";
 import { useCart, useHydrated } from "@/lib/cart/use-cart";
 import { MinOrderProgress, minOrderHint } from "./min-order-progress";
 import { QtyStepper } from "./qty-stepper";
@@ -90,7 +90,17 @@ export function CartView() {
                     Арт. {i.sku}
                     {i.preorder ? <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">Под заказ</span> : null}
                   </p>
-                  <p className="mt-1 text-[13px] text-muted">от {formatPriceValue(i.price)}</p>
+                  <p className="mt-1 flex flex-wrap items-center gap-x-2 text-[13px] text-muted">
+                    <span className={i.oldPrice ? "font-semibold text-brand" : undefined}>от {formatPriceValue(i.price)}</span>
+                    {i.oldPrice ? (
+                      <>
+                        <span className="line-through">{formatPriceValue(i.oldPrice)}</span>
+                        <span className="rounded-full bg-brand px-1.5 py-px text-[11px] font-bold text-white">
+                          {`\u2212${Math.round((1 - i.price / i.oldPrice) * 100)}%`}
+                        </span>
+                      </>
+                    ) : null}
+                  </p>
                 </div>
                 <div className="col-span-2 flex items-center justify-between gap-3 sm:col-span-1 sm:justify-end">
                   <QtyStepper id={i.id} qty={i.qty} title={i.title} />
@@ -131,6 +141,7 @@ export function CartView() {
 
 function Summary({ items }: { items: readonly CartItem[] }) {
   const total = cartTotal(items);
+  const discount = cartDiscount(items);
   const count = cartCount(items);
   const reached = total >= MIN_ORDER;
   return (
@@ -138,6 +149,9 @@ function Summary({ items }: { items: readonly CartItem[] }) {
     <aside aria-label="Итого" className="rounded-[14px] bg-surface p-5 md:p-6">
       <div aria-live="polite" aria-atomic="true">
         <p className="text-sm text-muted">Товаров: {count}</p>
+        {discount > 0 ? (
+          <p className="mt-1 text-sm font-medium text-brand">Скидка: {`\u2212${formatPriceValue(discount)}`}</p>
+        ) : null}
         <p className="mt-1 text-[22px] font-bold md:text-[26px]">Итого: от {formatPriceValue(total)}</p>
         <MinOrderProgress total={total} height={6} trackClassName="bg-white" className="mt-3" />
         <p className={`mt-2 text-[13px] ${reached ? "font-medium text-new-text" : "text-muted"}`}>

@@ -10,7 +10,7 @@ import { asset } from "@/lib/asset";
 import { plural } from "@/lib/plural";
 import { formatPriceValue } from "@/lib/format";
 import { site } from "@/content/site";
-import { MIN_ORDER, cartCount, cartTotal, clearCart, setPromo, type CartItem } from "@/lib/cart/store";
+import { MIN_ORDER, cartCount, cartDiscount, cartTotal, clearCart, setPromo, type CartItem } from "@/lib/cart/store";
 import { useCart, useHydrated, usePromo } from "@/lib/cart/use-cart";
 import {
   buildOrder,
@@ -300,6 +300,7 @@ export function CheckoutView() {
   const [done, setDone] = useState<Done | null>(null);
 
   const total = cartTotal(items);
+  const discount = cartDiscount(items);
   const set = <K extends keyof OrderData>(k: K, v: OrderData[K]) => {
     setD((p) => ({ ...p, [k]: v }));
     setErrors((p) => (p[k] ? { ...p, [k]: undefined } : p));
@@ -336,7 +337,10 @@ export function CheckoutView() {
           <aside aria-label="Состав заказа" className="rounded-[14px] bg-surface p-5 md:p-6">
             <h3 className="mb-4 text-[17px] font-semibold">Состав заказа</h3>
             <OrderLines items={done.items} />
-            <p className="mt-4 text-[22px] font-bold">Итого: от {formatPriceValue(done.total)}</p>
+            {cartDiscount(done.items) > 0 ? (
+              <p className="mt-4 text-sm font-medium text-brand">Скидка: {`\u2212${formatPriceValue(cartDiscount(done.items))}`}</p>
+            ) : null}
+            <p className="mt-1 text-[22px] font-bold">Итого: от {formatPriceValue(done.total)}</p>
           </aside>
         </Container>
       </section>
@@ -493,6 +497,9 @@ export function CheckoutView() {
             </div>
             <div className="mt-5 shrink-0 border-t border-line pt-4">
               <p className="text-sm text-muted">Товаров: {count}</p>
+              {discount > 0 ? (
+                <p className="mt-1 text-sm font-medium text-brand">Скидка: {`\u2212${formatPriceValue(discount)}`}</p>
+              ) : null}
               <p className="mt-1 text-[22px] font-bold md:text-[26px]">Итого: от {formatPriceValue(total)}</p>
             </div>
             <div className="mt-5 shrink-0">{submitBtn}</div>

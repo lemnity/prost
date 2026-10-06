@@ -14,6 +14,7 @@ export type CartProduct = {
   image: string;
   url: string;
   priceFrom: number;
+  oldPrice?: number;
   stock: number;
 };
 
@@ -92,6 +93,7 @@ export function AddToCartButton({
               image: product.image,
               url: product.url,
               price: product.priceFrom,
+              ...(product.oldPrice ? { oldPrice: product.oldPrice } : {}),
             });
             setAdded(true);
             setAnnounce("");

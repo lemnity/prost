@@ -6,6 +6,8 @@ export type CartItem = {
   url: string;
   price: number;
   qty: number;
+  /** Цена до скидки (распродажа); нет поля — скидки нет. */
+  oldPrice?: number;
   /** Позиция под заказ (нет на складе). */
   preorder?: boolean;
 };
@@ -46,7 +48,14 @@ function read(): readonly CartItem[] {
     const seen = new Set<string>();
     const list = data
       .filter((i) => !seen.has(i.id) && !!seen.add(i.id))
-      .map((i) => ({ ...i, qty: Math.min(i.qty, MAX_QTY) }));
+      .map((i) => {
+        const { oldPrice, ...rest } = i;
+        return {
+          ...rest,
+          ...(typeof oldPrice === "number" && oldPrice > i.price ? { oldPrice } : {}),
+          qty: Math.min(i.qty, MAX_QTY),
+        };
+      });
     return list.length ? Object.freeze(list) : EMPTY;
   } catch {
     try {
@@ -125,7 +134,7 @@ export function addToCart(item: Omit<CartItem, "qty">, qty = 1) {
   const found = items.find((i) => i.id === item.id);
   commit(
     found
-      ? items.map((i) => (i.id === item.id ? { ...i, qty: clamp(i.qty + qty) } : i))
+      ? items.map((i) => (i.id === item.id ? { ...i, qty: clamp(i.qty + qty), oldPrice: item.oldPrice } : i))
       : [...items, { ...item, qty: clamp(qty) }],
   );
 }
@@ -164,3 +173,7 @@ export function setPromo(code: string) {
 
 export const cartCount = (list: readonly CartItem[]) => list.reduce((s, i) => s + i.qty, 0);
 export const cartTotal = (list: readonly CartItem[]) => list.reduce((s, i) => s + i.qty * i.price, 0);
+
+/** Сумма скидки по позициям распродажи: Σ (старая − текущая) × кол-во. */
+export const cartDiscount = (list: readonly CartItem[]) =>
+  list.reduce((s, i) => s + (i.oldPrice && i.oldPrice > i.price ? (i.oldPrice - i.price) * i.qty : 0), 0);

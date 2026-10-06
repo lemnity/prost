@@ -484,6 +484,7 @@ function BuyBox({
                 image: v.image,
                 url: v.url,
                 price: v.price,
+                ...(v.oldPrice && v.oldPrice > v.price ? { oldPrice: v.oldPrice } : {}),
                 ...(inStock ? {} : { preorder: true }),
               },
               n,

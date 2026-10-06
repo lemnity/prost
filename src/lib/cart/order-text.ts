@@ -1,6 +1,6 @@
 import { site } from "@/content/site";
 import { formatPriceValue } from "@/lib/format";
-import { cartTotal, type CartItem } from "./store";
+import { cartDiscount, cartTotal, type CartItem } from "./store";
 
 export const MAILTO_LIMIT = 1800;
 
@@ -50,6 +50,7 @@ export type BuiltOrder = {
 
 export function buildOrder(items: readonly CartItem[], d: OrderData, promo = ""): BuiltOrder {
   const total = cartTotal(items);
+  const discount = cartDiscount(items);
   const build = (lines: string[], comment: string, sep: string) =>
     [
       "Контакты:",
@@ -65,6 +66,7 @@ export function buildOrder(items: readonly CartItem[], d: OrderData, promo = "")
       "Состав заказа:",
       ...lines,
       "",
+      ...(discount > 0 ? [`Скидка: \u2212${formatPriceValue(discount)}`] : []),
       `Итого: от ${formatPriceValue(total)}`,
       ...opt("Промокод", promo),
       ...(comment ? ["", `Комментарий: ${comment}`] : []),
