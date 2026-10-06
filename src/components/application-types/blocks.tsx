@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { Block, Section } from "@/lib/application-types";
 
 export function Table({ head, rows }: { head: string[]; rows: string[][] }) {
@@ -9,7 +10,7 @@ export function Table({ head, rows }: { head: string[]; rows: string[][] }) {
       tabIndex={0}
       role="region"
       aria-label={head[0] || "Таблица"}
-      className="my-4 overflow-x-auto rounded-[10px] border border-line"
+      className="overflow-x-auto rounded-[10px] border border-line"
     >
       <table className="w-full min-w-max border-collapse text-[14px] md:min-w-0">
         <thead>
@@ -62,63 +63,84 @@ export function Table({ head, rows }: { head: string[]; rows: string[][] }) {
   );
 }
 
-export function Blocks({ blocks }: { blocks: Block[] }) {
+const LIST =
+  "list-none space-y-2 text-[16px] leading-[1.65] text-ink [&>li]:relative [&>li]:pl-5 [&>li]:before:absolute [&>li]:before:left-0 [&>li]:before:top-[0.7em] [&>li]:before:size-1.5 [&>li]:before:rounded-full [&>li]:before:bg-brand";
+
+type Item = { kind: "h" | "p" | "ul" | "table" | "cards"; node: ReactNode };
+
+function blockItem(b: Block, key: string): Item {
+  if (b.type === "p")
+    return { kind: "p", node: <p key={key} className="text-[16px] leading-[1.65] text-ink">{b.text}</p> };
+  if (b.type === "ul")
+    return {
+      kind: "ul",
+      node: (
+        <ul key={key} className={LIST}>
+          {b.items.map((it, j) => <li key={j}>{it}</li>)}
+        </ul>
+      ),
+    };
+  return { kind: "table", node: <Table key={key} head={b.head} rows={b.rows} /> };
+}
+
+/** Единая шкала отступов: абзац→абзац 16, заголовок→контент 12, смена типа блока и перед h3 — 32. */
+function Flow({ items }: { items: Item[] }) {
   return (
-    <>
-      {blocks.map((b, i) => {
-        if (b.type === "p")
-          return (
-            <p key={i} className="mt-3 max-w-[78ch] text-[15px] leading-relaxed text-ink/90">
-              {b.text}
-            </p>
-          );
-        if (b.type === "ul")
-          return (
-            <ul key={i} className="mt-3 max-w-[78ch] list-disc space-y-2 pl-5 text-[15px] leading-relaxed text-ink/90 marker:text-brand">
-              {b.items.map((it, j) => (
-                <li key={j}>{it}</li>
-              ))}
-            </ul>
-          );
-        return <Table key={i} head={b.head} rows={b.rows} />;
+    <div>
+      {items.map((it, i) => {
+        const prev = items[i - 1]?.kind;
+        const mt = !prev
+          ? ""
+          : it.kind === "h"
+            ? "mt-8"
+            : prev === "h"
+              ? "mt-3"
+              : prev === "p" && (it.kind === "p" || it.kind === "ul")
+                ? "mt-4"
+                : "mt-8";
+        return <div key={i} className={mt}>{it.node}</div>;
       })}
-    </>
+    </div>
   );
 }
 
-/** Преимущества и ограничения — в две колонки; остальные секции — подряд. */
+export function Blocks({ blocks }: { blocks: Block[] }) {
+  return <Flow items={blocks.map((b, i) => blockItem(b, String(i)))} />;
+}
+
+function Cards({ adv, lim }: { adv: Section; lim: Section }) {
+  const card = (s: Section) => (
+    <section className="h-full rounded-[14px] bg-surface p-6">
+      <h3 className="text-[18px] font-semibold leading-snug">{s.heading}</h3>
+      <div className="mt-3">
+        <Blocks blocks={s.blocks.filter((b) => b.type === "ul")} />
+      </div>
+    </section>
+  );
+  return (
+    <div className="grid items-stretch gap-4 xl:grid-cols-2">
+      {card(adv)}
+      {card(lim)}
+    </div>
+  );
+}
+
+/** Преимущества и ограничения — две карточки одной высоты; всё остальное — единым потоком. */
 export function Sections({ sections }: { sections: Section[] }) {
-  const out: React.ReactNode[] = [];
+  const items: Item[] = [];
   for (let i = 0; i < sections.length; i++) {
     const s = sections[i];
     const next = sections[i + 1];
     if (s.heading === "Преимущества" && next?.heading === "Ограничения") {
-      const lists = next.blocks.filter((b) => b.type === "ul");
-      const rest = next.blocks.filter((b) => b.type !== "ul");
-      out.push(
-        <div key={i} className="mt-8">
-          <div className="grid gap-6 md:grid-cols-2">
-            <section className="rounded-[10px] bg-surface p-5">
-              <h3 className="text-[18px] font-semibold">{s.heading}</h3>
-              <Blocks blocks={s.blocks} />
-            </section>
-            <section className="rounded-[10px] bg-surface p-5">
-              <h3 className="text-[18px] font-semibold">{next.heading}</h3>
-              <Blocks blocks={lists} />
-            </section>
-          </div>
-          <Blocks blocks={rest} />
-        </div>,
-      );
+      items.push({ kind: "cards", node: <Cards adv={s} lim={next} /> });
+      next.blocks
+        .filter((b) => b.type !== "ul")
+        .forEach((b, j) => items.push(blockItem(b, `r${i}-${j}`)));
       i++;
       continue;
     }
-    out.push(
-      <section key={i} className="mt-8 first:mt-0">
-        {s.heading ? <h3 className="text-[20px] font-semibold">{s.heading}</h3> : null}
-        <Blocks blocks={s.blocks} />
-      </section>,
-    );
+    if (s.heading) items.push({ kind: "h", node: <h3 className="text-[20px] font-semibold leading-snug">{s.heading}</h3> });
+    s.blocks.forEach((b, j) => items.push(blockItem(b, `${i}-${j}`)));
   }
-  return <>{out}</>;
+  return <Flow items={items} />;
 }

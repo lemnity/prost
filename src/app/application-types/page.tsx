@@ -44,7 +44,9 @@ export default function ApplicationTypesPage() {
             <h2 id="apt-about" className="text-[22px] font-bold md:text-[26px]">
               {s.heading}
             </h2>
-            <Blocks blocks={s.blocks} />
+            <div className="mt-3 max-w-[78ch]">
+              <Blocks blocks={s.blocks} />
+            </div>
           </Container>
         </section>
       ))}

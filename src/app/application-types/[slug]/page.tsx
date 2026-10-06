@@ -47,6 +47,37 @@ export default async function ApplicationTypePage({ params }: Props) {
   const others = applicationTypes.filter((a) => a.slug !== slug);
   const titleOf = (s: string) => getApplicationCard(s)?.title ?? applicationTypes.find((a) => a.slug === s)!.title;
 
+  const facts = (
+    <>
+      {card ? (
+        <ul className="flex flex-wrap gap-2">
+          <li className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-[13px] text-ink">
+            <Clock size={14} aria-hidden="true" className="text-brand" />
+            {card.term}
+          </li>
+          <li className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-[13px] text-ink">
+            <Layers size={14} aria-hidden="true" className="text-brand" />
+            {card.run}
+          </li>
+        </ul>
+      ) : null}
+      <div className="mt-4 flex flex-wrap gap-3">
+        <Link
+          href="/contact-us#callback"
+          className={buttonClass({ size: "lg", px: "px-7" })}
+        >
+          Рассчитать нанесение
+        </Link>
+        <Link
+          href={catalogHrefFor(slug)}
+          className={buttonClass({ variant: "outline", size: "lg", px: "px-7" })}
+        >
+          Смотреть товары
+        </Link>
+      </div>
+    </>
+  );
+
   return (
     <main id="main">
       <Container className="pt-4 md:pt-6">
@@ -70,31 +101,8 @@ export default async function ApplicationTypePage({ params }: Props) {
                 {p}
               </p>
             ))}
-            {card ? (
-              <ul className="mt-4 flex flex-wrap gap-2">
-                <li className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-[13px] text-ink">
-                  <Clock size={14} aria-hidden="true" className="text-brand" />
-                  {card.term}
-                </li>
-                <li className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-[13px] text-ink">
-                  <Layers size={14} aria-hidden="true" className="text-brand" />
-                  {card.run}
-                </li>
-              </ul>
-            ) : null}
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link
-                href="/contact-us#callback"
-                className={buttonClass({ size: "lg", px: "px-7" })}
-              >
-                Рассчитать нанесение
-              </Link>
-              <Link
-                href={catalogHrefFor(slug)}
-                className="inline-flex h-12 items-center justify-center rounded-lg bg-surface px-7 text-[15px] font-semibold text-ink transition-colors hover:bg-field-hover"
-              >
-                Смотреть товары
-              </Link>
+            <div className="mt-5 lg:hidden">
+              {facts}
             </div>
           </div>
           <div className="relative aspect-[16/9] overflow-hidden rounded-[12px] bg-surface lg:aspect-[4/3]">
@@ -111,8 +119,61 @@ export default async function ApplicationTypePage({ params }: Props) {
       </section>
 
       <section aria-label="Подробно о виде нанесения" className="py-2 md:py-4">
-        <Container>
-          <ApplicationTabs sections={t.sections} />
+        <Container className="grid items-start gap-8 lg:grid-cols-[minmax(0,800px)_320px] lg:justify-between">
+          <div className="min-w-0">
+            <ApplicationTabs sections={t.sections} />
+          </div>
+          <aside aria-label="О виде нанесения" className="hidden lg:sticky lg:top-28 lg:grid lg:gap-4">
+            <div className="rounded-[14px] bg-surface p-6">
+              {card ? (
+                <dl className="grid gap-3 text-[15px]">
+                  <div>
+                    <dt className="flex items-center gap-1.5 text-[13px] text-muted">
+                      <Clock size={14} aria-hidden="true" className="text-brand" />
+                      Срок изготовления
+                    </dt>
+                    <dd className="mt-0.5 font-semibold text-ink">{card.term.replace(/^Срок:\s*/, "")}</dd>
+                  </div>
+                  <div>
+                    <dt className="flex items-center gap-1.5 text-[13px] text-muted">
+                      <Layers size={14} aria-hidden="true" className="text-brand" />
+                      Тираж
+                    </dt>
+                    <dd className="mt-0.5 font-semibold text-ink">{card.run.replace(/^Тираж:\s*/, "")}</dd>
+                  </div>
+                </dl>
+              ) : null}
+              <div className="mt-5 grid gap-3">
+                <Link
+                  href="/contact-us#callback"
+                  className={buttonClass({ size: "lg", full: true })}
+                >
+                  Рассчитать нанесение
+                </Link>
+                <Link
+                  href={catalogHrefFor(slug)}
+                  className={buttonClass({ variant: "outline", size: "lg", full: true })}
+                >
+                  Смотреть товары
+                </Link>
+              </div>
+            </div>
+            <nav aria-labelledby="apt-others-side" className="rounded-[14px] bg-surface p-6">
+              <h2 id="apt-others-side" className="text-[16px] font-bold">Другие виды нанесения</h2>
+              <ul className="mt-3 grid gap-0.5">
+                {others.map((o) => (
+                  <li key={o.slug}>
+                    <Link
+                      href={`/application-types/${o.slug}`}
+                      className="block rounded-md px-2 py-1.5 text-[14px] text-ink transition-colors hover:bg-white hover:text-brand"
+                    >
+                      {titleOf(o.slug)}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </aside>
         </Container>
       </section>
 
@@ -140,7 +201,7 @@ export default async function ApplicationTypePage({ params }: Props) {
         </section>
       ) : null}
 
-      <section aria-labelledby="apt-others" className="pb-4 md:pb-6">
+      <section aria-labelledby="apt-others" className="pb-4 md:pb-6 lg:hidden">
         <Container>
           <h2 id="apt-others" className="text-[22px] font-bold md:text-[26px]">
             Другие виды нанесения
