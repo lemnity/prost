@@ -160,7 +160,18 @@ function Badge({ n }: { n?: number }) {
 }
 
 /** Список разделов (боковое меню на компьютере и выпадающее на телефоне). */
-function SectionList({ section, counts, onPick }: { section: AccountSection; counts: Counts; onPick?: () => void }) {
+function SectionList({
+  section,
+  counts,
+  onPick,
+  signOutItem = false,
+}: {
+  section: AccountSection;
+  counts: Counts;
+  onPick?: () => void;
+  /** «Выйти» — только в мобильном меню (на компьютере выход в меню профиля в шапке). */
+  signOutItem?: boolean;
+}) {
   return (
     <ul className="grid gap-1">
       {NAV.map(({ key, label, href, Icon }) => {
@@ -182,6 +193,7 @@ function SectionList({ section, counts, onPick }: { section: AccountSection; cou
           </li>
         );
       })}
+      {signOutItem ? (
       <li className="mt-1 border-t border-line pt-1">
         <button
           type="button"
@@ -195,6 +207,7 @@ function SectionList({ section, counts, onPick }: { section: AccountSection; cou
           Выйти
         </button>
       </li>
+      ) : null}
     </ul>
   );
 }
@@ -236,7 +249,7 @@ function SectionMenu({ section, counts }: { section: AccountSection; counts: Cou
       </button>
       {open ? (
         <div id="account-sections" className="absolute inset-x-0 top-full z-30 mt-2 rounded-[14px] border border-line bg-surface p-2 shadow-[0_12px_32px_rgba(0,0,0,0.14)]">
-          <SectionList section={section} counts={counts} onPick={() => setOpen(false)} />
+          <SectionList section={section} counts={counts} onPick={() => setOpen(false)} signOutItem />
         </div>
       ) : null}
     </nav>
