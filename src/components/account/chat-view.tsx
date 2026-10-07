@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { Check, Copy, Download, MessageCircle, Paperclip, SendHorizontal, X } from "lucide-react";
+import { Check, Copy, Download, MessageCircle, Paperclip, Phone, SendHorizontal, X } from "lucide-react";
 import { buttonClass } from "@/components/ui/button";
 import { asset } from "@/lib/asset";
 import { formatPriceValue, formatQty } from "@/lib/format";
@@ -13,7 +13,7 @@ import { site } from "@/content/site";
 import { cartCount, clearCart } from "@/lib/cart/store";
 import { useCart } from "@/lib/cart/use-cart";
 import { AGENT, agentReply } from "@/lib/chat/agent";
-import { appendMessages, messageId, type Chat, type ChatMessage } from "@/lib/chat/store";
+import { appendMessages, getChatsSnapshot, messageId, type Chat, type ChatMessage } from "@/lib/chat/store";
 import { ACCEPT, MAX_FILES, MAX_FILE_SIZE, extOf, formatSize, isImage, loadFile, saveFiles, type ChatFile } from "@/lib/chat/files";
 import { useChats, useNow } from "@/lib/chat/use-chats";
 
@@ -88,7 +88,7 @@ function ChatWindow({ chat }: { chat: Chat }) {
   const until = chat.messages.reduce((t, m) => Math.max(t, m.at), 0);
   const now = useNow(until, waiting);
   const visible = chat.messages.filter((m) => m.at <= now);
-  const typing = waiting || chat.messages.some((m) => m.at > now);
+  const typing = waiting || chat.messages.some((m) => m.at > now && (m.typeAt ?? 0) <= now);
   const logRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -134,7 +134,10 @@ function ChatWindow({ chat }: { chat: Chat }) {
     const mine: ChatMessage = { id: messageId(), role: "user", text, at: Date.now(), ...(meta.length ? { files: meta } : {}) };
     appendMessages(chat.number, [mine]);
     const reply = await agentReply({ ...chat, messages: [...chat.messages, mine] }, text, files, meta);
-    appendMessages(chat.number, [reply]);
+    // Ответы идут по очереди: следующий начинает «печататься» после предыдущего.
+    const busyUntil = getChatsSnapshot()[chat.number]?.messages.reduce((t, m) => Math.max(t, m.at), 0) ?? 0;
+    const shift = Math.max(0, busyUntil + 1200 - (reply.typeAt ?? reply.at));
+    appendMessages(chat.number, [{ ...reply, typeAt: (reply.typeAt ?? reply.at) + shift, at: reply.at + shift }]);
     setWaiting(false);
   }
 
@@ -168,10 +171,20 @@ function ChatWindow({ chat }: { chat: Chat }) {
           <Avatar />
           <span aria-hidden="true" className="absolute bottom-0 right-0 size-3 rounded-full bg-[#3BB273] ring-2 ring-white" />
         </span>
-        <div className="min-w-0">
-          <p className="text-[16px] font-semibold leading-tight">{AGENT.name}</p>
-          <p className="text-[12px] text-muted">{AGENT.role}</p>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[16px] font-semibold leading-tight">{AGENT.name}</p>
+          <p className={`truncate text-[12px] ${typing ? "text-new-text" : "text-muted"}`}>
+            {typing ? "печатает…" : `${AGENT.role} · в сети`}
+          </p>
         </div>
+        <a
+          href={site.phone.href}
+          aria-label={`Позвонить менеджеру: ${site.phone.label}`}
+          className={`${buttonClass({ variant: "outline", size: "sm" })} shrink-0`}
+        >
+          <Phone size={15} aria-hidden="true" />
+          <span className="hidden sm:inline">Позвонить</span>
+        </a>
       </header>
 
       <div

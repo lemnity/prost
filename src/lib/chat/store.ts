@@ -2,7 +2,15 @@ import type { CartItem } from "@/lib/cart/store";
 import type { ChatFile } from "./files";
 
 /** Сообщение чата. at — момент, с которого сообщение видно (для «печатает…» у ответов). */
-export type ChatMessage = { id: string; role: "agent" | "user"; text: string; at: number; files?: ChatFile[] };
+export type ChatMessage = {
+  id: string;
+  role: "agent" | "user";
+  text: string;
+  at: number;
+  /** С какого момента показывать «печатает…» (до него менеджер «читает»). */
+  typeAt?: number;
+  files?: ChatFile[];
+};
 
 export type Chat = {
   /** Номер заявки — он же ключ чата. */

@@ -14,21 +14,27 @@ export const AGENT = { name: "Виктория Широкова", firstName: "В
  */
 const CHAT_API = process.env.NEXT_PUBLIC_CHAT_API ?? "";
 
-const TYPING_MS = 1600;
+/** Пауза «прочитать сообщение» и скорость набора — чтобы ответы приходили как у живого менеджера. */
+const READ_MS = 2200;
+const typingMs = (text: string) => Math.min(14_000, 2500 + text.length * 30);
 
 /** Первые сообщения после оформления заявки: приветствие и разбор корзины. */
 export function openingMessages(chat: Pick<Chat, "name" | "number" | "items" | "total">, now = Date.now()): ChatMessage[] {
   const hello = chat.name ? `Здравствуйте, ${chat.name}!` : "Здравствуйте!";
+  const greetAt = now + 1500;
   return [
     {
       id: messageId(),
       role: "agent",
-      at: now + 700,
+      typeAt: now + 300,
+      at: greetAt,
       text: `${hello} Меня зовут ${AGENT.firstName}, я ваш персональный менеджер. Спасибо за ваше оформление, сейчас изучаю вашу корзину.`,
     },
-    { id: messageId(), role: "agent", at: now + 700 + 4200, text: cartReview(chat) },
+    // Разбор корзины — через 25 секунд: менеджер «изучает» заказ, потом пишет длинное сообщение.
+    { id: messageId(), role: "agent", typeAt: greetAt + 9000, at: greetAt + 25_000, text: cartReview(chat) },
   ];
 }
+
 
 function cartReview({ number, items, total }: Pick<Chat, "number" | "items" | "total">): string {
   const qty = cartCount(items);
@@ -109,7 +115,8 @@ export async function agentReply(chat: Chat, text: string, files: File[] = [], m
   }
   if (!reply) reply = text.trim() ? ruleReply(text) : "";
   if (!CHAT_API && meta.length) reply = text.trim() && !/^Записала/.test(reply) ? `${reply}\n\n${filesReply(meta)}` : filesReply(meta);
-  return { id: messageId(), role: "agent", text: reply, at: Math.max(Date.now(), started + TYPING_MS) };
+  const typeAt = Math.max(Date.now(), started + READ_MS);
+  return { id: messageId(), role: "agent", text: reply, typeAt, at: typeAt + typingMs(reply) };
 }
 
 /** Открывает чат по только что оформленной заявке с приветствием и разбором корзины. */
