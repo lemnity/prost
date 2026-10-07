@@ -255,3 +255,16 @@ export async function changePassword(current: string, next: string): Promise<Aut
   patchAccount((a) => ({ ...a, salt, hash }));
   return { ok: true };
 }
+
+/** Создаёт (или пересоздаёт) кабинет с готовыми данными и входит в него — для демо-доступа. */
+export async function importAccount(data: { profile: Profile; password: string; orders: SavedOrder[]; createdAt: string }) {
+  ensure();
+  const email = normEmail(data.profile.email);
+  const salt = hex(crypto.getRandomValues(new Uint8Array(16)));
+  const hash = await hashPassword(data.password, salt);
+  db = {
+    accounts: { ...db.accounts, [email]: { profile: { ...data.profile, email }, salt, hash, orders: data.orders, createdAt: data.createdAt } },
+    session: email,
+  };
+  commit();
+}

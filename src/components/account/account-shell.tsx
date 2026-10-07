@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Heart, LogOut, MessageCircle, Package, ShoppingCart, Truck, UserRound } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { buttonClass } from "@/components/ui/button";
 import { useHydrated } from "@/lib/cart/use-cart";
-import { fullName, signOut } from "@/lib/account/store";
+import { fullName, isCurrentOrder, signOut } from "@/lib/account/store";
 import { useSession } from "@/lib/account/use-account";
 import { cartCount } from "@/lib/cart/store";
 import { useCart } from "@/lib/cart/use-cart";
@@ -46,10 +46,11 @@ export function AccountShell({
 }) {
   const hydrated = useHydrated();
   const session = useSession();
+  const [now] = useState(() => Date.now());
   const counts: Partial<Record<AccountSection, number>> = {
     cart: cartCount(useCart()),
     favorites: useFavorites().length,
-    orders: session?.orders.filter((o) => (o.status ?? "new") === "new").length ?? 0,
+    orders: session?.orders.filter((o) => isCurrentOrder(o, now)).length ?? 0,
   };
   const title = TITLES[section];
   const crumbs = [{ label: "Главная", href: "/" }, { label: "Личный кабинет", href: "/account" }, { label: title }];
