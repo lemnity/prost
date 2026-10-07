@@ -4,9 +4,9 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Check } from "lucide-react";
 import { PhoneInput, isPhoneComplete } from "@/components/ui/phone-input";
 import { buttonClass } from "@/components/ui/button";
-import { updateProfile, type Profile } from "@/lib/account/store";
+import { changePassword, updateProfile, type Profile } from "@/lib/account/store";
 import { useSession } from "@/lib/account/use-account";
-import { Field, MarketingCheckbox, field } from "./form-kit";
+import { Field, MarketingCheckbox, PasswordInput, field } from "./form-kit";
 
 type Key = "name" | "phone" | "inn";
 type Errors = Partial<Record<Key, string>>;
@@ -14,7 +14,12 @@ const ORDER: Key[] = ["name", "phone", "inn"];
 
 export function ProfileForm() {
   const s = useSession();
-  return s ? <ProfileFormInner key={s.profile.email} initial={s.profile} /> : null;
+  return s ? (
+    <div className="grid gap-4">
+      <ProfileFormInner key={s.profile.email} initial={s.profile} />
+      <PasswordForm />
+    </div>
+  ) : null;
 }
 
 function ProfileFormInner({ initial }: { initial: Profile }) {
@@ -85,17 +90,6 @@ function ProfileFormInner({ initial }: { initial: Profile }) {
           </Field>
         </div>
       </section>
-      <section aria-labelledby="p-delivery" className={card}>
-        <h2 id="p-delivery" className="text-[18px] font-bold">Доставка</h2>
-        <div className="mt-5 grid gap-4 sm:grid-cols-2">
-          <Field name="city" label="Город">
-            {(p) => <input {...p} type="text" autoComplete="address-level2" value={d.city} onChange={(e) => set("city", e.target.value)} className={field} />}
-          </Field>
-          <Field name="address" label="Адрес">
-            {(p) => <input {...p} type="text" autoComplete="street-address" value={d.address} onChange={(e) => set("address", e.target.value)} className={field} />}
-          </Field>
-        </div>
-      </section>
       <section aria-labelledby="p-mailing" className={card}>
         <h2 id="p-mailing" className="text-[18px] font-bold">Рассылки</h2>
         <MarketingCheckbox
@@ -112,6 +106,56 @@ function ProfileFormInner({ initial }: { initial: Profile }) {
               <Check size={16} aria-hidden="true" /> Изменения сохранены
             </>
           ) : null}
+        </p>
+      </div>
+    </form>
+  );
+}
+
+function PasswordForm() {
+  const [cur, setCur] = useState("");
+  const [next, setNext] = useState("");
+  const [errors, setErrors] = useState<Partial<Record<"current" | "next", string>>>({});
+  const [busy, setBusy] = useState(false);
+  const [ok, setOk] = useState(false);
+
+  async function submit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const errs: Partial<Record<"current" | "next", string>> = {};
+    if (!cur) errs.current = "Введите текущий пароль";
+    if (next.length < 8) errs.next = "Минимум 8 символов";
+    setErrors(errs);
+    setOk(false);
+    if (errs.current || errs.next) return document.getElementById(errs.current ? "f-current" : "f-next")?.focus();
+    setBusy(true);
+    const res = await changePassword(cur, next);
+    setBusy(false);
+    if (!res.ok) {
+      setErrors({ current: res.error });
+      return document.getElementById("f-current")?.focus();
+    }
+    setCur("");
+    setNext("");
+    setOk(true);
+  }
+
+  return (
+    <form noValidate onSubmit={submit} aria-labelledby="p-password" className="rounded-[14px] bg-surface p-5 md:p-6">
+      <h2 id="p-password" className="text-[18px] font-bold">Смена пароля</h2>
+      <div className="mt-5 grid gap-4 sm:grid-cols-2">
+        <Field name="current" label="Текущий пароль" error={errors.current}>
+          {(p) => <PasswordInput {...p} autoComplete="current-password" value={cur} onChange={(e) => { setCur(e.target.value); setErrors((x) => ({ ...x, current: undefined })); }} />}
+        </Field>
+        <Field name="next" label="Новый пароль" error={errors.next} hint="Не короче 8 символов">
+          {(p) => <PasswordInput {...p} autoComplete="new-password" value={next} onChange={(e) => { setNext(e.target.value); setErrors((x) => ({ ...x, next: undefined })); }} />}
+        </Field>
+      </div>
+      <div className="mt-4 flex flex-wrap items-center gap-4">
+        <button type="submit" disabled={busy} aria-busy={busy} className={buttonClass({ variant: "outline" })}>
+          {busy ? "Сохраняем…" : "Изменить пароль"}
+        </button>
+        <p role="status" className="flex items-center gap-1.5 text-[14px] font-medium text-new-text">
+          {ok ? (<><Check size={16} aria-hidden="true" /> Пароль изменён</>) : null}
         </p>
       </div>
     </form>

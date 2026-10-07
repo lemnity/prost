@@ -2,30 +2,36 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Heart, LayoutGrid, LogOut, MessageCircle, Package, UserRound } from "lucide-react";
+import { Heart, LogOut, MessageCircle, Package, ShoppingCart, Truck, UserRound } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { buttonClass } from "@/components/ui/button";
 import { useHydrated } from "@/lib/cart/use-cart";
 import { fullName, signOut } from "@/lib/account/store";
 import { useSession } from "@/lib/account/use-account";
+import { cartCount } from "@/lib/cart/store";
+import { useCart } from "@/lib/cart/use-cart";
+import { useFavorites } from "@/lib/favorites/use-favorites";
 import { FAVORITES_HREF } from "@/lib/favorites/store";
 
-export type AccountSection = "overview" | "orders" | "chat" | "profile";
+export type AccountSection = "orders" | "cart" | "favorites" | "delivery" | "profile" | "chat";
 
-const NAV: { key: AccountSection | "favorites"; label: string; href: string; Icon: typeof Heart }[] = [
-  { key: "overview", label: "Обзор", href: "/account", Icon: LayoutGrid },
-  { key: "orders", label: "Мои заказы", href: "/account/orders", Icon: Package },
-  { key: "chat", label: "Чат с менеджером", href: "/account/chat", Icon: MessageCircle },
-  { key: "profile", label: "Профиль и реквизиты", href: "/account/profile", Icon: UserRound },
+const NAV: { key: AccountSection; label: string; href: string; Icon: typeof Heart }[] = [
+  { key: "orders", label: "Заявки", href: "/account", Icon: Package },
+  { key: "cart", label: "Корзина", href: "/account/cart", Icon: ShoppingCart },
   { key: "favorites", label: "Избранное", href: FAVORITES_HREF, Icon: Heart },
+  { key: "delivery", label: "Доставка", href: "/account/delivery", Icon: Truck },
+  { key: "profile", label: "Личные данные", href: "/account/profile", Icon: UserRound },
+  { key: "chat", label: "Чат с менеджером", href: "/account/chat", Icon: MessageCircle },
 ];
 
 const TITLES: Record<AccountSection, string> = {
-  overview: "Личный кабинет",
-  orders: "Мои заказы",
+  orders: "Заявки",
+  cart: "Корзина",
+  favorites: "Избранное",
+  delivery: "Доставка",
+  profile: "Личные данные",
   chat: "Чат с менеджером",
-  profile: "Профиль и реквизиты",
 };
 
 export function AccountShell({
@@ -40,11 +46,13 @@ export function AccountShell({
 }) {
   const hydrated = useHydrated();
   const session = useSession();
+  const counts: Partial<Record<AccountSection, number>> = {
+    cart: cartCount(useCart()),
+    favorites: useFavorites().length,
+    orders: session?.orders.filter((o) => (o.status ?? "new") === "new").length ?? 0,
+  };
   const title = TITLES[section];
-  const crumbs =
-    section === "overview"
-      ? [{ label: "Главная", href: "/" }, { label: title }]
-      : [{ label: "Главная", href: "/" }, { label: "Личный кабинет", href: "/account" }, { label: title }];
+  const crumbs = [{ label: "Главная", href: "/" }, { label: "Личный кабинет", href: "/account" }, { label: title }];
 
   return (
     <main id="main">
@@ -106,6 +114,11 @@ export function AccountShell({
                       >
                         <Icon size={18} aria-hidden="true" />
                         {label}
+                        {counts[key] ? (
+                          <span className="ml-auto rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-bold tabular-nums text-brand">
+                            {counts[key]! > 99 ? "99+" : counts[key]}
+                          </span>
+                        ) : null}
                       </Link>
                     </li>
                   );

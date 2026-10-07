@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
 import { AccountShell } from "@/components/account/account-shell";
-import { AccountOverview } from "@/components/account/overview";
+import { OrdersSection } from "@/components/account/orders";
 
 export const metadata: Metadata = {
-  title: "Личный кабинет — ProStyle",
-  description: "Личный кабинет ProStyle: заказы, избранное, данные компании.",
+  title: "Заявки — личный кабинет ProStyle",
+  description: "Текущие заявки и история заказов в личном кабинете ProStyle.",
   robots: { index: false },
 };
 
 export default function AccountPage() {
   return (
-    <AccountShell section="overview">
-      <AccountOverview />
+    <AccountShell section="orders">
+      <OrdersSection />
     </AccountShell>
   );
 }

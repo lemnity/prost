@@ -16,7 +16,7 @@ import { buttonClass } from "@/components/ui/button";
 const btnPrimary = buttonClass({ size: "lg", px: "px-8" });
 const btnOutline = buttonClass({ variant: "outline", size: "lg" });
 
-export function CartView() {
+export function CartView({ embedded = false }: { embedded?: boolean } = {}) {
   const items = useCart();
   const hydrated = useHydrated();
   const pendingFocus = useRef<{ id: string | null } | null>(null);
@@ -39,19 +39,19 @@ export function CartView() {
 
   if (!hydrated) {
     return (
-      <section aria-label="Корзина загружается" aria-busy="true" className="py-6 md:py-8">
-        <Container className="grid items-start gap-6 lg:grid-cols-[1fr_360px]">
+      <section aria-label="Корзина загружается" aria-busy="true" className={embedded ? undefined : "py-6 md:py-8"}>
+        <Box embedded={embedded} className={embedded ? "grid items-start gap-6 xl:grid-cols-[1fr_340px]" : "grid items-start gap-6 lg:grid-cols-[1fr_360px]"}>
           <div className="min-h-[300px] animate-pulse rounded-[10px] bg-surface motion-reduce:animate-none" />
           <div className="hidden min-h-[220px] animate-pulse rounded-[14px] bg-surface motion-reduce:animate-none lg:block" />
-        </Container>
+        </Box>
       </section>
     );
   }
 
   if (items.length === 0) {
     return (
-      <section aria-label="Пустая корзина" className="py-8 md:py-10">
-        <Container>
+      <section aria-label="Пустая корзина" className={embedded ? undefined : "py-8 md:py-10"}>
+        <Box embedded={embedded}>
           <div className="flex flex-col items-center rounded-[14px] bg-surface px-5 py-12 text-center md:py-16">
             <ShoppingCart size={40} strokeWidth={1.5} aria-hidden="true" className="text-brand" />
             <h2 id="cart-heading" tabIndex={-1} className="mt-4 text-[22px] font-bold outline-none md:text-[26px]">Корзина пуста</h2>
@@ -63,14 +63,14 @@ export function CartView() {
               <Link href="/#new-products-title" className={btnOutline}>Новинки</Link>
             </div>
           </div>
-        </Container>
+        </Box>
       </section>
     );
   }
 
   return (
-    <section aria-label="Состав заказа" className="py-6 md:py-8">
-      <Container className="grid items-start gap-6 lg:grid-cols-[1fr_360px]">
+    <section aria-label="Состав заказа" className={embedded ? undefined : "py-6 md:py-8"}>
+      <Box embedded={embedded} className={embedded ? "grid items-start gap-6 xl:grid-cols-[1fr_340px]" : "grid items-start gap-6 lg:grid-cols-[1fr_360px]"}>
         <div>
           <h2 id="cart-heading" tabIndex={-1} className="sr-only">Состав заказа</h2>
           <ul className="grid gap-3">
@@ -134,7 +134,7 @@ export function CartView() {
         </div>
 
         <Summary items={items} />
-      </Container>
+      </Box>
     </section>
   );
 }
@@ -211,4 +211,9 @@ function ClearCart() {
       )}
     </div>
   );
+}
+
+/** Внутри кабинета — без своего контейнера и отступов. */
+function Box({ embedded, className = "", children }: { embedded: boolean; className?: string; children: React.ReactNode }) {
+  return embedded ? <div className={className}>{children}</div> : <Container className={className}>{children}</Container>;
 }

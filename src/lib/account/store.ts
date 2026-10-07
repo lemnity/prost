@@ -22,7 +22,28 @@ export type Profile = {
   marketing: boolean;
   /** Когда согласие дано (ISO) — нужно для подтверждения по 38-ФЗ «О рекламе». */
   marketingAt?: string;
+  /** Настройки доставки (раздел «Доставка»). */
+  delivery?: DeliveryPrefs;
 };
+
+export type DeliveryMethod = "pickup" | "courier" | "region";
+
+export type Address = {
+  id: string;
+  /** Короткое имя: «Офис», «Склад». */
+  label: string;
+  city: string;
+  address: string;
+  recipient: string;
+  phone: string;
+  comment: string;
+};
+
+export type DeliveryPrefs = { method: DeliveryMethod; addresses: Address[]; defaultId: string | null };
+
+/** Адрес по умолчанию (или первый сохранённый). */
+export const defaultAddress = (p: Profile): Address | undefined =>
+  p.delivery?.addresses.find((a) => a.id === p.delivery?.defaultId) ?? p.delivery?.addresses[0];
 
 /** «Фамилия Имя Отчество» из заполненных частей. */
 export const fullName = (p: Profile) => [p.lastName, p.name, p.middleName].filter(Boolean).join(" ");
@@ -30,15 +51,31 @@ export const fullName = (p: Profile) => [p.lastName, p.name, p.middleName].filte
 /** Обращение: «Имя Отчество». */
 export const greetName = (p: Profile) => [p.name, p.middleName].filter(Boolean).join(" ");
 
+/** new — отправлена менеджеру; done — получена; cancelled — отменена. */
+export type OrderStatus = "new" | "done" | "cancelled";
+
 export type SavedOrder = {
   number: string;
+  /** В старых заявках поля нет — считаем «new». */
+  status?: OrderStatus;
   /** ISO-дата. */
   date: string;
   total: number;
   items: CartItem[];
   delivery: string;
   payment: string;
+  /** Адрес доставки текстом (если не самовывоз). */
+  address?: string;
 };
+
+/** Через сколько дней заявка без отметки уходит в историю. */
+const STALE_DAYS = 60;
+
+/** Текущая ли заявка (не закрыта и не старше STALE_DAYS). */
+export function isCurrentOrder(o: SavedOrder, now: number): boolean {
+  const status = o.status ?? "new";
+  return status === "new" && now - Date.parse(o.date) < STALE_DAYS * 86_400_000;
+}
 
 type Account = { profile: Profile; salt: string; hash: string; orders: SavedOrder[]; createdAt: string };
 type Db = { accounts: Record<string, Account>; session: string | null };
@@ -186,4 +223,35 @@ export function saveOrder(order: SavedOrder) {
   const orders = [order, ...acc.orders.filter((o) => o.number !== order.number)].slice(0, MAX_ORDERS);
   db = { ...db, accounts: { ...db.accounts, [email]: { ...acc, orders } } };
   commit();
+}
+
+function patchAccount(fn: (acc: Account) => Account) {
+  ensure();
+  const email = db.session;
+  const acc = email ? db.accounts[email] : undefined;
+  if (!email || !acc) return;
+  db = { ...db, accounts: { ...db.accounts, [email]: fn(acc) } };
+  commit();
+}
+
+export function setOrderStatus(number: string, status: OrderStatus) {
+  patchAccount((acc) => ({ ...acc, orders: acc.orders.map((o) => (o.number === number ? { ...o, status } : o)) }));
+}
+
+export function updateDelivery(delivery: DeliveryPrefs) {
+  patchAccount((acc) => ({ ...acc, profile: { ...acc.profile, delivery } }));
+}
+
+export async function changePassword(current: string, next: string): Promise<AuthResult> {
+  ensure();
+  const email = db.session;
+  const acc = email ? db.accounts[email] : undefined;
+  if (!email || !acc) return { ok: false, field: "password", error: "Войдите в кабинет" };
+  if ((await hashPassword(current, acc.salt)) !== acc.hash) {
+    return { ok: false, field: "password", error: "Текущий пароль указан неверно" };
+  }
+  const salt = hex(crypto.getRandomValues(new Uint8Array(16)));
+  const hash = await hashPassword(next, salt);
+  patchAccount((a) => ({ ...a, salt, hash }));
+  return { ok: true };
 }

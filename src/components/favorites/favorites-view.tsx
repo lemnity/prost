@@ -29,7 +29,7 @@ const SORTERS: Record<Sort, (a: FavoriteItem, b: FavoriteItem) => number> = {
   sale: (a, b) => Number(!!b.oldPrice) - Number(!!a.oldPrice) || b.addedAt - a.addedAt,
 };
 
-export function FavoritesView() {
+export function FavoritesView({ embedded = false }: { embedded?: boolean } = {}) {
   const items = useFavorites();
   const cart = useCart();
   const hydrated = useHydrated();
@@ -41,22 +41,22 @@ export function FavoritesView() {
 
   if (!hydrated) {
     return (
-      <section aria-label="Избранное загружается" aria-busy="true" className="py-6 md:py-8">
-        <Container>
+      <section aria-label="Избранное загружается" aria-busy="true" className={embedded ? undefined : "py-6 md:py-8"}>
+        <Box embedded={embedded}>
           <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
             {Array.from({ length: 5 }, (_, i) => (
               <li key={i} className={`aspect-[3/4] animate-pulse rounded-[10px] bg-surface motion-reduce:animate-none ${i > 1 ? "hidden md:block" : ""}`} />
             ))}
           </ul>
-        </Container>
+        </Box>
       </section>
     );
   }
 
   if (items.length === 0) {
     return (
-      <section aria-label="Пустое избранное" className="py-8 md:py-10">
-        <Container>
+      <section aria-label="Пустое избранное" className={embedded ? undefined : "py-8 md:py-10"}>
+        <Box embedded={embedded}>
           <div className="flex flex-col items-center rounded-[14px] bg-surface px-5 py-12 text-center md:py-16">
             <Heart size={40} strokeWidth={1.5} aria-hidden="true" className="text-brand" />
             <h2 id="favorites-heading" tabIndex={-1} className="mt-4 text-[22px] font-bold outline-none md:text-[26px]">
@@ -70,7 +70,7 @@ export function FavoritesView() {
               <Link href="/#new-products-title" className={buttonClass({ variant: "outline", size: "lg" })}>Новинки</Link>
             </div>
           </div>
-        </Container>
+        </Box>
       </section>
     );
   }
@@ -97,8 +97,8 @@ export function FavoritesView() {
   }
 
   return (
-    <section aria-labelledby="favorites-heading" className="py-6 md:py-8">
-      <Container>
+    <section aria-labelledby="favorites-heading" className={embedded ? undefined : "py-6 md:py-8"}>
+      <Box embedded={embedded}>
         <div className="flex flex-wrap items-center gap-3">
           <h2 id="favorites-heading" tabIndex={-1} className="mr-auto text-[15px] text-muted outline-none">
             {items.length} {plural("item", items.length)}
@@ -118,7 +118,7 @@ export function FavoritesView() {
           </label>
         </div>
 
-        <ul className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+        <ul className={`mt-4 grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 ${embedded ? "xl:grid-cols-4" : "lg:grid-cols-4 xl:grid-cols-5"}`}>
           {list.map((f) => (
             <li key={f.id}>
               <ProductCard product={favoriteToProduct(f)} />
@@ -184,7 +184,12 @@ export function FavoritesView() {
         <p className="mt-3 text-[12px] text-muted">
           Избранное хранится в этом браузере. Товары без остатка можно запросить у менеджера.
         </p>
-      </Container>
+      </Box>
     </section>
   );
+}
+
+/** Внутри кабинета — без своего контейнера и отступов. */
+function Box({ embedded, className = "", children }: { embedded: boolean; className?: string; children: React.ReactNode }) {
+  return embedded ? <div className={className}>{children}</div> : <Container className={className}>{children}</Container>;
 }

@@ -23,7 +23,7 @@ import {
   type Payment,
 } from "@/lib/cart/order-text";
 import { buttonClass } from "@/components/ui/button";
-import { fullName, greetName, saveOrder } from "@/lib/account/store";
+import { defaultAddress, fullName, greetName, saveOrder } from "@/lib/account/store";
 import { startChat } from "@/lib/chat/agent";
 import { useSession } from "@/lib/account/use-account";
 
@@ -282,15 +282,17 @@ export function CheckoutView() {
   if (session && !prefilled) {
     setPrefilled(true);
     const pr = session.profile;
+    const addr = defaultAddress(pr);
     setD((p) => ({
       ...p,
+      delivery: pr.delivery?.method ?? p.delivery,
       name: p.name || fullName(pr),
       phone: p.phone || pr.phone,
       email: p.email || pr.email,
       company: p.company || pr.company,
       inn: p.inn || pr.inn,
-      city: p.city || pr.city,
-      address: p.address || pr.address,
+      city: p.city || addr?.city || pr.city,
+      address: p.address || (addr ? [addr.address, addr.comment].filter(Boolean).join(", ") : pr.address),
     }));
   }
 
@@ -337,6 +339,8 @@ export function CheckoutView() {
       items: [...items],
       delivery: deliveryLabel[clean.delivery],
       payment: paymentLabel[clean.payment],
+      status: "new",
+      ...(clean.delivery !== "pickup" ? { address: [clean.delivery === "region" ? clean.city : "", clean.address].filter(Boolean).join(", ") } : {}),
     });
     const name = session ? greetName(session.profile) : clean.name.split(/\s+/)[0];
     startChat({
