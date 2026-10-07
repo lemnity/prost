@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
+import Image from "next/image";
 import { Heart, LogOut, MessageCircle, Package, ShoppingCart, Truck, UserRound } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
@@ -13,6 +14,8 @@ import { cartCount } from "@/lib/cart/store";
 import { useCart } from "@/lib/cart/use-cart";
 import { useFavorites } from "@/lib/favorites/use-favorites";
 import { FAVORITES_HREF } from "@/lib/favorites/store";
+import { AGENT } from "@/lib/chat/agent";
+import { asset } from "@/lib/asset";
 
 export type AccountSection = "orders" | "cart" | "favorites" | "delivery" | "profile" | "chat";
 
@@ -22,7 +25,6 @@ const NAV: { key: AccountSection; label: string; href: string; Icon: typeof Hear
   { key: "favorites", label: "Избранное", href: FAVORITES_HREF, Icon: Heart },
   { key: "delivery", label: "Доставка", href: "/account/delivery", Icon: Truck },
   { key: "profile", label: "Личные данные", href: "/account/profile", Icon: UserRound },
-  { key: "chat", label: "Чат с менеджером", href: "/account/chat", Icon: MessageCircle },
 ];
 
 const TITLES: Record<AccountSection, string> = {
@@ -101,7 +103,10 @@ export function AccountShell({
                 <p className="truncate text-[15px] font-semibold">{fullName(session.profile)}</p>
                 <p className="truncate text-[13px] text-muted">{session.profile.company || session.profile.email}</p>
               </div>
-              <ul className="no-scrollbar flex gap-1 overflow-x-auto lg:mt-2 lg:flex-col">
+              <ul className="no-scrollbar flex gap-1 overflow-x-auto lg:mt-3 lg:flex-col">
+                <li className="shrink-0 lg:mb-2">
+                  <ChatLink active={section === "chat"} />
+                </li>
                 {NAV.map(({ key, label, href, Icon }) => {
                   const on = key === section;
                   return (
@@ -141,5 +146,36 @@ export function AccountShell({
         )}
       </Container>
     </main>
+  );
+}
+
+/** Заметная ссылка на чат: фото менеджера и статус «в сети». */
+function ChatLink({ active }: { active: boolean }) {
+  return (
+    <Link
+      href="/account/chat"
+      aria-current={active ? "page" : undefined}
+      className={`flex h-11 items-center gap-2.5 whitespace-nowrap rounded-[10px] bg-brand pl-1.5 pr-3 text-white shadow-[0_4px_14px_rgba(208,46,49,0.28)] hover:bg-brand-hover lg:h-auto lg:rounded-[12px] lg:p-2.5 ${
+        active ? "ring-2 ring-brand ring-offset-2 ring-offset-surface" : ""
+      }`}
+    >
+      <span className="relative shrink-0">
+        <Image
+          src={asset(AGENT.photo)}
+          alt=""
+          width={40}
+          height={40}
+          className="size-8 rounded-full object-cover ring-2 ring-white/80 lg:size-10"
+        />
+        <span aria-hidden="true" className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full bg-[#3BB273] ring-2 ring-brand" />
+      </span>
+      <span className="min-w-0">
+        <span className="flex items-center gap-1.5 text-[14px] font-semibold leading-tight">
+          <MessageCircle size={15} aria-hidden="true" className="hidden lg:block" />
+          Чат с менеджером
+        </span>
+        <span className="hidden truncate text-[12px] text-white/80 lg:block">{AGENT.firstName} · в сети</span>
+      </span>
+    </Link>
   );
 }
