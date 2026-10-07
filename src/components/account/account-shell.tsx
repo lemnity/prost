@@ -155,7 +155,7 @@ function ChatLink({ active }: { active: boolean }) {
     <Link
       href="/account/chat"
       aria-current={active ? "page" : undefined}
-      className={`flex h-11 items-center gap-2.5 whitespace-nowrap rounded-[10px] bg-brand pl-1.5 pr-3 text-white lg:shadow-[0_4px_14px_rgba(208,46,49,0.28)] hover:bg-brand-hover lg:h-auto lg:rounded-[12px] lg:p-2.5 ${
+      className={`flex h-11 items-center gap-2.5 whitespace-nowrap rounded-[10px] bg-brand bg-chat-gradient pl-1.5 pr-3 text-white lg:shadow-[0_4px_14px_rgba(208,46,49,0.28)] hover:brightness-105 lg:h-auto lg:rounded-[12px] lg:p-2.5 ${
         active ? "ring-2 ring-inset ring-white/70" : ""
       }`}
     >

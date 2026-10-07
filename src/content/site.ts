@@ -16,6 +16,7 @@ export const site = {
     ],
     links: [
       { label: "О компании", href: "/about" },
+      { label: "Новости", href: "/news" },
       { label: "Доставка и оплата", href: "/delivery" },
       { label: "Контакты", href: "/contact-us" },
     ] satisfies NavLink[],
@@ -48,6 +49,7 @@ export const site = {
       { label: "Новинки", href: "/catalog/new" },
       { label: "Портфолио", href: "/portfolio" },
       { label: "О компании", href: "/about" },
+      { label: "Новости", href: "/news" },
     ],
     [
       { label: "Доставка и оплата", href: "/delivery" },

@@ -70,11 +70,11 @@ export function SiteHeader() {
         <a
           href={site.phone.href}
           aria-label={site.phone.label}
-          className={`${circle} size-10 lg:hidden`}
+          className={`${circle} size-10 xl:hidden`}
         >
           <PhoneCall size={20} strokeWidth={2} aria-hidden />
         </a>
-        <div className="hidden shrink-0 items-center gap-3 whitespace-nowrap lg:flex">
+        <div className="hidden shrink-0 items-center gap-3 whitespace-nowrap xl:flex">
           <a
             href={site.phone.href}
             tabIndex={-1}
