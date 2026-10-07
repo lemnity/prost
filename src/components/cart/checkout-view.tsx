@@ -447,34 +447,10 @@ export function CheckoutView() {
               </fieldset>
             </Card>
 
-            <Card n={4} title="Комментарий и согласие">
+            <Card n={4} title="Комментарий">
               <Field name="comment" label="Комментарий к заказу" wide>
                 {(p) => <textarea {...p} rows={4} value={d.comment} onChange={(e) => set("comment", e.target.value)} className={field} />}
               </Field>
-              <div className="sm:col-span-2">
-                <label className="flex items-start gap-2.5 text-[13px] text-muted">
-                  <input
-                    id="f-consent"
-                    type="checkbox"
-                    checked={consent}
-                    aria-invalid={!!errors.consent}
-                    aria-describedby={errors.consent ? "f-consent-err" : undefined}
-                    onChange={(e) => {
-                      setConsent(e.target.checked);
-                      setErrors((p) => ({ ...p, consent: undefined }));
-                    }}
-                    className="mt-0.5 size-4 shrink-0 accent-[#D02E31] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-                  />
-                  <span>
-                    Согласен на обработку{" "}
-                    <Link href="/personal-data-processing" className="text-brand underline hover:text-brand-hover">
-                      персональных данных
-                    </Link>{" "}
-                    <span className="text-brand">*</span>
-                  </span>
-                </label>
-                {errors.consent ? <p id="f-consent-err" className="mt-1.5 text-[13px] text-brand">{errors.consent}</p> : null}
-              </div>
             </Card>
           </div>
 
@@ -491,7 +467,32 @@ export function CheckoutView() {
               ) : null}
               <p className="mt-1 text-[22px] font-bold md:text-[26px]">Итого: от {formatPriceValue(total)}</p>
             </div>
-            <div className="mt-5 shrink-0">{submitBtn}</div>
+            <div className="mt-5 shrink-0">
+              <label className="flex items-start gap-2.5 text-[13px] text-muted">
+                <input
+                  id="f-consent"
+                  type="checkbox"
+                  checked={consent}
+                  aria-invalid={!!errors.consent}
+                  aria-describedby={errors.consent ? "f-consent-err" : undefined}
+                  onChange={(e) => {
+                    setConsent(e.target.checked);
+                    setErrors((p) => ({ ...p, consent: undefined }));
+                  }}
+                  className="mt-0.5 size-4 shrink-0 accent-[#D02E31] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                />
+                <span>
+                  Согласен на обработку{" "}
+                  <Link href="/personal-data-processing" className="text-brand underline hover:text-brand-hover">
+                    персональных данных
+                  </Link>
+                  {"\u00a0"}
+                  <span className="text-brand">*</span>
+                </span>
+              </label>
+              {errors.consent ? <p id="f-consent-err" className="mt-1.5 text-[13px] text-brand">{errors.consent}</p> : null}
+            </div>
+            <div className="mt-4 shrink-0">{submitBtn}</div>
             <Link href="/cart" className="mt-3 block text-center text-[13px] font-medium text-muted underline hover:text-brand">
               Изменить корзину
             </Link>
