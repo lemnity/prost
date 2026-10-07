@@ -5,7 +5,7 @@ import { cartCount, cartDiscount, MIN_ORDER } from "@/lib/cart/store";
 import { createChat, messageId, type Chat, type ChatMessage } from "./store";
 import type { ChatFile } from "./files";
 
-export const AGENT = { name: "Виктория Широкова", initials: "ВШ", role: "Персональный менеджер" };
+export const AGENT = { name: "Виктория Широкова", firstName: "Виктория", role: "Персональный менеджер", photo: "/images/manager/viktoriya.webp" };
 
 /**
  * Адрес сервера с ИИ-моделью (POST multipart: payload = { order, messages }, files[] → { reply }).
@@ -24,7 +24,7 @@ export function openingMessages(chat: Pick<Chat, "name" | "number" | "items" | "
       id: messageId(),
       role: "agent",
       at: now + 700,
-      text: `${hello} Меня зовут ${AGENT.name}, я ваш персональный менеджер. Спасибо за ваше оформление, сейчас изучаю вашу корзину.`,
+      text: `${hello} Меня зовут ${AGENT.firstName}, я ваш персональный менеджер. Спасибо за ваше оформление, сейчас изучаю вашу корзину.`,
     },
     { id: messageId(), role: "agent", at: now + 700 + 4200, text: cartReview(chat) },
   ];

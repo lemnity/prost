@@ -30,11 +30,23 @@ let db: Db = EMPTY;
 let loaded = false;
 const subs = new Set<() => void>();
 
+/** Старые приветствия (до переименования менеджера) приводим к актуальному имени. */
+const OLD_NAME = /Меня зовут (Анжела|Виктория Широкова),/;
+
+function migrate(data: Db): Db {
+  return Object.fromEntries(
+    Object.entries(data).map(([k, c]) => [
+      k,
+      { ...c, messages: (c.messages ?? []).map((m) => (m.role === "agent" && OLD_NAME.test(m.text) ? { ...m, text: m.text.replace(OLD_NAME, "Меня зовут Виктория,") } : m)) },
+    ]),
+  );
+}
+
 function read(): Db {
   try {
     const raw = localStorage.getItem(CHATS_KEY);
     const data: unknown = raw ? JSON.parse(raw) : null;
-    return data && typeof data === "object" && !Array.isArray(data) ? Object.freeze(data as Db) : EMPTY;
+    return data && typeof data === "object" && !Array.isArray(data) ? Object.freeze(migrate(data as Db)) : EMPTY;
   } catch {
     return EMPTY;
   }

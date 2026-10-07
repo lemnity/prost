@@ -1,10 +1,12 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Check, Copy, Download, MessageCircle, Paperclip, SendHorizontal, X } from "lucide-react";
 import { buttonClass } from "@/components/ui/button";
+import { asset } from "@/lib/asset";
 import { formatPriceValue, formatQty } from "@/lib/format";
 import { plural } from "@/lib/plural";
 import { site } from "@/content/site";
@@ -18,13 +20,16 @@ import { useChats, useNow } from "@/lib/chat/use-chats";
 const time = (ms: number) => new Date(ms).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
 
 function Avatar({ size = "md" }: { size?: "sm" | "md" }) {
+  const px = size === "sm" ? 32 : 44;
   return (
-    <span
-      aria-hidden="true"
-      className={`grid shrink-0 place-items-center rounded-full bg-brand font-bold text-white ${size === "sm" ? "size-8 text-[11px]" : "size-11 text-[15px]"}`}
-    >
-      {AGENT.initials}
-    </span>
+    <Image
+      src={asset(AGENT.photo)}
+      alt=""
+      width={px}
+      height={px}
+      className="shrink-0 rounded-full bg-brand-soft object-cover"
+      style={{ width: px, height: px }}
+    />
   );
 }
 
