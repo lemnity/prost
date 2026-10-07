@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { Check, Copy, Download, MessageCircle, Paperclip, Phone, SendHorizontal, X } from "lucide-react";
+import { Check, ChevronLeft, Copy, Download, MessageCircle, Paperclip, Phone, SendHorizontal, X } from "lucide-react";
 import { buttonClass } from "@/components/ui/button";
 import { asset } from "@/lib/asset";
 import { formatPriceValue, formatQty } from "@/lib/format";
@@ -97,6 +97,20 @@ function ChatWindow({ chat }: { chat: Chat }) {
     if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [visible.length, typing]);
 
+  // На телефоне чат — полноэкранное окно: страница под ним не прокручивается.
+  useEffect(() => {
+    const mq = matchMedia("(max-width: 1023px)");
+    const apply = () => {
+      document.documentElement.style.overflow = mq.matches ? "hidden" : "";
+    };
+    apply();
+    mq.addEventListener("change", apply);
+    return () => {
+      mq.removeEventListener("change", apply);
+      document.documentElement.style.overflow = "";
+    };
+  }, []);
+
   function addFiles(list: FileList | File[] | null) {
     if (!list) return;
     const incoming = Array.from(list);
@@ -159,14 +173,17 @@ function ChatWindow({ chat }: { chat: Chat }) {
         setDrag(false);
         addFiles(e.dataTransfer.files);
       }}
-      className={`relative flex min-w-0 flex-col overflow-hidden rounded-[14px] border bg-white ${drag ? "border-brand" : "border-line"}`}
+      className={`flex min-w-0 flex-col overflow-hidden bg-white max-lg:fixed max-lg:inset-0 max-lg:z-[60] max-lg:h-[100dvh] lg:relative lg:rounded-[14px] lg:border ${drag ? "lg:border-brand" : "lg:border-line"}`}
     >
       {drag ? (
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-10 grid place-items-center bg-white/85 text-[15px] font-semibold text-brand">
           Отпустите, чтобы прикрепить файлы
         </div>
       ) : null}
-      <header className="flex items-center gap-3 border-b border-line px-4 py-3 md:px-5">
+      <header className="flex shrink-0 items-center gap-3 border-b border-line px-3 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] md:px-5 lg:pt-3">
+        <Link href="/account" aria-label="Назад в кабинет" className="-ml-1 grid size-9 shrink-0 place-items-center rounded-full text-ink hover:bg-surface lg:hidden">
+          <ChevronLeft size={22} aria-hidden="true" />
+        </Link>
         <span className="relative">
           <Avatar />
           <span aria-hidden="true" className="absolute bottom-0 right-0 size-3 rounded-full bg-[#3BB273] ring-2 ring-white" />
@@ -186,13 +203,14 @@ function ChatWindow({ chat }: { chat: Chat }) {
           <span className="hidden sm:inline">Позвонить</span>
         </a>
       </header>
+      <MobileOrderBar chat={chat} />
 
       <div
         ref={logRef}
         role="log"
         aria-live="polite"
         aria-label="Сообщения"
-        className="flex h-[min(60dvh,560px)] flex-col gap-3 overflow-y-auto overscroll-contain bg-surface/60 px-3 py-4 md:px-5"
+        className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain bg-surface/60 px-3 py-4 md:px-5 lg:h-[min(60dvh,560px)] lg:flex-none"
       >
         <p className="self-center rounded-full bg-white px-3 py-1 text-[12px] text-muted">
           Заявка № {chat.number} · {new Date(chat.createdAt).toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}
@@ -233,7 +251,7 @@ function ChatWindow({ chat }: { chat: Chat }) {
         ) : null}
       </div>
 
-      <form onSubmit={send} className="border-t border-line p-3">
+      <form onSubmit={send} className="shrink-0 border-t border-line p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:pb-3">
         {pending.length ? (
           <ul aria-label="Прикреплённые файлы" className="mb-2 flex flex-wrap gap-2">
             {pending.map((p, i) => (
@@ -305,7 +323,7 @@ function ChatWindow({ chat }: { chat: Chat }) {
             <SendHorizontal size={18} aria-hidden="true" />
           </button>
         </div>
-        <p className="mt-1.5 text-[11px] text-muted">
+        <p className="mt-1.5 hidden text-[11px] text-muted lg:block">
           До {MAX_FILES} файлов, каждый до {formatSize(MAX_FILE_SIZE)}: картинки, PDF, Word, Excel, макеты (AI, EPS, CDR). Можно перетащить в окно чата.
         </p>
       </form>
@@ -451,5 +469,30 @@ function StoredFile({ file, mine, image = false }: { file: ChatFile; mine: boole
     </a>
   ) : (
     <div className={cls}>{body}</div>
+  );
+}
+
+/** Телефон: тонкая строка заявки под шапкой чата. */
+function MobileOrderBar({ chat }: { chat: Chat }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="flex shrink-0 items-center gap-2 border-b border-line bg-white px-4 py-2 text-[12px] lg:hidden">
+      <span className="min-w-0 truncate text-muted">
+        Заявка <span className="font-semibold text-ink">№ {chat.number}</span> · от {formatPriceValue(chat.total)}
+      </span>
+      <button
+        type="button"
+        onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(chat.orderText);
+            setCopied(true);
+          } catch {}
+        }}
+        className="ml-auto inline-flex shrink-0 items-center gap-1 font-medium text-brand"
+      >
+        {copied ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
+        {copied ? "Скопировано" : "Текст заявки"}
+      </button>
+    </div>
   );
 }
