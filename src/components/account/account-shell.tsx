@@ -103,7 +103,7 @@ export function AccountShell({
                 <p className="truncate text-[15px] font-semibold">{fullName(session.profile)}</p>
                 <p className="truncate text-[13px] text-muted">{session.profile.company || session.profile.email}</p>
               </div>
-              <ul className="no-scrollbar flex gap-1 overflow-x-auto lg:mt-3 lg:flex-col">
+              <ul className="no-scrollbar flex gap-1 overflow-x-auto lg:mt-3 lg:flex-col lg:overflow-visible">
                 <li className="shrink-0 lg:mb-2">
                   <ChatLink active={section === "chat"} />
                 </li>
@@ -155,8 +155,8 @@ function ChatLink({ active }: { active: boolean }) {
     <Link
       href="/account/chat"
       aria-current={active ? "page" : undefined}
-      className={`flex h-11 items-center gap-2.5 whitespace-nowrap rounded-[10px] bg-brand pl-1.5 pr-3 text-white shadow-[0_4px_14px_rgba(208,46,49,0.28)] hover:bg-brand-hover lg:h-auto lg:rounded-[12px] lg:p-2.5 ${
-        active ? "ring-2 ring-brand ring-offset-2 ring-offset-surface" : ""
+      className={`flex h-11 items-center gap-2.5 whitespace-nowrap rounded-[10px] bg-brand pl-1.5 pr-3 text-white lg:shadow-[0_4px_14px_rgba(208,46,49,0.28)] hover:bg-brand-hover lg:h-auto lg:rounded-[12px] lg:p-2.5 ${
+        active ? "ring-2 ring-inset ring-white/70" : ""
       }`}
     >
       <span className="relative shrink-0">
