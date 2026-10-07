@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Gift, ShoppingCart, UserRound, X } from "lucide-react";
 import { PhoneInput, isPhoneComplete } from "@/components/ui/phone-input";
@@ -10,7 +11,7 @@ import { asset } from "@/lib/asset";
 import { plural } from "@/lib/plural";
 import { formatPriceValue } from "@/lib/format";
 import { site } from "@/content/site";
-import { MIN_ORDER, cartCount, cartDiscount, cartTotal, clearCart, setPromo, type CartItem } from "@/lib/cart/store";
+import { MIN_ORDER, cartCount, cartDiscount, cartTotal, setPromo, type CartItem } from "@/lib/cart/store";
 import { useCart, useHydrated, usePromo } from "@/lib/cart/use-cart";
 import {
   buildOrder,
@@ -22,7 +23,8 @@ import {
   type Payment,
 } from "@/lib/cart/order-text";
 import { buttonClass } from "@/components/ui/button";
-import { fullName, saveOrder } from "@/lib/account/store";
+import { fullName, greetName, saveOrder } from "@/lib/account/store";
+import { startChat } from "@/lib/chat/agent";
 import { useSession } from "@/lib/account/use-account";
 
 const field =
@@ -265,33 +267,6 @@ function PromoBox() {
   );
 }
 
-function CopyBlock({ text }: { text: string }) {
-  const [state, setState] = useState<"" | "ok" | "fail">("");
-  const area = useRef<HTMLTextAreaElement>(null);
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(text);
-      setState("ok");
-    } catch {
-      area.current?.select();
-      setState("fail");
-    }
-  }
-  return (
-    <div className="grid gap-3">
-      <label htmlFor="order-text" className="sr-only">Текст заказа</label>
-      <textarea id="order-text" ref={area} readOnly rows={10} value={text} className={`${field} mt-0 text-[13px]`} />
-      <button type="button" onClick={copy} className={btnOutline}>Скопировать заказ</button>
-      <p role="status" className="text-[13px]">
-        {state === "ok" ? <span className="font-medium text-new-text">Заказ скопирован</span> : null}
-        {state === "fail" ? <span className="text-muted">Не удалось скопировать — выделите текст и скопируйте вручную</span> : null}
-      </p>
-    </div>
-  );
-}
-
-type Done = { number: string; text: string; opened: boolean; items: readonly CartItem[]; total: number };
-
 export function CheckoutView() {
   const items = useCart();
   const promo = usePromo();
@@ -299,7 +274,8 @@ export function CheckoutView() {
   const [d, setD] = useState<OrderData>(INITIAL);
   const [consent, setConsent] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
-  const [done, setDone] = useState<Done | null>(null);
+  const router = useRouter();
+  const [sent, setSent] = useState(false);
   const session = useSession();
   const [prefilled, setPrefilled] = useState(false);
   // Данные кабинета подставляются один раз, не перетирая уже введённое.
@@ -327,48 +303,7 @@ export function CheckoutView() {
 
   if (!hydrated) return <Skeleton />;
 
-  if (done) {
-    return (
-      <section aria-labelledby="done-title" className="py-6 md:py-8">
-        <Container className="grid items-start gap-6 lg:grid-cols-[1fr_380px]">
-          <div className="rounded-[14px] bg-surface p-5 md:p-6">
-            <h2 id="done-title" tabIndex={-1} ref={(el) => el?.focus()} className="text-[22px] font-bold outline-none md:text-[26px]">
-              Заказ сформирован
-            </h2>
-            <p className="mt-2 text-[15px] text-ink">
-              Номер заявки: <strong>{done.number}</strong>
-            </p>
-            <p className="mt-2 text-sm text-muted">Мы свяжемся с вами в рабочее время. {site.hours}.</p>
-            <p className="mt-2 text-sm text-muted">
-              {done.opened
-                ? "Мы открыли ваш почтовый клиент. Если письмо не открылось, скопируйте заказ ниже и отправьте на "
-                : "Скопируйте заказ ниже и отправьте на "}
-              <a href={`mailto:${site.email}`} className="font-medium text-ink hover:text-brand">{site.email}</a>
-              {" "}или позвоните{" "}
-              <a href={site.phone.href} className="font-medium text-ink hover:text-brand">{site.phone.label}</a>.
-            </p>
-            <div className="mt-5"><CopyBlock text={done.text} /></div>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/" onClick={() => clearCart()} className={btnPrimary}>Очистить корзину и вернуться на главную</Link>
-              {session ? (
-                <Link href="/account/orders" className={btnOutline}>Мои заказы</Link>
-              ) : (
-                <Link href="/catalog" className={btnOutline}>Вернуться в каталог</Link>
-              )}
-            </div>
-          </div>
-          <aside aria-label="Состав заказа" className="rounded-[14px] bg-surface p-5 md:p-6">
-            <h3 className="mb-4 text-[17px] font-semibold">Состав заказа</h3>
-            <OrderLines items={done.items} />
-            {cartDiscount(done.items) > 0 ? (
-              <p className="mt-4 text-sm font-medium text-brand">Скидка: {`\u2212${formatPriceValue(cartDiscount(done.items))}`}</p>
-            ) : null}
-            <p className="mt-1 text-[22px] font-bold">Итого: от {formatPriceValue(done.total)}</p>
-          </aside>
-        </Container>
-      </section>
-    );
-  }
+  if (sent) return <Skeleton />;
 
   if (items.length === 0) return <Gate title="Корзина пуста" text="Добавьте товары в корзину, чтобы оформить заказ." />;
   if (total < MIN_ORDER)
@@ -403,8 +338,19 @@ export function CheckoutView() {
       delivery: deliveryLabel[clean.delivery],
       payment: paymentLabel[clean.payment],
     });
-    setDone({ number, text, opened: href !== null, items, total });
+    const name = session ? greetName(session.profile) : clean.name.split(/\s+/)[0];
+    startChat({
+      number,
+      name,
+      total,
+      items: [...items],
+      orderText: text,
+      mailOpened: href !== null,
+      owner: session?.profile.email ?? null,
+    });
+    setSent(true);
     if (href) window.open(href, "_self");
+    router.push(`/account/chat?order=${encodeURIComponent(number)}`);
   }
 
   const count = cartCount(items);

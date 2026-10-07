@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Heart, LayoutGrid, LogOut, Package, UserRound } from "lucide-react";
+import { Heart, LayoutGrid, LogOut, MessageCircle, Package, UserRound } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { buttonClass } from "@/components/ui/button";
@@ -11,11 +11,12 @@ import { fullName, signOut } from "@/lib/account/store";
 import { useSession } from "@/lib/account/use-account";
 import { FAVORITES_HREF } from "@/lib/favorites/store";
 
-export type AccountSection = "overview" | "orders" | "profile";
+export type AccountSection = "overview" | "orders" | "chat" | "profile";
 
 const NAV: { key: AccountSection | "favorites"; label: string; href: string; Icon: typeof Heart }[] = [
   { key: "overview", label: "Обзор", href: "/account", Icon: LayoutGrid },
   { key: "orders", label: "Мои заказы", href: "/account/orders", Icon: Package },
+  { key: "chat", label: "Чат с менеджером", href: "/account/chat", Icon: MessageCircle },
   { key: "profile", label: "Профиль и реквизиты", href: "/account/profile", Icon: UserRound },
   { key: "favorites", label: "Избранное", href: FAVORITES_HREF, Icon: Heart },
 ];
@@ -23,10 +24,20 @@ const NAV: { key: AccountSection | "favorites"; label: string; href: string; Ico
 const TITLES: Record<AccountSection, string> = {
   overview: "Личный кабинет",
   orders: "Мои заказы",
+  chat: "Чат с менеджером",
   profile: "Профиль и реквизиты",
 };
 
-export function AccountShell({ section, children }: { section: AccountSection; children: ReactNode }) {
+export function AccountShell({
+  section,
+  guest = false,
+  children,
+}: {
+  section: AccountSection;
+  /** Раздел доступен и без входа (чат после оформления заявки гостем). */
+  guest?: boolean;
+  children: ReactNode;
+}) {
   const hydrated = useHydrated();
   const session = useSession();
   const title = TITLES[section];
@@ -46,6 +57,21 @@ export function AccountShell({ section, children }: { section: AccountSection; c
           <div aria-busy="true" aria-label="Кабинет загружается" className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
             <div className="hidden h-[240px] animate-pulse rounded-[14px] bg-surface motion-reduce:animate-none lg:block" />
             <div className="h-[320px] animate-pulse rounded-[14px] bg-surface motion-reduce:animate-none" />
+          </div>
+        ) : !session && guest ? (
+          <div className="grid gap-4">
+            <div className="flex flex-col gap-3 rounded-[14px] bg-brand-soft p-4 sm:flex-row sm:items-center">
+              <UserRound size={26} strokeWidth={1.5} aria-hidden="true" className="shrink-0 text-brand" />
+              <p className="text-[14px] sm:flex-1">
+                <span className="font-semibold">Создайте личный кабинет,</span>
+                <span className="text-muted"> чтобы видеть историю заказов и быстрее оформлять следующие.</span>
+              </p>
+              <div className="flex gap-2">
+                <Link href="/account/register" className={buttonClass({ size: "sm" })}>Создать кабинет</Link>
+                <Link href="/account/login" className={buttonClass({ variant: "outline", size: "sm" })}>Войти</Link>
+              </div>
+            </div>
+            {children}
           </div>
         ) : !session ? (
           <div className="flex flex-col items-center rounded-[14px] bg-surface px-5 py-12 text-center md:py-16">

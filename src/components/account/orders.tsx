@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Check, ChevronDown, Package, RotateCcw } from "lucide-react";
+import { Check, ChevronDown, MessageCircle, Package, RotateCcw } from "lucide-react";
 import { buttonClass } from "@/components/ui/button";
 import { ProductImage } from "@/components/ui/product-image";
 import { asset } from "@/lib/asset";
@@ -11,6 +11,7 @@ import { plural } from "@/lib/plural";
 import { addToCart, cartCount } from "@/lib/cart/store";
 import type { SavedOrder } from "@/lib/account/store";
 import { useSession } from "@/lib/account/use-account";
+import { useChats } from "@/lib/chat/use-chats";
 
 export const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
@@ -22,6 +23,7 @@ function repeat(o: SavedOrder) {
 export function OrderCard({ order: o, open: initial = false }: { order: SavedOrder; open?: boolean }) {
   const [open, setOpen] = useState(initial);
   const [done, setDone] = useState(false);
+  const hasChat = !!useChats()[o.number];
   const n = cartCount(o.items);
   const id = `order-${o.number}`;
   return (
@@ -75,6 +77,12 @@ export function OrderCard({ order: o, open: initial = false }: { order: SavedOrd
             {done ? "Добавлено в корзину" : "Повторить заказ"}
           </button>
           {done ? <Link href="/cart" className={buttonClass({ variant: "outline" })}>Перейти в корзину</Link> : null}
+          {hasChat ? (
+            <Link href={`/account/chat?order=${encodeURIComponent(o.number)}`} className={buttonClass({ variant: "outline" })}>
+              <MessageCircle size={16} aria-hidden="true" />
+              Чат по заявке
+            </Link>
+          ) : null}
         </div>
         <p role="status" className="sr-only">{done ? "Товары заказа добавлены в корзину" : ""}</p>
       </div>
