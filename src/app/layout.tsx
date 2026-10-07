@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { MobileTabBar } from "@/components/layout/mobile-tab-bar";
 import { PageLoader } from "@/components/layout/page-loader";
 import { NavigationLoader } from "@/components/layout/navigation-loader";
 
@@ -21,7 +22,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="ru" className={inter.variable}>
       <body
-        className="min-h-screen font-sans"
+        className="min-h-screen pb-[calc(3.5rem+env(safe-area-inset-bottom))] font-sans md:pb-0"
         suppressHydrationWarning
       >
         <PageLoader />
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <SiteHeader />
         {children}
         <SiteFooter />
+        <MobileTabBar />
       </body>
     </html>
   );

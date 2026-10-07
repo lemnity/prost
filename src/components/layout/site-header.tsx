@@ -100,7 +100,7 @@ export function SiteHeader() {
     </header>
     <StickyBar>
       <Container>
-        <div className="relative flex flex-wrap items-center gap-3 rounded-[14px] bg-navy p-2 md:flex-nowrap [&_a:focus-visible]:outline-white">
+        <div className="relative flex items-center gap-2 rounded-[14px] bg-navy p-2 md:gap-3 [&_a:focus-visible]:outline-white">
           <Link
             href="/"
             aria-label="ProStyle — на главную"
@@ -115,7 +115,7 @@ export function SiteHeader() {
           <form
             action="/search"
             role="search"
-            className="order-last flex h-12 min-w-0 w-full items-center overflow-hidden rounded-[10px] bg-white focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-ink md:order-none md:w-auto md:flex-1"
+            className="flex h-12 min-w-0 flex-1 items-center overflow-hidden rounded-[10px] bg-white focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-ink"
           >
             <input
               type="search"
@@ -132,7 +132,7 @@ export function SiteHeader() {
               <Search size={20} aria-hidden />
             </button>
           </form>
-          <ul className="ml-auto flex items-center gap-3 md:ml-0">
+          <ul className="hidden items-center gap-3 md:flex">
             {actions.map(({ label, href, Icon, mobile, tip }) => (
               <li key={href} className={`${mobile ? "" : "hidden md:block"} ${tip ? "group relative" : ""}`}>
                 {href === FAVORITES_HREF ? (

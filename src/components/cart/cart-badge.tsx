@@ -18,13 +18,15 @@ const popOutline = `${popBase} h-10 border border-line bg-white text-ink hover:b
 export function CartLink({ className }: { className: string }) {
   const items = useCart();
   const n = cartCount(items);
+  // В бейдже — число позиций: при оптовых количествах сумма штук всегда «99+».
+  const positions = items.length;
   const total = cartTotal(items);
   const reached = total >= MIN_ORDER;
   const [open, setOpen] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
 
   const label = n
-    ? `Корзина, ${n} ${plural("item", n)}, на сумму ${formatPriceValue(total)}. ${
+    ? `Корзина, ${positions} ${plural("item", positions)}, на сумму ${formatPriceValue(total)}. ${
         reached ? "Минимальная сумма заказа набрана" : minOrderHint(total)
       }`
     : "Корзина";
@@ -49,7 +51,7 @@ export function CartLink({ className }: { className: string }) {
               aria-hidden="true"
               className="absolute -right-3 -top-3 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-brand px-1 text-[11px] font-bold leading-none text-white"
             >
-              {n > 99 ? "99+" : n}
+              {positions > 99 ? "99+" : positions}
             </span>
           ) : null}
         </span>

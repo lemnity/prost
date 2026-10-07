@@ -11,8 +11,8 @@ import { legalLinks } from "@/lib/legal";
 export function SiteFooter() {
   return (
     <footer className="overflow-x-clip border-t border-line py-10">
-      <Container className="grid gap-8 sm:grid-cols-2 xl:grid-cols-[2.1fr_0.8fr_0.8fr_auto_auto] xl:gap-8">
-        <div className="sm:col-span-2 xl:col-span-1">
+      <Container className="grid grid-cols-2 gap-x-6 gap-y-8 xl:grid-cols-[2.1fr_0.8fr_0.8fr_auto_auto] xl:gap-8">
+        <div className="col-span-2 xl:col-span-1">
           <Link href="/" aria-label="ProStyle — на главную" className="inline-block">
             <BrandLogo className="h-auto w-[150px]" />
           </Link>
@@ -33,7 +33,7 @@ export function SiteFooter() {
             ))}
           </ul>
         ))}
-        <ul className="flex flex-col gap-2.5 text-[13px] whitespace-nowrap sm:col-span-2 xl:col-span-1 xl:border-l xl:border-line xl:pl-10">
+        <ul className="flex flex-col gap-2.5 text-[13px] col-span-2 sm:whitespace-nowrap xl:col-span-1 xl:border-l xl:border-line xl:pl-10">
           <li className="flex items-start gap-2 text-muted">
             <MapPin size={14} className="mt-0.5 shrink-0 text-brand" aria-hidden />
             {site.address}
@@ -50,7 +50,7 @@ export function SiteFooter() {
             </a>
           </li>
         </ul>
-        <SocialLinks size={32} className="items-start gap-3 sm:col-span-2 xl:col-span-1" />
+        <SocialLinks size={32} className="col-span-2 items-start gap-3 xl:col-span-1" />
       </Container>
       <Container className="mt-8">
         <div className="flex flex-col gap-4 border-t border-line pt-5 text-xs lg:flex-row lg:items-start lg:justify-between">
