@@ -5,10 +5,11 @@ import { site } from "@/content/site";
 import { CurrentYear } from "./current-year";
 import { BrandLogo } from "./brand-logo";
 import { SocialLinks } from "./social-links";
+import { DevCredit } from "./dev-credit";
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-line py-10">
+    <footer className="overflow-x-clip border-t border-line py-10">
       <Container className="grid gap-8 sm:grid-cols-2 xl:grid-cols-[2.1fr_0.8fr_0.8fr_auto_auto] xl:gap-8">
         <div className="sm:col-span-2 xl:col-span-1">
           <Link href="/" aria-label="ProStyle — на главную" className="inline-block">
@@ -49,6 +50,11 @@ export function SiteFooter() {
           </li>
         </ul>
         <SocialLinks size={32} className="items-start gap-3 sm:col-span-2 xl:col-span-1" />
+      </Container>
+      <Container className="mt-8">
+        <div className="flex justify-center border-t border-line pt-5 text-xs sm:justify-end">
+          <DevCredit />
+        </div>
       </Container>
     </footer>
   );
