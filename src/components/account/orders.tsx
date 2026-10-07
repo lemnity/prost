@@ -39,7 +39,7 @@ export function OrderCard({ order: o, current, open: initial = false }: { order:
   return (
     <article className="rounded-[14px] border border-line bg-white">
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 p-4 md:p-5">
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 basis-full sm:basis-0 sm:flex-1">
           <h3 className="text-[16px] font-semibold">Заявка № {o.number}</h3>
           <p className="mt-0.5 text-[13px] text-muted">
             {formatDate(o.date)} · {n} шт. · {o.delivery}

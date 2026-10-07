@@ -59,9 +59,9 @@ export function AccountShell({
     <main id="main">
       <Container className="pt-4 md:pt-6">
         <Breadcrumbs items={crumbs} />
-        <h1 className="mt-6 text-[30px] font-bold leading-[1.12] tracking-tight md:mt-8 md:text-[44px]">{title}</h1>
+        <h1 className="sr-only">{title}</h1>
       </Container>
-      <Container className="py-6 md:py-8">
+      <Container className="pt-5 pb-8 md:pt-6 md:pb-10">
         {!hydrated ? (
           <div aria-busy="true" aria-label="Кабинет загружается" className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
             <div className="hidden h-[240px] animate-pulse rounded-[14px] bg-surface motion-reduce:animate-none lg:block" />
