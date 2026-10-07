@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { Check, Copy, MessageCircle, SendHorizontal } from "lucide-react";
+import { Check, Copy, Download, MessageCircle, Paperclip, SendHorizontal, X } from "lucide-react";
 import { buttonClass } from "@/components/ui/button";
 import { formatPriceValue, formatQty } from "@/lib/format";
 import { plural } from "@/lib/plural";
@@ -11,7 +11,8 @@ import { site } from "@/content/site";
 import { cartCount, clearCart } from "@/lib/cart/store";
 import { useCart } from "@/lib/cart/use-cart";
 import { AGENT, agentReply } from "@/lib/chat/agent";
-import { appendMessages, messageId, type Chat } from "@/lib/chat/store";
+import { appendMessages, messageId, type Chat, type ChatMessage } from "@/lib/chat/store";
+import { ACCEPT, MAX_FILES, MAX_FILE_SIZE, extOf, formatSize, isImage, loadFile, saveFiles, type ChatFile } from "@/lib/chat/files";
 import { useChats, useNow } from "@/lib/chat/use-chats";
 
 const time = (ms: number) => new Date(ms).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
@@ -20,9 +21,9 @@ function Avatar({ size = "md" }: { size?: "sm" | "md" }) {
   return (
     <span
       aria-hidden="true"
-      className={`grid shrink-0 place-items-center rounded-full bg-brand font-bold text-white ${size === "sm" ? "size-8 text-[13px]" : "size-11 text-[17px]"}`}
+      className={`grid shrink-0 place-items-center rounded-full bg-brand font-bold text-white ${size === "sm" ? "size-8 text-[11px]" : "size-11 text-[15px]"}`}
     >
-      {AGENT.name[0]}
+      {AGENT.initials}
     </span>
   );
 }
@@ -76,32 +77,87 @@ export function ChatView() {
 function ChatWindow({ chat }: { chat: Chat }) {
   const [draft, setDraft] = useState("");
   const [waiting, setWaiting] = useState(false);
+  const [pending, setPending] = useState<Pending[]>([]);
+  const [fileError, setFileError] = useState("");
+  const [drag, setDrag] = useState(false);
   const until = chat.messages.reduce((t, m) => Math.max(t, m.at), 0);
   const now = useNow(until, waiting);
   const visible = chat.messages.filter((m) => m.at <= now);
   const typing = waiting || chat.messages.some((m) => m.at > now);
   const logRef = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const el = logRef.current;
     if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [visible.length, typing]);
 
+  function addFiles(list: FileList | File[] | null) {
+    if (!list) return;
+    const incoming = Array.from(list);
+    const tooBig = incoming.filter((f) => f.size > MAX_FILE_SIZE);
+    const ok = incoming.filter((f) => f.size <= MAX_FILE_SIZE);
+    const room = Math.max(0, MAX_FILES - pending.length);
+    const added = ok.slice(0, room).map((file) => ({ file, url: isImage(file) ? URL.createObjectURL(file) : null }));
+    const dropped = ok.length - added.length;
+    setPending([...pending, ...added]);
+    setFileError(
+      tooBig.length
+        ? `Не прикреплено: ${tooBig.map((f) => f.name).join(", ")} — файл больше ${formatSize(MAX_FILE_SIZE)}`
+        : dropped > 0
+          ? `Можно прикрепить не больше ${MAX_FILES} файлов за раз`
+          : "",
+    );
+  }
+
   async function send(e?: FormEvent) {
     e?.preventDefault();
     const text = draft.trim();
-    if (!text || waiting) return;
+    if ((!text && !pending.length) || waiting) return;
+    const files = pending.map((p) => p.file);
+    pending.forEach((p) => p.url && URL.revokeObjectURL(p.url));
     setDraft("");
-    const mine = { id: messageId(), role: "user" as const, text, at: Date.now() };
-    appendMessages(chat.number, [mine]);
+    setPending([]);
+    setFileError("");
     setWaiting(true);
-    const reply = await agentReply({ ...chat, messages: [...chat.messages, mine] }, text);
+    let meta: ChatFile[] = [];
+    try {
+      meta = files.length ? await saveFiles(files) : [];
+    } catch {
+      setFileError("Не удалось сохранить файлы в браузере — отправьте их на почту");
+    }
+    const mine: ChatMessage = { id: messageId(), role: "user", text, at: Date.now(), ...(meta.length ? { files: meta } : {}) };
+    appendMessages(chat.number, [mine]);
+    const reply = await agentReply({ ...chat, messages: [...chat.messages, mine] }, text, files, meta);
     appendMessages(chat.number, [reply]);
     setWaiting(false);
   }
 
   return (
-    <section aria-label={`Чат с менеджером по заявке № ${chat.number}`} className="flex min-w-0 flex-col overflow-hidden rounded-[14px] border border-line bg-white">
+    <section
+      aria-label={`Чат с менеджером по заявке № ${chat.number}`}
+      onDragOver={(e) => {
+        if (e.dataTransfer.types.includes("Files")) {
+          e.preventDefault();
+          setDrag(true);
+        }
+      }}
+      onDragLeave={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDrag(false);
+      }}
+      onDrop={(e) => {
+        if (!e.dataTransfer.files.length) return;
+        e.preventDefault();
+        setDrag(false);
+        addFiles(e.dataTransfer.files);
+      }}
+      className={`relative flex min-w-0 flex-col overflow-hidden rounded-[14px] border bg-white ${drag ? "border-brand" : "border-line"}`}
+    >
+      {drag ? (
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-10 grid place-items-center bg-white/85 text-[15px] font-semibold text-brand">
+          Отпустите, чтобы прикрепить файлы
+        </div>
+      ) : null}
       <header className="flex items-center gap-3 border-b border-line px-4 py-3 md:px-5">
         <span className="relative">
           <Avatar />
@@ -128,13 +184,15 @@ function ChatWindow({ chat }: { chat: Chat }) {
             <div key={m.id} className="flex max-w-[88%] items-end gap-2 md:max-w-[75%]">
               <Avatar size="sm" />
               <div className="rounded-[14px] rounded-bl-[4px] bg-white px-3.5 py-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.06)]">
-                <p className="whitespace-pre-line text-[14px] leading-relaxed">{m.text}</p>
+                {m.files?.length ? <Attachments files={m.files} /> : null}
+                {m.text ? <p className="whitespace-pre-line text-[14px] leading-relaxed">{m.text}</p> : null}
                 <p className="mt-1 text-right text-[11px] text-muted">{time(m.at)}</p>
               </div>
             </div>
           ) : (
             <div key={m.id} className="max-w-[88%] self-end rounded-[14px] rounded-br-[4px] bg-brand px-3.5 py-2.5 text-white md:max-w-[75%]">
-              <p className="whitespace-pre-line text-[14px] leading-relaxed">{m.text}</p>
+              {m.files?.length ? <Attachments files={m.files} mine /> : null}
+              {m.text ? <p className="whitespace-pre-line text-[14px] leading-relaxed">{m.text}</p> : null}
               <p className="mt-1 text-right text-[11px] text-white/75">{time(m.at)}</p>
             </div>
           ),
@@ -157,31 +215,81 @@ function ChatWindow({ chat }: { chat: Chat }) {
         ) : null}
       </div>
 
-      <form onSubmit={send} className="flex items-end gap-2 border-t border-line p-3">
-        <label htmlFor="chat-input" className="sr-only">Сообщение менеджеру</label>
-        <textarea
-          id="chat-input"
-          rows={1}
-          value={draft}
-          maxLength={2000}
-          placeholder="Напишите сообщение…"
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
-              e.preventDefault();
-              void send();
-            }
-          }}
-          className="max-h-32 min-h-11 flex-1 resize-none rounded-[10px] border border-line bg-white px-3.5 py-2.5 text-[15px] [field-sizing:content] placeholder:text-faint focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand"
-        />
-        <button
-          type="submit"
-          aria-label="Отправить"
-          disabled={!draft.trim() || waiting}
-          className={`${buttonClass({ px: "px-0" })} size-11 shrink-0`}
-        >
-          <SendHorizontal size={18} aria-hidden="true" />
-        </button>
+      <form onSubmit={send} className="border-t border-line p-3">
+        {pending.length ? (
+          <ul aria-label="Прикреплённые файлы" className="mb-2 flex flex-wrap gap-2">
+            {pending.map((p, i) => (
+              <li key={p.url ?? `${p.file.name}-${p.file.size}-${i}`}>
+                <PendingFile
+                  item={p}
+                  onRemove={() => {
+                    if (p.url) URL.revokeObjectURL(p.url);
+                    setPending((list) => list.filter((x) => x !== p));
+                  }}
+                />
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        {fileError ? <p role="alert" className="mb-2 text-[13px] text-brand">{fileError}</p> : null}
+        <div className="flex items-end gap-2">
+          <input
+            ref={fileRef}
+            type="file"
+            multiple
+            accept={ACCEPT}
+            tabIndex={-1}
+            aria-hidden="true"
+            className="hidden"
+            onChange={(e) => {
+              addFiles(e.target.files);
+              e.target.value = "";
+            }}
+          />
+          <button
+            type="button"
+            aria-label="Прикрепить файлы"
+            title="Прикрепить файлы: документы и картинки"
+            onClick={() => fileRef.current?.click()}
+            className="grid size-11 shrink-0 place-items-center rounded-[10px] border border-line bg-white text-muted hover:border-brand hover:text-brand"
+          >
+            <Paperclip size={18} aria-hidden="true" />
+          </button>
+          <label htmlFor="chat-input" className="sr-only">Сообщение менеджеру</label>
+          <textarea
+            id="chat-input"
+            rows={1}
+            value={draft}
+            maxLength={2000}
+            placeholder="Напишите сообщение…"
+            onChange={(e) => setDraft(e.target.value)}
+            onPaste={(e) => {
+              const files = Array.from(e.clipboardData.files);
+              if (files.length) {
+                e.preventDefault();
+                addFiles(files);
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+                e.preventDefault();
+                void send();
+              }
+            }}
+            className="max-h-32 min-h-11 min-w-0 flex-1 resize-none rounded-[10px] border border-line bg-white px-3.5 py-2.5 text-[15px] [field-sizing:content] placeholder:text-faint focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand"
+          />
+          <button
+            type="submit"
+            aria-label="Отправить"
+            disabled={(!draft.trim() && !pending.length) || waiting}
+            className={`${buttonClass({ px: "px-0" })} size-11 shrink-0`}
+          >
+            <SendHorizontal size={18} aria-hidden="true" />
+          </button>
+        </div>
+        <p className="mt-1.5 text-[11px] text-muted">
+          До {MAX_FILES} файлов, каждый до {formatSize(MAX_FILE_SIZE)}: картинки, PDF, Word, Excel, макеты (AI, EPS, CDR). Можно перетащить в окно чата.
+        </p>
       </form>
     </section>
   );
@@ -223,5 +331,107 @@ function OrderSummary({ chat }: { chat: Chat }) {
         </button>
       ) : null}
     </section>
+  );
+}
+
+type Pending = { file: File; url: string | null };
+
+/** Превью файла, выбранного к отправке. */
+function PendingFile({ item: { file, url }, onRemove }: { item: Pending; onRemove: () => void }) {
+  return (
+    <div className="relative flex h-14 items-center gap-2 rounded-[10px] border border-line bg-surface pr-8 pl-1.5">
+      {url ? (
+        // eslint-disable-next-line @next/next/no-img-element -- локальное превью (blob:)
+        <img src={url} alt="" className="size-11 rounded-md object-cover" />
+      ) : (
+        <span aria-hidden="true" className="grid size-11 place-items-center rounded-md bg-white text-[10px] font-bold text-brand">
+          {extOf(file.name)}
+        </span>
+      )}
+      <span className="max-w-[140px] min-w-0">
+        <span className="block truncate text-[12px] font-medium">{file.name}</span>
+        <span className="block text-[11px] text-muted">{formatSize(file.size)}</span>
+      </span>
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label={`Убрать файл ${file.name}`}
+        className="absolute right-1 top-1 grid size-6 place-items-center rounded-full text-muted hover:bg-white hover:text-brand"
+      >
+        <X size={14} aria-hidden="true" />
+      </button>
+    </div>
+  );
+}
+
+/** Вложения в сообщении: картинки сеткой, документы карточками. */
+function Attachments({ files, mine = false }: { files: ChatFile[]; mine?: boolean }) {
+  const images = files.filter(isImage);
+  const docs = files.filter((f) => !isImage(f));
+  return (
+    <div className="mb-1.5 grid gap-1.5">
+      {images.length ? (
+        <ul className={`grid gap-1.5 ${images.length === 1 ? "grid-cols-1" : "grid-cols-2 sm:grid-cols-3"}`}>
+          {images.map((f) => (
+            <li key={f.id}>
+              <StoredFile file={f} mine={mine} image />
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {docs.map((f) => (
+        <StoredFile key={f.id} file={f} mine={mine} />
+      ))}
+    </div>
+  );
+}
+
+function StoredFile({ file, mine, image = false }: { file: ChatFile; mine: boolean; image?: boolean }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [missing, setMissing] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    let u: string | null = null;
+    void loadFile(file.id).then((blob) => {
+      if (!alive) return;
+      if (!blob) return setMissing(true);
+      u = URL.createObjectURL(blob);
+      setUrl(u);
+    });
+    return () => {
+      alive = false;
+      if (u) URL.revokeObjectURL(u);
+    };
+  }, [file.id]);
+
+  if (image && url) {
+    return (
+      <a href={url} target="_blank" rel="noopener" title={file.name} className="block overflow-hidden rounded-[10px]">
+        {/* eslint-disable-next-line @next/next/no-img-element -- вложение из IndexedDB (blob:) */}
+        <img src={url} alt={file.name} className="aspect-square w-full max-w-[240px] bg-white object-cover" />
+      </a>
+    );
+  }
+  const body = (
+    <>
+      <span aria-hidden="true" className={`grid size-10 shrink-0 place-items-center rounded-md text-[10px] font-bold ${mine ? "bg-white/20 text-white" : "bg-brand-soft text-brand"}`}>
+        {extOf(file.name)}
+      </span>
+      <span className="min-w-0">
+        <span className="block truncate text-[13px] font-medium">{file.name}</span>
+        <span className={`block text-[11px] ${mine ? "text-white/75" : "text-muted"}`}>
+          {missing ? "Файл недоступен в этом браузере" : formatSize(file.size)}
+        </span>
+      </span>
+      {url ? <Download size={16} aria-hidden="true" className="ml-auto shrink-0 opacity-70" /> : null}
+    </>
+  );
+  const cls = `flex max-w-[280px] items-center gap-2.5 rounded-[10px] p-1.5 pr-3 ${mine ? "bg-white/10" : "bg-surface"}`;
+  return url ? (
+    <a href={url} download={file.name} className={`${cls} hover:opacity-90`}>
+      {body}
+    </a>
+  ) : (
+    <div className={cls}>{body}</div>
   );
 }

@@ -3,13 +3,14 @@ import { formatPriceValue, formatQty } from "@/lib/format";
 import { plural } from "@/lib/plural";
 import { cartCount, cartDiscount, MIN_ORDER } from "@/lib/cart/store";
 import { createChat, messageId, type Chat, type ChatMessage } from "./store";
+import type { ChatFile } from "./files";
 
-export const AGENT = { name: "Анжела", role: "Персональный менеджер" };
+export const AGENT = { name: "Виктория Широкова", initials: "ВШ", role: "Персональный менеджер" };
 
 /**
- * Адрес сервера с ИИ-моделью (POST { order, messages } → { reply }).
+ * Адрес сервера с ИИ-моделью (POST multipart: payload = { order, messages }, files[] → { reply }).
  * Ключ модели хранится только на этом сервере, не в браузере.
- * Пока адреса нет, Анжела отвечает по встроенным правилам ниже.
+ * Пока адреса нет, менеджер отвечает по встроенным правилам ниже.
  */
 const CHAT_API = process.env.NEXT_PUBLIC_CHAT_API ?? "";
 
@@ -81,24 +82,33 @@ function ruleReply(text: string): string {
     : `Записала ваш вопрос и передала в работу — подробно отвечу в рабочее время (${site.hours.toLowerCase()}). Если срочно, звоните ${site.phone.label}.`;
 }
 
-/** Ответ Анжелы на сообщение клиента: через ИИ-сервер, если он подключён, иначе по правилам. */
-export async function agentReply(chat: Chat, text: string): Promise<ChatMessage> {
+/** Ответ на вложения, пока нет сервера: файлы остаются в браузере клиента. */
+function filesReply(files: ChatFile[]): string {
+  const names = files.map((f) => f.name).join(", ");
+  return `Вижу ${files.length === 1 ? "файл" : "файлы"}: ${names}. Чтобы дизайнер сразу взял их в работу, продублируйте, пожалуйста, на ${site.email} с номером заявки в теме письма — подготовлю расчёт и макет.`;
+}
+
+/** Ответ менеджера на сообщение клиента: через ИИ-сервер, если он подключён, иначе по правилам. */
+export async function agentReply(chat: Chat, text: string, files: File[] = [], meta: ChatFile[] = []): Promise<ChatMessage> {
   const started = Date.now();
   let reply = "";
   if (CHAT_API) {
     try {
-      const res = await fetch(CHAT_API, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const body = new FormData();
+      body.append(
+        "payload",
+        JSON.stringify({
           order: { number: chat.number, total: chat.total, items: chat.items.map(({ title, sku, qty, price }) => ({ title, sku, qty, price })) },
           messages: [...chat.messages, { role: "user", text }].map(({ role, text: t }) => ({ role, text: t })),
         }),
-      });
+      );
+      files.forEach((f) => body.append("files", f, f.name));
+      const res = await fetch(CHAT_API, { method: "POST", body });
       if (res.ok) reply = String(((await res.json()) as { reply?: unknown }).reply ?? "").trim();
     } catch {}
   }
-  if (!reply) reply = ruleReply(text);
+  if (!reply) reply = text.trim() ? ruleReply(text) : "";
+  if (!CHAT_API && meta.length) reply = text.trim() && !/^Записала/.test(reply) ? `${reply}\n\n${filesReply(meta)}` : filesReply(meta);
   return { id: messageId(), role: "agent", text: reply, at: Math.max(Date.now(), started + TYPING_MS) };
 }
 
