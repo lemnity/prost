@@ -6,6 +6,7 @@ import { CurrentYear } from "./current-year";
 import { BrandLogo } from "./brand-logo";
 import { SocialLinks } from "./social-links";
 import { DevCredit } from "./dev-credit";
+import { legalLinks } from "@/lib/legal";
 
 export function SiteFooter() {
   return (
@@ -52,8 +53,21 @@ export function SiteFooter() {
         <SocialLinks size={32} className="items-start gap-3 sm:col-span-2 xl:col-span-1" />
       </Container>
       <Container className="mt-8">
-        <div className="flex justify-center border-t border-line pt-5 text-xs sm:justify-end">
-          <DevCredit />
+        <div className="flex flex-col gap-4 border-t border-line pt-5 text-xs lg:flex-row lg:items-start lg:justify-between">
+          <nav aria-label="Документы">
+            <ul className="flex flex-wrap gap-x-5 gap-y-2 text-muted">
+              {legalLinks.map((l) => (
+                <li key={l.href}>
+                  <Link href={l.href} className="hover:text-brand">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <div className="flex justify-center lg:shrink-0 lg:justify-end">
+            <DevCredit />
+          </div>
         </div>
       </Container>
     </footer>
