@@ -11,7 +11,6 @@
   --color-line: #ececec;
   --color-case: #1f6fa8;
   --color-work: #f3f1f0;
-  --color-cta: #efefee;
   --color-new-bg: #ddf3e9;
   --color-new-text: #25704f;
   --color-glow: #fbede8;
@@ -213,4 +212,14 @@ html {
 }
 @media (prefers-reduced-motion: no-preference) {
   .bg-chat-gradient { animation: gradient-shift 6s ease-in-out infinite; }
+}
+
+/* Блок «Не знаете, что выбрать?» — переливающийся фирменный градиент. */
+.bg-cta-gradient {
+  background-color: #c4272b;
+  background-image: linear-gradient(110deg, #a91f27 0%, #d02e31 28%, #e8573a 52%, #d02e31 76%, #a91f27 100%);
+  background-size: 240% 240%;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .bg-cta-gradient { animation: gradient-shift 9s ease-in-out infinite; }
 }
