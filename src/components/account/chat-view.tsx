@@ -109,7 +109,7 @@ function ChatWindow({ chat }: { chat: Chat }) {
         </span>
         <div className="min-w-0">
           <p className="text-[16px] font-semibold leading-tight">{AGENT.name}</p>
-          <p className="text-[12px] text-muted">{AGENT.role} · ИИ-ассистент ProStyle</p>
+          <p className="text-[12px] text-muted">{AGENT.role}</p>
         </div>
       </header>
 
