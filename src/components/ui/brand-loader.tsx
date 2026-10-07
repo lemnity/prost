@@ -37,7 +37,7 @@ export function BrandLoader({
           d={BRACKET}
           pathLength={100}
           fill="none"
-          stroke="#444551"
+          stroke="#D02E31"
           strokeWidth={9}
           strokeLinecap="butt"
           className={styles.dash}
