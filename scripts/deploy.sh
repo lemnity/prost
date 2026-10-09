@@ -25,7 +25,7 @@ REL="$1"
 chown -R prostyle:prostyle "/opt/prostyle/releases/$REL"
 ln -sfn "/opt/prostyle/releases/$REL" /opt/prostyle/current.new && mv -Tf /opt/prostyle/current.new /opt/prostyle/current
 systemctl restart prostyle
-for i in $(seq 1 30); do curl -fsS -o /dev/null http://127.0.0.1:3010/api/me && break; sleep 1; done
+for i in $(seq 1 30); do curl -fsS -o /dev/null 2>/dev/null http://127.0.0.1:3010/api/me && break; sleep 1; done
 curl -fsS -o /dev/null http://127.0.0.1:3010/api/me && echo "релиз $REL запущен"
 # Храним два последних релиза.
 ls -1dt /opt/prostyle/releases/* | tail -n +3 | xargs -r rm -rf
