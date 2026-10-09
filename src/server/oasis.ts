@@ -78,6 +78,22 @@ export async function recountCategories() {
   );
 }
 
+/** Обложка карточки — первое фото (ссылка на крупное). */
+export function coverFrom(images: unknown): string | null {
+  const i = (Array.isArray(images) ? images : [])[0] as { big?: string; superbig?: string; small?: string } | undefined;
+  return (i?.big || i?.superbig || i?.small || "").slice(0, 500) || null;
+}
+
+/** Описание, характеристики и фото — в oc_product_details. */
+export async function saveDetails(rows: [string, string | null, string, string][]) {
+  if (!rows.length) return;
+  await exec(
+    `INSERT INTO oc_product_details (id, description, attributes, images) VALUES ?
+     ON DUPLICATE KEY UPDATE description = VALUES(description), attributes = VALUES(attributes), images = VALUES(images)`,
+    [rows],
+  );
+}
+
 export function single(name: string, fn: () => Promise<{ items: number }>) {
   if (!running[name]) running[name] = fn().finally(() => (running[name] = null));
   return running[name]!;
@@ -116,31 +132,31 @@ export function syncOasisCatalog(): Promise<{ items: number }> {
       for (let offset = 0; ; offset += PAGE) {
         const page = await api<OcProduct[]>("products", { fields: FULL_FIELDS, limit: String(PAGE), offset: String(offset) });
         if (!Array.isArray(page) || !page.length) break;
-        const rows = page
-          .filter((p) => p.id && p.article)
-          .map((p) => {
-            const s = stockOf(p);
-            const ids = Array.isArray(p.categories) ? p.categories : [];
-            return [
-              String(p.id).slice(0, 32), String(p.article).slice(0, 64), p.group_id ?? null, p.color_group_id ?? null,
-              slugify(p.name), String(p.name).slice(0, 400), p.full_name ? String(p.full_name).slice(0, 500) : null, p.description ?? null,
-              Number(p.price) || 0, oldPriceOf(p), Number(p.rating) || 0, p.size ? String(p.size).slice(0, 64) : null,
-              JSON.stringify(p.colors ?? []), JSON.stringify(p.attributes ?? []), JSON.stringify(p.images ?? []), JSON.stringify(ids),
-              primaryOf(ids), p.brand_id ?? null, s.stock, s.remote, p.is_deleted ? 1 : 0,
-              p.updated_at ? new Date(p.updated_at.replace(" ", "T") + "+03:00") : null, started,
-            ];
-          });
+        const items = page.filter((p) => p.id && p.article);
+        const rows = items.map((p) => {
+          const s = stockOf(p);
+          const ids = Array.isArray(p.categories) ? p.categories : [];
+          return [
+            String(p.id).slice(0, 32), String(p.article).slice(0, 64), p.group_id ?? null, p.color_group_id ?? null,
+            slugify(p.name), String(p.name).slice(0, 400), p.full_name ? String(p.full_name).slice(0, 500) : null, coverFrom(p.images),
+            Number(p.price) || 0, oldPriceOf(p), Number(p.rating) || 0, p.size ? String(p.size).slice(0, 64) : null,
+            JSON.stringify(p.colors ?? []), JSON.stringify(ids),
+            primaryOf(ids), p.brand_id ?? null, s.stock, s.remote, p.is_deleted ? 1 : 0,
+            p.updated_at ? new Date(p.updated_at.replace(" ", "T") + "+03:00") : null, started,
+          ];
+        });
         if (rows.length) {
           await exec(
-            `INSERT INTO oc_products (id, article, group_id, color_group_id, slug, name, full_name, description, price, old_price, rating, size,
-               colors, attributes, images, categories, primary_cat, brand_id, stock, remote, deleted, updated_at, synced_at) VALUES ?
+            `INSERT INTO oc_products (id, article, group_id, color_group_id, slug, name, full_name, cover, price, old_price, rating, size,
+               colors, categories, primary_cat, brand_id, stock, remote, deleted, updated_at, synced_at) VALUES ?
              ON DUPLICATE KEY UPDATE article = VALUES(article), group_id = VALUES(group_id), color_group_id = VALUES(color_group_id), slug = VALUES(slug),
-               name = VALUES(name), full_name = VALUES(full_name), description = VALUES(description), price = VALUES(price), old_price = VALUES(old_price),
-               rating = VALUES(rating), size = VALUES(size), colors = VALUES(colors), attributes = VALUES(attributes), images = VALUES(images),
+               name = VALUES(name), full_name = VALUES(full_name), cover = VALUES(cover), price = VALUES(price), old_price = VALUES(old_price),
+               rating = VALUES(rating), size = VALUES(size), colors = VALUES(colors),
                categories = VALUES(categories), primary_cat = VALUES(primary_cat), brand_id = VALUES(brand_id), stock = VALUES(stock), remote = VALUES(remote),
                deleted = VALUES(deleted), updated_at = VALUES(updated_at), synced_at = VALUES(synced_at)`,
             [rows],
           );
+          await saveDetails(items.map((p) => [String(p.id).slice(0, 32), p.description ?? null, JSON.stringify(p.attributes ?? []), JSON.stringify(p.images ?? [])]));
           const ids = rows.map((r) => r[0] as string);
           await exec("DELETE FROM oc_product_categories WHERE product_id IN (?)", [ids]);
           const links = page.flatMap((p) => [...new Set((p.categories ?? []).flatMap(ancestors))].map((c) => [String(p.id), c]));

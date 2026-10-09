@@ -6,7 +6,7 @@ export async function rebuildFacets(): Promise<number> {
   let after = "", total = 0;
   for (;;) {
     const rows = await query<Row & { id: string; colors: unknown; attributes: unknown }>(
-      "SELECT id, colors, attributes FROM oc_products WHERE deleted = 0 AND id > ? ORDER BY id LIMIT 2000",
+      "SELECT p.id, p.colors, d.attributes FROM oc_products p LEFT JOIN oc_product_details d ON d.id = p.id WHERE p.deleted = 0 AND p.id > ? ORDER BY p.id LIMIT 2000",
       [after],
     );
     if (!rows.length) break;

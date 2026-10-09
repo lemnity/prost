@@ -16,14 +16,16 @@ export type OcRow = Row & {
   slug: string;
   name: string;
   full_name: string | null;
-  description: string | null;
+  cover: string | null;
+  /** Поля из oc_product_details — есть только у строк, прочитанных через DETAIL. */
+  description?: string | null;
   price: string;
   old_price: string | null;
   rating: number;
   size: string | null;
   colors: unknown;
-  attributes: unknown;
-  images: unknown;
+  attributes?: unknown;
+  images?: unknown;
   primary_cat: number | null;
   stock: number;
   remote: number;
@@ -32,6 +34,7 @@ export type OcRow = Row & {
 
 export const imagesOf = (r: OcRow) => (json<Img[]>(r.images) ?? []).map((i) => i.superbig || i.big || i.small || "").filter(Boolean);
 export const coverOf = (r: OcRow) => {
+  if (r.cover) return r.cover;
   const i = (json<Img[]>(r.images) ?? [])[0];
   return i?.big || i?.superbig || i?.small || "";
 };
@@ -183,8 +186,11 @@ export async function listWithFacets(p: ListParams): Promise<Listing & { facets:
   return { ...list, facets };
 }
 
+/** Товар со всеми полями (описание, характеристики, фото). */
+const DETAIL = "SELECT p.*, d.description, d.attributes, d.images FROM oc_products p LEFT JOIN oc_product_details d ON d.id = p.id";
+
 export async function getProductRow(id: string): Promise<OcRow | null> {
-  const [r] = await query<OcRow>("SELECT * FROM oc_products WHERE id = ? LIMIT 1", [id]);
+  const [r] = await query<OcRow>(`${DETAIL} WHERE p.id = ? LIMIT 1`, [id]);
   return r ?? null;
 }
 
@@ -192,7 +198,7 @@ export async function getProductRow(id: string): Promise<OcRow | null> {
 export async function modelRows(r: OcRow): Promise<OcRow[]> {
   if (!r.color_group_id && !r.group_id) return [r];
   return query<OcRow>(
-    "SELECT * FROM oc_products WHERE deleted = 0 AND (color_group_id = ? OR group_id = ?) ORDER BY group_id, size, id LIMIT 300",
+    `${DETAIL} WHERE p.deleted = 0 AND (p.color_group_id = ? OR p.group_id = ?) ORDER BY p.group_id, p.size, p.id LIMIT 300`,
     [r.color_group_id ?? r.id, r.group_id ?? r.id],
   );
 }

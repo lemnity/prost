@@ -94,14 +94,12 @@ const SCHEMA = [
     slug VARCHAR(120) NOT NULL,
     name VARCHAR(400) NOT NULL,
     full_name VARCHAR(500) NULL,
-    description MEDIUMTEXT NULL,
+    cover VARCHAR(500) NULL,
     price DECIMAL(12,2) NOT NULL,
     old_price DECIMAL(12,2) NULL,
     rating INT NOT NULL DEFAULT 0,
     size VARCHAR(64) NULL,
     colors JSON NULL,
-    attributes JSON NULL,
-    images JSON NULL,
     categories JSON NULL,
     primary_cat INT NULL,
     brand_id INT NULL,
@@ -111,6 +109,13 @@ const SCHEMA = [
     updated_at DATETIME NULL,
     synced_at DATETIME NOT NULL,
     INDEX (article), INDEX (group_id), INDEX (color_group_id), INDEX (primary_cat), INDEX (deleted, rating)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+  // Тяжёлые поля товара отдельно: выдача читает только узкую oc_products, и она помещается в память MySQL.
+  `CREATE TABLE IF NOT EXISTS oc_product_details (
+    id VARCHAR(32) PRIMARY KEY,
+    description MEDIUMTEXT NULL,
+    attributes JSON NULL,
+    images JSON NULL
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
   `CREATE TABLE IF NOT EXISTS oc_product_categories (
     product_id VARCHAR(32) NOT NULL,
@@ -173,7 +178,24 @@ const ALTERS = [
   "ALTER TABLE oc_products ADD INDEX supplier_idx (supplier)",
   // «Новинка» у поставщика (gifts.ru — статус «новинка»): такие товары первыми в подборке «Новинки».
   "ALTER TABLE oc_products ADD COLUMN is_new TINYINT(1) NOT NULL DEFAULT 0",
+  "ALTER TABLE oc_products ADD COLUMN cover VARCHAR(500) NULL AFTER full_name",
 ];
+
+/** Разовый перенос описаний, характеристик и фото из oc_products в oc_product_details (если ещё не перенесены). */
+async function splitDetails() {
+  const [cols] = await pool().query<RowDataPacket[]>(
+    "SELECT COUNT(*) n FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'oc_products' AND column_name = 'images'",
+  );
+  if (!Number(cols[0]?.n)) return;
+  await pool().query(
+    `INSERT INTO oc_product_details (id, description, attributes, images) SELECT id, description, attributes, images FROM oc_products
+     ON DUPLICATE KEY UPDATE description = VALUES(description), attributes = VALUES(attributes), images = VALUES(images)`,
+  );
+  await pool().query(
+    `UPDATE oc_products SET cover = LEFT(JSON_UNQUOTE(COALESCE(JSON_EXTRACT(images, '$[0].big'), JSON_EXTRACT(images, '$[0].superbig'), JSON_EXTRACT(images, '$[0].small'))), 500)`,
+  );
+  await pool().query("ALTER TABLE oc_products DROP COLUMN description, DROP COLUMN attributes, DROP COLUMN images");
+}
 
 function migrate(): Promise<void> {
   if (!g.__psMigrated) {
@@ -186,6 +208,7 @@ function migrate(): Promise<void> {
           if (![1060, 1061].includes((e as { errno?: number }).errno ?? 0)) throw e; // 1060/1061 — поле/индекс уже есть
         }
       }
+      await splitDetails();
     })().catch((e) => {
       g.__psMigrated = undefined;
       throw e;

@@ -2,7 +2,7 @@ import sax from "sax";
 import { rebuildFacets } from "./facets";
 import { exec, getPool, query, type Row } from "./db";
 import { GIFTS_MAP } from "./gifts-map";
-import { logEnd, logStart, recountCategories, ROOTS, single } from "./oasis";
+import { coverFrom, logEnd, logStart, recountCategories, ROOTS, saveDetails, single } from "./oasis";
 import { slugify } from "@/lib/translit";
 
 /**
@@ -221,23 +221,26 @@ export function syncGiftsCatalog(): Promise<{ items: number }> {
       const started = new Date(Math.floor(Date.now() / 1000) * 1000);
       let rows: unknown[][] = [];
       let linkRows: [string, number][] = [];
+      let details: [string, string | null, string, string][] = [];
       let total = 0;
 
       const flush = async () => {
         if (!rows.length) return;
-        const batch = rows, batchLinks = linkRows;
+        const batch = rows, batchLinks = linkRows, batchDetails = details;
         rows = [];
         linkRows = [];
+        details = [];
         await exec(
-          `INSERT INTO oc_products (id, supplier, article, group_id, color_group_id, slug, name, full_name, description, price, old_price, rating, size,
-             colors, attributes, images, categories, primary_cat, brand_id, stock, remote, deleted, is_new, updated_at, synced_at) VALUES ?
+          `INSERT INTO oc_products (id, supplier, article, group_id, color_group_id, slug, name, full_name, cover, price, old_price, rating, size,
+             colors, categories, primary_cat, brand_id, stock, remote, deleted, is_new, updated_at, synced_at) VALUES ?
            ON DUPLICATE KEY UPDATE supplier = VALUES(supplier), article = VALUES(article), group_id = VALUES(group_id), color_group_id = VALUES(color_group_id),
-             slug = VALUES(slug), name = VALUES(name), full_name = VALUES(full_name), description = VALUES(description), price = VALUES(price),
-             old_price = VALUES(old_price), size = VALUES(size), colors = VALUES(colors), attributes = VALUES(attributes), images = VALUES(images),
+             slug = VALUES(slug), name = VALUES(name), full_name = VALUES(full_name), cover = VALUES(cover), price = VALUES(price),
+             old_price = VALUES(old_price), size = VALUES(size), colors = VALUES(colors),
              categories = VALUES(categories), primary_cat = VALUES(primary_cat), stock = VALUES(stock), remote = VALUES(remote), deleted = 0,
              is_new = VALUES(is_new), updated_at = VALUES(updated_at), synced_at = VALUES(synced_at)`,
           [batch],
         );
+        await saveDetails(batchDetails);
         await exec("DELETE FROM oc_product_categories WHERE product_id IN (?)", [batch.map((r) => r[0])]);
         if (batchLinks.length) await exec("INSERT IGNORE INTO oc_product_categories (product_id, category_id) VALUES ?", [batchLinks]);
       };
@@ -280,6 +283,7 @@ export function syncGiftsCatalog(): Promise<{ items: number }> {
             colors: JSON.stringify(colorNames.map((n) => ({ name: n }))),
             attrs: JSON.stringify(attrs),
             images: JSON.stringify(images),
+            cover: coverFrom(images),
             cats: JSON.stringify(ours),
             isNew: kid(p, "status")?.attrs.id === "0" ? 1 : 0,
             mainPrice: Number(txt(kid(p, "price"), "price")) || 0,
@@ -288,8 +292,8 @@ export function syncGiftsCatalog(): Promise<{ items: number }> {
             const s = stock.get(rid);
             const price = s?.price || fallbackPrice || base.mainPrice;
             return [
-              pid(rid), "gifts", article.slice(0, 64), base.group, base.model, base.slug, name.slice(0, 400), null, base.description,
-              price, null, 0, size ? size.slice(0, 64) : null, base.colors, base.attrs, base.images, base.cats, primary, null,
+              pid(rid), "gifts", article.slice(0, 64), base.group, base.model, base.slug, name.slice(0, 400), null, base.cover,
+              price, null, 0, size ? size.slice(0, 64) : null, base.colors, base.cats, primary, null,
               s?.free ?? 0, s?.inway ?? 0, 0, base.isNew, started, started,
             ];
           };
@@ -300,6 +304,7 @@ export function syncGiftsCatalog(): Promise<{ items: number }> {
           const priced = made.filter((r) => Number(r[9]) > 0);
           rows.push(...priced);
           for (const r of priced) for (const c of linked) linkRows.push([r[0] as string, c]);
+          for (const r of priced) details.push([r[0] as string, base.description, base.attrs, base.images]);
           total += priced.length;
         },
         async () => {
