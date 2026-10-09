@@ -4,12 +4,12 @@ import nodemailer, { type Transporter } from "nodemailer";
  * Почта и уведомления. Настройки — в /opt/prostyle/.env:
  *  SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, MAIL_FROM — отправка (127.0.0.1:25 — свой Postfix с DKIM, без логина);
  *  MAIL_REPLY_TO — куда приходят ответы клиентов на письма;
- *  MAIL_TO   — менеджерам (через запятую), по умолчанию pro-style@bk.ru и pro-style24@bk.ru;
+ *  MAIL_TO   — менеджерам (через запятую), по умолчанию pro-style24@bk.ru;
  *  MAIL_COPY — скрытая копия всех писем клиентам, по умолчанию pro-style24@bk.ru;
  *  TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID — дубль уведомлений в Telegram (по желанию).
  * Без SMTP письма не уходят (пишем в лог), заявки и чат всё равно сохраняются.
  */
-const MANAGERS = (process.env.MAIL_TO || "pro-style@bk.ru,pro-style24@bk.ru").split(",").map((s) => s.trim()).filter(Boolean);
+const MANAGERS = (process.env.MAIL_TO || "pro-style24@bk.ru").split(",").map((s) => s.trim()).filter(Boolean);
 const COPY = process.env.MAIL_COPY ?? "pro-style24@bk.ru";
 
 let transport: Transporter | null | undefined;
