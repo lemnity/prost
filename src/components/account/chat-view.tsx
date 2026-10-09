@@ -213,7 +213,7 @@ function ChatWindow({ chat }: { chat: Chat }) {
               <Avatar size="sm" />
               <div className="rounded-[14px] rounded-bl-[4px] bg-white px-3.5 py-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.06)]">
                 {m.files?.length ? <Attachments files={m.files} /> : null}
-                {m.text ? <p className="whitespace-pre-line text-[14px] leading-relaxed">{m.text}</p> : null}
+                {m.text ? <p className="whitespace-pre-line text-[14px] leading-relaxed">{withLinks(m.text)}</p> : null}
                 <p className="mt-1 text-right text-[11px] text-muted">{time(m.at)}</p>
               </div>
             </div>
@@ -462,4 +462,23 @@ function MobileOrderBar({ chat }: { chat: Chat }) {
       </button>
     </div>
   );
+}
+
+/** Ссылки в тексте менеджера: на товары сайта — короткой подписью, остальные — как есть. */
+function withLinks(text: string) {
+  return text.split(/(https?:\/\/[^\s<>()]+[^\s<>().,!?:;»"'])/g).map((part, i) => {
+    if (i % 2 === 0) return part;
+    let label = part;
+    try {
+      const u = new URL(part);
+      if (u.hostname.endsWith("prostyle.agency")) label = u.pathname.includes("/item-") ? "Открыть товар →" : "Открыть на сайте →";
+    } catch {
+      return part;
+    }
+    return (
+      <a key={i} href={part} target={label === part ? "_blank" : undefined} rel="noopener" className="font-medium text-brand underline-offset-2 hover:underline">
+        {label}
+      </a>
+    );
+  });
 }

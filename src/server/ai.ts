@@ -1,5 +1,6 @@
 import { listProducts } from "./catalog";
 import type { Product } from "@/lib/catalog/types";
+import { INTRO, KNOWLEDGE, STYLE } from "./persona";
 
 /**
  * ИИ-помощник поиска: модель через шлюз RouterAI (OpenAI-совместимый API, https://routerai.ru/api/v1).
@@ -14,14 +15,14 @@ export type AiAnswer = { reply: string; products: Product[]; ai: boolean };
 
 export const aiEnabled = () => !!(process.env.ROUTERAI_API_KEY && process.env.ROUTERAI_MODEL);
 
-const SYSTEM = `Ты — ИИ-помощник интернет-магазина ProStyle (Тюмень): корпоративные подарки, сувениры и промо-продукция с нанесением логотипа для компаний (B2B, минимальный заказ от 10 000 ₽, доставка по России).
-Помогаешь подобрать товары: уточняешь задачу (повод, аудитория, бюджет на единицу, тираж, сроки), если её не хватает, и ищешь в каталоге.
-Правила:
-- Товары, цены и наличие — только из результатов инструмента search_catalog. Ничего не выдумывай. Если не нашлось — переформулируй запрос (синонимы, более общий запрос) и поищи снова.
-- Для поиска передавай короткие запросы из 1–3 слов в именительном падеже («термокружка», «power bank», «ежедневник»).
-- Отвечай по-русски, коротко и по делу: 2–5 предложений, без markdown-таблиц. Подходящие товары кратко назови — их карточки покажутся пользователю под ответом.
-- Цены указаны за штуку без нанесения. Стоимость нанесения, макет и сроки рассчитывает менеджер — предложи оставить заявку или позвонить +7 (3452) 550 995.
-- Не обсуждай темы, не связанные с подбором подарков и заказом.`;
+const SYSTEM = `${INTRO} Ты отвечаешь посетителю сайта в окне поиска: помогаешь подобрать корпоративные подарки и сувениры из каталога.
+
+${STYLE}
+- Подходящие товары кратко назови с ценой — их карточки покажутся под твоим ответом, ссылки не нужны.
+- Цены за штуку без нанесения. Чтобы оформить заказ, посетитель добавляет товары в корзину и отправляет заявку — после этого ты продолжишь работу с ним в чате заявки, рассчитаешь нанесение и макет.
+
+${KNOWLEDGE}
+Сегодня: {TODAY}.`;
 
 const TOOLS = [
   {
@@ -67,13 +68,13 @@ export async function searchCatalog(args: { query?: string; price_max?: number; 
 
 const brief = (p: Product) => ({ title: p.title, article: p.sku, price: p.priceFrom, stock: p.stock ?? 0 });
 
-type Msg = { role: string; content: string | null; tool_calls?: { id: string; function: { name: string; arguments: string } }[]; tool_call_id?: string };
+export type Msg = { role: string; content: string | null; tool_calls?: { id: string; function: { name: string; arguments: string } }[]; tool_call_id?: string };
 
-async function complete(messages: Msg[]) {
+async function complete(messages: Msg[], maxTokens: number) {
   const res = await fetch(`${API}/chat/completions`, {
     method: "POST",
     headers: { Authorization: `Bearer ${process.env.ROUTERAI_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ model: process.env.ROUTERAI_MODEL, messages, tools: TOOLS, temperature: 0.3, max_tokens: 600 }),
+    body: JSON.stringify({ model: process.env.ROUTERAI_MODEL, messages, tools: TOOLS, temperature: 0.5, max_tokens: maxTokens }),
     signal: AbortSignal.timeout(45_000),
     cache: "no-store",
   });
@@ -82,6 +83,37 @@ async function complete(messages: Msg[]) {
   const msg = data.choices?.[0]?.message;
   if (!msg) throw new Error("RouterAI: пустой ответ");
   return msg;
+}
+
+/**
+ * Диалог с моделью и поиском по каталогу: модель может несколько раз вызвать search_catalog, затем отвечает текстом.
+ * withLinks — в результатах поиска отдаём ссылки на товары (для чата менеджера, где карточек нет).
+ */
+export async function runWithCatalog(messages: Msg[], opts: { withLinks?: boolean; maxTokens?: number } = {}): Promise<{ text: string; products: Product[] }> {
+  const found = new Map<string, Product>();
+  const site = process.env.SITE_URL || "https://prostyle.agency";
+  for (let step = 0; step < MAX_STEPS; step++) {
+    const msg = await complete(messages, opts.maxTokens ?? 600);
+    const calls = msg.tool_calls ?? [];
+    if (!calls.length) return { text: (msg.content ?? "").trim(), products: [...found.values()].slice(0, 8) };
+    messages.push({ role: "assistant", content: msg.content ?? null, tool_calls: calls });
+    for (const call of calls) {
+      let result: unknown = { error: "неизвестный инструмент" };
+      if (call.function.name === "search_catalog") {
+        let args = {};
+        try {
+          args = JSON.parse(call.function.arguments || "{}");
+        } catch {
+          // некорректный JSON от модели — ищем без параметров
+        }
+        const items = await searchCatalog(args);
+        for (const p of items) found.set(p.id, p);
+        result = items.length ? items.map((p) => ({ ...brief(p), ...(opts.withLinks ? { url: site + p.url } : {}) })) : "Ничего не найдено";
+      }
+      messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify(result) });
+    }
+  }
+  return { text: "", products: [...found.values()].slice(0, 8) };
 }
 
 /** Ответ помощника на диалог. */
@@ -97,30 +129,9 @@ export async function answer(history: ChatTurn[]): Promise<AiAnswer> {
         : `По запросу «${last}» ничего не нашлось. Попробуйте другое слово или артикул — или позвоните нам: +7 (3452) 550 995.`,
     };
   }
-  const messages: Msg[] = [{ role: "system", content: SYSTEM }, ...history.map((m) => ({ role: m.role, content: m.content }))];
-  const found = new Map<string, Product>();
-  for (let step = 0; step < MAX_STEPS; step++) {
-    const msg = await complete(messages);
-    const calls = msg.tool_calls ?? [];
-    if (!calls.length) {
-      return { ai: true, reply: (msg.content ?? "").trim() || "Не удалось сформулировать ответ — попробуйте переформулировать вопрос.", products: [...found.values()].slice(0, 8) };
-    }
-    messages.push({ role: "assistant", content: msg.content ?? null, tool_calls: calls });
-    for (const call of calls) {
-      let result: unknown = { error: "неизвестный инструмент" };
-      if (call.function.name === "search_catalog") {
-        let args = {};
-        try {
-          args = JSON.parse(call.function.arguments || "{}");
-        } catch {
-          // некорректный JSON от модели — ищем без параметров
-        }
-        const items = await searchCatalog(args);
-        for (const p of items) found.set(p.id, p);
-        result = items.length ? items.map(brief) : "Ничего не найдено";
-      }
-      messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify(result) });
-    }
-  }
-  return { ai: true, reply: "Вот что удалось подобрать. Уточните задачу или бюджет — подберу точнее.", products: [...found.values()].slice(0, 8) };
+  const today = new Date().toLocaleDateString("ru-RU", { timeZone: "Europe/Moscow", day: "numeric", month: "long", year: "numeric" });
+  const messages: Msg[] = [{ role: "system", content: SYSTEM.replace("{TODAY}", today) }, ...history.map((m) => ({ role: m.role, content: m.content }))];
+  const { text, products } = await runWithCatalog(messages);
+  if (text) return { ai: true, reply: text, products };
+  return { ai: true, reply: "Вот что удалось подобрать. Уточните задачу или бюджет — подберу точнее.", products };
 }

@@ -1,7 +1,10 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
+import { after } from "next/server";
 import { exec, json, query, type Row } from "./db";
+import { aiEnabled } from "./ai";
+import { victoriaReply } from "./victoria";
 import { READ_MS, filesReply, openingMessages, ruleReply, typingMs } from "@/lib/chat/agent";
 import { MAX_FILE_SIZE, MAX_FILES, type ChatFileMeta, type ChatMessage } from "@/lib/chat/types";
 import type { CartItem } from "@/lib/cart/store";
@@ -72,16 +75,42 @@ export async function saveUploads(number: string, files: File[]): Promise<ChatFi
   return out;
 }
 
-/** Сообщение клиента + (если менеджер не на связи) ответ бота с «живыми» паузами. */
-export async function addUserMessage(number: string, text: string, files: ChatFileMeta[]): Promise<void> {
-  const now = Date.now();
-  await insert(number, "user", text, now, null, files);
-  if (await managerActive(number)) return;
+/** Ответ по правилам — запасной вариант, если ИИ выключен или недоступен. */
+function fallbackReply(text: string, files: ChatFileMeta[]) {
   let reply = text ? ruleReply(text) : "";
   if (files.length) reply = text && !/^Записала/.test(reply) ? `${reply}\n\n${filesReply(files)}` : filesReply(files);
-  if (!reply) return;
-  const typeAt = Math.max(now + READ_MS, (await lastVisibleAt(number)) + 1200);
-  await insert(number, "agent", reply, typeAt + typingMs(reply), typeAt);
+  return reply;
+}
+
+/** Ответ Виктории с «живыми» паузами: прочитала → печатает → сообщение. */
+async function insertAgentReply(number: string, reply: string, sentAt: number, maxTyping = 14_000) {
+  const typeAt = Math.max(sentAt + READ_MS, (await lastVisibleAt(number)) + 1200, Date.now());
+  await insert(number, "agent", reply, typeAt + Math.min(typingMs(reply), maxTyping), typeAt);
+}
+
+/** Сообщение клиента + (если менеджер не на связи) ответ Виктории. */
+export async function addUserMessage(number: string, text: string, files: ChatFileMeta[]): Promise<void> {
+  const now = Date.now();
+  const id = await insert(number, "user", text, now, null, files);
+  if (await managerActive(number)) return;
+  if (aiEnabled()) {
+    // Ответ модели готовится несколько секунд — после ответа на запрос; клиент видит его через опрос чата.
+    after(async () => {
+      let reply: string | null = null;
+      try {
+        reply = await victoriaReply(number);
+      } catch (e) {
+        console.error("victoria:", (e as Error).message);
+      }
+      // Клиент дописал ещё сообщение — ответим один раз, на последнее.
+      const newer = await query<Row & { n: number }>("SELECT COUNT(*) n FROM messages WHERE order_number = ? AND role = 'user' AND id > ?", [number, id]);
+      if (Number(newer[0]?.n ?? 0) > 0 || (await managerActive(number))) return;
+      await insertAgentReply(number, reply || fallbackReply(text, files), now, 8000);
+    });
+    return;
+  }
+  const reply = fallbackReply(text, files);
+  if (reply) await insertAgentReply(number, reply, now);
 }
 
 export async function addManagerMessage(number: string, text: string, files: ChatFileMeta[] = []): Promise<void> {

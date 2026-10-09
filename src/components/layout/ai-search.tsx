@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { ArrowUp, Search, Sparkles, X } from "lucide-react";
 import { ProductCard } from "@/components/catalog/product-card";
 import type { Product } from "@/lib/catalog/types";
+import { AGENT } from "@/lib/chat/agent";
 
 /** Подсказки: по очереди в поле поиска и кнопками в окне помощника. */
 const HINTS = [
@@ -139,7 +140,7 @@ export function AiSearch() {
         />
         <button
           type="submit"
-          aria-label="Спросить ИИ-помощника"
+          aria-label="Спросить Викторию, менеджера ProStyle"
           className="flex h-12 shrink-0 items-center gap-1.5 rounded-r-[10px] bg-gradient-to-r from-[#D02E31] to-[#F0643C] px-4 text-[14px] font-bold tracking-wide text-white hover:brightness-110 focus-visible:outline-ink focus-visible:-outline-offset-2"
         >
           <Sparkles size={17} aria-hidden /> AI
@@ -150,12 +151,14 @@ export function AiSearch() {
         <div className="fixed inset-0 z-[80] flex items-stretch justify-center bg-black/40 md:items-start md:p-6 md:pt-[calc(8dvh/var(--zoom))]" onMouseDown={(e) => e.target === e.currentTarget && close()}>
           <div role="dialog" aria-modal="true" aria-labelledby="ai-title" className="flex h-full w-full flex-col overflow-hidden bg-white md:h-[min(calc(84dvh/var(--zoom)),780px)] md:max-w-[880px] md:rounded-[18px] md:shadow-2xl">
             <div className="flex items-center gap-3 border-b border-line px-4 py-3 md:px-5">
-              <span aria-hidden="true" className="grid size-9 place-items-center rounded-full bg-gradient-to-br from-[#D02E31] to-[#F0643C] text-white">
-                <Sparkles size={18} />
+              <span className="relative shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element -- маленький аватар, без оптимизации */}
+                <img src={AGENT.photo} alt="" width={40} height={40} className="size-10 rounded-full object-cover" />
+                <span aria-hidden="true" className="absolute bottom-0 right-0 size-3 rounded-full bg-[#2BB673] ring-2 ring-white" />
               </span>
               <div className="min-w-0 flex-1">
-                <h2 id="ai-title" className="text-[16px] font-semibold leading-tight">ИИ-помощник ProStyle</h2>
-                <p className="text-[12px] text-muted">Подберёт подарки из каталога под задачу и бюджет</p>
+                <h2 id="ai-title" className="text-[16px] font-semibold leading-tight">{AGENT.name}</h2>
+                <p className="text-[12px] text-muted">Менеджер ProStyle · онлайн</p>
               </div>
               <button type="button" onClick={close} aria-label="Закрыть" className="grid size-10 place-items-center rounded-full text-muted hover:bg-surface hover:text-ink">
                 <X size={20} aria-hidden />
@@ -165,8 +168,8 @@ export function AiSearch() {
             <div ref={list} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 md:px-5" aria-live="polite">
               <div className="mb-4 grid gap-3">
                 <p className="max-w-[90%] rounded-[16px] rounded-bl-[4px] bg-surface px-4 py-2.5 text-[14px]">
-                  Здравствуйте! Я ИИ-помощник ProStyle. Подберу корпоративные подарки и сувениры из нашего каталога под вашу задачу: повод, кому, бюджет и тираж.
-                  Пишите своими словами — или введите название товара либо артикул.
+                  Здравствуйте! Меня зовут {AGENT.firstName}, я менеджер ProStyle. Помогу подобрать корпоративные подарки и сувениры из нашего каталога.
+                  Расскажите, для кого и к какому поводу ищете, какой бюджет и тираж — подскажу лучшие варианты. Можно просто написать название товара или артикул.
                 </p>
                 {!turns.length && !busy ? (
                   <ul className="flex flex-wrap gap-2">
@@ -208,7 +211,7 @@ export function AiSearch() {
                 )}
                 {busy ? (
                   <p role="status" className="flex w-fit items-center gap-2 rounded-[16px] rounded-bl-[4px] bg-surface px-4 py-2.5 text-[14px] text-muted">
-                    Ищу подходящие товары
+                    Виктория подбирает товары
                     <span aria-hidden="true" className="flex gap-1">
                       {[0, 1, 2].map((d) => (
                         <span key={d} className="size-1.5 rounded-full bg-brand motion-safe:animate-bounce" style={{ animationDelay: `${d * 150}ms` }} />
@@ -239,7 +242,7 @@ export function AiSearch() {
                   }
                 }}
                 placeholder="Например: подарки для IT-команды до 1500 ₽, 50 штук"
-                aria-label="Сообщение ИИ-помощнику"
+                aria-label="Сообщение Виктории"
                 className="max-h-32 min-h-11 flex-1 resize-none rounded-[12px] border border-line px-3.5 py-2.5 text-[14px] outline-none focus:border-ink"
               />
               <button type="submit" disabled={busy || !draft.trim()} aria-label="Отправить" className="grid size-11 shrink-0 place-items-center rounded-full bg-brand text-white hover:bg-brand-hover disabled:opacity-40">
