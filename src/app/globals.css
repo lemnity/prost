@@ -1,3 +1,5 @@
+/* Порядок слоёв: стили Material UI (mui) ниже utilities — Tailwind-классы главнее. */
+@layer theme, base, mui, components, utilities;
 @import "tailwindcss";
 
 @theme {
