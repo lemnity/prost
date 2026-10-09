@@ -1,67 +1,65 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ListingPage } from "@/components/catalog/listing-page";
-import { ProductPage, productMetadata } from "@/components/catalog/product-page";
-import { catalogTree } from "@/lib/catalog/static-data";
-import {
-  getAllProducts,
-  getCategoryNode,
-  getProductByPath,
-  getProductsByCategory,
-  getSubcategories,
-} from "@/lib/catalog/products";
+import { OcListing, parseListing } from "@/components/catalog/oc-listing";
+import { OcProductPage, ocProductMetadata } from "@/components/catalog/oc-product-page";
+import { catHref, childrenOf, getCat } from "@/lib/catalog/oasis-tree";
+import { listProducts } from "@/server/catalog";
+import { ensureCanonical, legacyRedirect, productFromItem, resolveCat, subSections } from "@/server/catalog-routes";
 
-type Params = { category: string; sub: string };
+type Props = { params: Promise<{ category: string; sub: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 
-export const dynamicParams = false;
-
-// Второй сегмент — подкатегория или товар без подкатегории (префикс «item-»).
-export function generateStaticParams(): Params[] {
-  const subs = catalogTree.flatMap((c) =>
-    getSubcategories(c.id).map((s) => ({ category: c.id, sub: s.slug })),
-  );
-  const items = getAllProducts()
-    .filter((p) => !p.subcategory)
-    .map((p) => ({ category: p.category, sub: p.url.split("/").pop()! }));
-  return [...subs, ...items];
-}
-
-export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
-  const { category, sub } = await params;
-  if (sub.startsWith("item-")) return productMetadata(getProductByPath(category, null, sub));
-  const info = getSubcategories(category).find((s) => s.slug === sub);
-  return info ? { title: `${info.title} — каталог ProStyle` } : {};
-}
-
-export default async function SubcategoryPage({ params }: { params: Promise<Params> }) {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { category, sub } = await params;
   if (sub.startsWith("item-")) {
-    const product = getProductByPath(category, null, sub);
-    if (!product) notFound();
-    return <ProductPage product={product} />;
+    const row = await productFromItem(sub);
+    return row ? ocProductMetadata(row) : {};
   }
+  const cat = resolveCat(category, sub);
+  return cat ? { title: `${cat.name} — каталог ProStyle` } : {};
+}
 
-  const node = getCategoryNode(category);
-  const subs = getSubcategories(category);
-  const info = subs.find((s) => s.slug === sub);
-  if (!node || !info) notFound();
-
-  const products = getProductsByCategory(category, sub);
-  const chips = [
-    { title: "Все товары", href: node.href, active: false, count: getProductsByCategory(category).length },
-    ...subs.map((s) => ({ title: s.title, href: s.href, active: s.slug === sub, count: s.count })),
-  ];
+// Второй сегмент — подраздел или товар раздела верхнего уровня (префикс «item-»).
+export default async function SubPage({ params, searchParams }: Props) {
+  const { category, sub } = await params;
+  const path = `/catalog/${category}/${sub}`;
+  if (sub.startsWith("item-")) {
+    const row = await productFromItem(sub);
+    if (!row) {
+      await legacyRedirect(path);
+      notFound();
+    }
+    ensureCanonical(row, path);
+    return <OcProductPage row={row} />;
+  }
+  const cat = resolveCat(category, sub);
+  if (!cat) {
+    await legacyRedirect(path);
+    notFound();
+  }
+  const parent = cat.parent ? getCat(cat.parent)! : cat;
+  const q = parseListing(await searchParams);
+  const kids = childrenOf(cat.id);
+  const filter = q.c ? kids.find((c) => String(c.id) === q.c) : undefined;
+  const { items, total } = await listProducts({ ...q, category: filter?.id ?? cat.id });
+  const chips = kids.length
+    ? [{ title: "Все", href: catHref(cat.id), active: !filter }, ...kids.map((k) => ({ title: k.name, href: catHref(k.id), active: k.id === filter?.id, count: k.count }))]
+    : undefined;
   return (
-    <ListingPage
-      title={info.title}
+    <OcListing
+      title={filter?.name ?? cat.name}
       crumbs={[
         { label: "Главная", href: "/" },
         { label: "Каталог", href: "/catalog" },
-        { label: node.title, href: node.href },
-        { label: info.title },
+        { label: parent.name, href: catHref(parent.id) },
+        { label: cat.name, ...(filter ? { href: catHref(cat.id) } : {}) },
+        ...(filter ? [{ label: filter.name }] : []),
       ]}
+      path={catHref(cat.id)}
+      query={q}
+      items={items}
+      total={total}
+      sections={subSections(parent, cat.id)}
       chips={chips}
-      products={products}
     />
   );
 }

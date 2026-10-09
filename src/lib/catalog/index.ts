@@ -1,5 +1,6 @@
-// Здесь позже подключаются провайдеры складов (Oasis и др.).
-import { catalogTree, newProducts, saleProducts, popularCategories, productOfDay, newYearPicks } from "./static-data";
+// Дерево каталога — единое (основа Oasis), из снимка src/data/oasis-tree.json; подборки главной — статические.
+import { newProducts, saleProducts, productOfDay, newYearPicks, popularCategories } from "./static-data";
+import { topCategories, topNodes } from "./oasis-tree";
 import type { CatalogNode, Category, Product } from "./types";
 
 export type { CatalogNode, Category, Product } from "./types";
@@ -12,12 +13,22 @@ export async function getWeeklySale(limit = 6): Promise<Product[]> {
   return saleProducts.slice(0, limit);
 }
 
-export async function getPopularCategories(): Promise<Category[]> {
-  return popularCategories;
+/** Сезонные плитки главной: новогодняя (с отсчётом) и праздничная (ближайшие праздники). */
+const SEASONAL = [
+  { ...popularCategories[0], count: 0 },
+  { ...popularCategories[1], href: "/catalog/podarochnie-nabori", count: 0 },
+];
+
+/** Плитки главной: 2 сезонные + 18 крупнейших разделов (всего 20 — под сетку); страница «Каталог» — все разделы. */
+export async function getPopularCategories(opts: { all?: boolean } = {}): Promise<(Category & { count: number })[]> {
+  if (opts.all) return topCategories();
+  const cats = topCategories({ home: true });
+  const keep = new Set([...cats].sort((a, b) => b.count - a.count).slice(0, 20 - SEASONAL.length));
+  return [...SEASONAL, ...cats.filter((c) => keep.has(c))];
 }
 
 export async function getCatalogTree(): Promise<CatalogNode[]> {
-  return catalogTree;
+  return topNodes();
 }
 
 export async function getProductOfDay(categoryId: string): Promise<Product | null> {

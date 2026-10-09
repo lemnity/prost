@@ -1,26 +1,28 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ProductPage, productMetadata } from "@/components/catalog/product-page";
-import { getAllProducts, getProductByPath } from "@/lib/catalog/products";
+import { OcProductPage, ocProductMetadata } from "@/components/catalog/oc-product-page";
+import { ensureCanonical, legacyRedirect, productFromItem } from "@/server/catalog-routes";
 
-type Params = { category: string; sub: string; item: string };
+type Props = { params: Promise<{ category: string; sub: string; item: string }> };
 
-export const dynamicParams = false;
-
-export function generateStaticParams(): Params[] {
-  return getAllProducts()
-    .filter((p) => p.subcategory)
-    .map((p) => ({ category: p.category, sub: p.subcategory!, item: p.url.split("/").pop()! }));
+export const revalidate = 3600;
+export async function generateStaticParams() {
+  return [];
 }
 
-export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
-  const { category, sub, item } = await params;
-  return productMetadata(getProductByPath(category, sub, item));
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const row = await productFromItem((await params).item);
+  return row ? ocProductMetadata(row) : {};
 }
 
-export default async function ItemPage({ params }: { params: Promise<Params> }) {
+export default async function ItemPage({ params }: Props) {
   const { category, sub, item } = await params;
-  const product = getProductByPath(category, sub, item);
-  if (!product) notFound();
-  return <ProductPage product={product} />;
+  const path = `/catalog/${category}/${sub}/${item}`;
+  const row = await productFromItem(item);
+  if (!row) {
+    await legacyRedirect(path);
+    notFound();
+  }
+  ensureCanonical(row, path);
+  return <OcProductPage row={row} />;
 }

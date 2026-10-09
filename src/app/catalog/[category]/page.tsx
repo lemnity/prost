@@ -1,57 +1,46 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ListingPage } from "@/components/catalog/listing-page";
-import { catalogTree } from "@/lib/catalog/static-data";
-import {
-  collections,
-  getCategoryNode,
-  getCollectionProducts,
-  getProductsByCategory,
-  getSubcategories,
-  isCollection,
-} from "@/lib/catalog/products";
+import { OcListing, parseListing } from "@/components/catalog/oc-listing";
+import { catHref, childrenOf } from "@/lib/catalog/oasis-tree";
+import { listProducts } from "@/server/catalog";
+import { COLLECTIONS, isCollection, legacyRedirect, resolveCat, subSections, topSections } from "@/server/catalog-routes";
 
-type Params = { category: string };
+type Props = { params: Promise<{ category: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 
-export const dynamicParams = false;
-
-export function generateStaticParams(): Params[] {
-  return [
-    ...catalogTree.map((c) => ({ category: c.id })),
-    ...Object.keys(collections).map((category) => ({ category })),
-  ];
-}
-
-function titleOf(category: string): string | null {
-  if (isCollection(category)) return collections[category].title;
-  return getCategoryNode(category)?.title ?? null;
-}
-
-export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { category } = await params;
-  const title = titleOf(category);
+  const title = isCollection(category) ? COLLECTIONS[category].title : resolveCat(category)?.name;
   return title ? { title: `${title} — каталог ProStyle` } : {};
 }
 
-export default async function CategoryPage({ params }: { params: Promise<Params> }) {
+export default async function CategoryPage({ params, searchParams }: Props) {
   const { category } = await params;
-  const title = titleOf(category);
-  if (!title) notFound();
-
-  const crumbs = [
-    { label: "Главная", href: "/" },
-    { label: "Каталог", href: "/catalog" },
-    { label: title },
-  ];
+  const q = parseListing(await searchParams);
+  const crumbs = [{ label: "Главная", href: "/" }, { label: "Каталог", href: "/catalog" }];
 
   if (isCollection(category)) {
-    return <ListingPage title={title} crumbs={crumbs} products={getCollectionProducts(category)} />;
+    const col = COLLECTIONS[category];
+    const query = { ...q, sort: q.sort === "popular" ? col.sort : q.sort, inStock: q.inStock || col.inStock };
+    const { items, total } = await listProducts({ ...query, sale: col.sale, theme: col.theme });
+    return <OcListing title={col.title} crumbs={[...crumbs, { label: col.title }]} path={`/catalog/${category}`} query={q} items={items} total={total} sections={topSections()} />;
   }
 
-  const products = getProductsByCategory(category);
-  const chips = [
-    { title: "Все товары", href: `/catalog/${category}`, active: true, count: products.length },
-    ...getSubcategories(category).map((s) => ({ title: s.title, href: s.href, active: false, count: s.count })),
-  ];
-  return <ListingPage title={title} crumbs={crumbs} chips={chips} products={products} />;
+  const cat = resolveCat(category);
+  if (!cat) {
+    await legacyRedirect(`/catalog/${category}`);
+    notFound();
+  }
+  const filter = q.c ? childrenOf(cat.id).find((c) => String(c.id) === q.c) : undefined;
+  const { items, total } = await listProducts({ ...q, category: filter?.id ?? cat.id });
+  return (
+    <OcListing
+      title={cat.name}
+      crumbs={[...crumbs, { label: cat.name }]}
+      path={catHref(cat.id)}
+      query={q}
+      items={items}
+      total={total}
+      sections={subSections(cat)}
+    />
+  );
 }

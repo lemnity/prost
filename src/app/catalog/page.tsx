@@ -8,7 +8,6 @@ import { ConsultationCta } from "@/components/home/consultation-cta";
 import { asset } from "@/lib/asset";
 import { productsLabel } from "@/lib/format";
 import { getCatalogTree, getPopularCategories } from "@/lib/catalog";
-import { countByCategory } from "@/lib/catalog/products";
 
 export const metadata: Metadata = {
   title: "Каталог — ProStyle",
@@ -18,8 +17,9 @@ export const metadata: Metadata = {
 const MAX_SUBS = 6;
 
 export default async function CatalogPage() {
-  const [tree, popular] = await Promise.all([getCatalogTree(), getPopularCategories()]);
+  const [tree, popular] = await Promise.all([getCatalogTree(), getPopularCategories({ all: true })]);
   const images = new Map(popular.map((c) => [c.id, c.image]));
+  const counts = new Map(popular.map((c) => [c.id, c.count]));
   return (
     <main id="main">
       <Container className="pt-4 md:pt-6">
@@ -33,7 +33,7 @@ export default async function CatalogPage() {
             const image = images.get(cat.id);
             const subs = cat.children.slice(0, MAX_SUBS);
             const rest = cat.children.length - subs.length;
-            const count = countByCategory(cat.id);
+            const count = counts.get(cat.id) ?? 0;
             return (
               <li key={cat.id} className="flex flex-col rounded-[10px] bg-surface p-4">
                 <Link href={cat.href} className="group flex items-center gap-3">
