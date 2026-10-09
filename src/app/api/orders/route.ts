@@ -4,6 +4,7 @@ import { insertOrder, nextOrderNumber, priceItems } from "@/server/orders";
 import { openChat } from "@/server/chat";
 import { notifyManager, sendMail } from "@/server/notify";
 import { orderEmail } from "@/server/emails";
+import { cancelLink } from "@/server/cancel";
 import { buildOrder, deliveryLabel, paymentLabel, type Delivery, type OrderData, type Payment } from "@/lib/cart/order-text";
 import { cartTotal, type CartItem } from "@/lib/cart/store";
 import { greetName } from "@/lib/account/store";
@@ -68,6 +69,7 @@ export async function POST(req: Request) {
     address,
     comment: data.comment,
     chatLink: `${site}/account/chat?order=${number}`,
+    cancelLink: cancelLink(number),
   });
   // Клиенту — «Ваш заказ» (со скрытой копией менеджеру), менеджерам — уведомление со ссылкой в админку.
   const customerEmail = data.email || user?.email || "";
