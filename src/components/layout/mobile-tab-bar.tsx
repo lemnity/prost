@@ -14,6 +14,7 @@ export function MobileTabBar() {
   const cart = useCart().length;
   const favs = useFavorites().length;
   const session = useSession();
+  if (path.startsWith("/admin")) return null;
 
   const tabs = [
     { href: "/", label: "Главная", Icon: House, on: path === "/" },

@@ -34,7 +34,7 @@ function ProfileFormInner({ initial }: { initial: Profile }) {
     setErrors((p) => (k in p ? { ...p, [k]: undefined } : p));
   };
 
-  function submit(e: FormEvent<HTMLFormElement>) {
+  async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const errs: Errors = {};
     if (!d.name.trim()) errs.name = "Укажите имя";
@@ -44,10 +44,14 @@ function ProfileFormInner({ initial }: { initial: Profile }) {
     setErrors(errs);
     const first = ORDER.find((k) => errs[k]);
     if (first) return document.getElementById(`f-${first}`)?.focus();
-    updateProfile({
+    const res = await updateProfile({
       name: d.name.trim(), lastName: (d.lastName ?? "").trim(), middleName: (d.middleName ?? "").trim(), phone: d.phone.trim(), company: d.company.trim(), inn: d.inn,
       city: d.city.trim(), address: d.address.trim(), marketing: d.marketing,
     });
+    if (!res.ok) {
+      setErrors({ [res.field]: res.error } as Errors);
+      return document.getElementById(`f-${res.field}`)?.focus();
+    }
     setSaved(true);
     clearTimeout(timer.current);
     timer.current = setTimeout(() => setSaved(false), 3000);

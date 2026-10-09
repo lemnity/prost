@@ -1,8 +1,5 @@
 import type { CartItem } from "@/lib/cart/store";
-import { createChat, messageId } from "@/lib/chat/store";
-import { openingMessages } from "@/lib/chat/agent";
-import { getFavoritesSnapshot, toggleFavorite } from "@/lib/favorites/store";
-import { importAccount, type SavedOrder } from "./store";
+import type { Profile, SavedOrder } from "./store";
 
 export const DEMO = { email: "demo@prostyle.gifts", password: "demo2026" };
 
@@ -34,67 +31,49 @@ function order(number: string, daysAgo: number, now: number, items: CartItem[], 
   };
 }
 
-/** Демо-кабинет: компания, адреса, текущие и закрытые заявки, чат и избранное. */
-export async function seedDemo() {
-  const now = Date.now();
-  const o1 = order("PS-DEMO-0001", 1, now, [line(P.star, 50), line(P.pen, 200, { preorder: true }), line(P.mug, 10)]);
-  const o2 = order("PS-DEMO-0002", 4, now, [line(P.tee, 40)], { delivery: "Самовывоз из офиса", address: undefined });
-  const orders: SavedOrder[] = [
-    o1,
-    o2,
+export const DEMO_FAVORITES = [P.star, P.mug, P.ball];
+
+export function demoProfile(now: number): Profile {
+  return {
+    lastName: "Смирнова",
+    name: "Анна",
+    middleName: "Викторовна",
+    email: DEMO.email,
+    phone: "+7 (912) 345-67-89",
+    company: "ООО «Демо Компания»",
+    inn: "7203000000",
+    city: "Тюмень",
+    address: "ул. Республики, 14, офис 305",
+    marketing: true,
+    marketingAt: new Date(now - 120 * 86_400_000).toISOString(),
+    delivery: {
+      method: "courier",
+      defaultId: "office",
+      addresses: [
+        { id: "office", label: "Офис", city: "Тюмень", address: "ул. Республики, 14, офис 305", recipient: "Смирнова Анна", phone: "+7 (912) 345-67-89", comment: "Пропуск на ресепшн" },
+        { id: "branch", label: "Филиал", city: "Екатеринбург", address: "ул. Малышева, 51", recipient: "Иванов Пётр", phone: "+7 (922) 111-22-33", comment: "" },
+      ],
+    },
+  };
+}
+
+/** Заявки демо-кабинета: 2 текущие и 3 в истории. Номера — с префиксом PS-DEMO. */
+export function demoOrders(now: number): SavedOrder[] {
+  return [
+    order("PS-DEMO-0001", 1, now, [line(P.star, 50), line(P.pen, 200, { preorder: true }), line(P.mug, 10)]),
+    order("PS-DEMO-0002", 4, now, [line(P.tee, 40)], { delivery: "Самовывоз из офиса", address: undefined }),
     order("PS-DEMO-0003", 21, now, [line(P.tippo, 500), line(P.ball, 60)], { status: "done" }),
     order("PS-DEMO-0004", 34, now, [line(P.box, 100)], { status: "cancelled", delivery: "В регионы России", address: "Екатеринбург, ул. Малышева, 51" }),
     order("PS-DEMO-0005", 95, now, [line(P.mug, 30), line(P.pen, 300)], { payment: "Банковской картой" }),
   ];
-  await importAccount({
-    createdAt: new Date(now - 120 * 86_400_000).toISOString(),
-    password: DEMO.password,
-    orders,
-    profile: {
-      lastName: "Смирнова",
-      name: "Анна",
-      middleName: "Викторовна",
-      email: DEMO.email,
-      phone: "+7 (912) 345-67-89",
-      company: "ООО «Демо Компания»",
-      inn: "7203000000",
-      city: "Тюмень",
-      address: "ул. Республики, 14, офис 305",
-      marketing: true,
-      marketingAt: new Date(now - 120 * 86_400_000).toISOString(),
-      delivery: {
-        method: "courier",
-        defaultId: "office",
-        addresses: [
-          { id: "office", label: "Офис", city: "Тюмень", address: "ул. Республики, 14, офис 305", recipient: "Смирнова Анна", phone: "+7 (912) 345-67-89", comment: "Пропуск на ресепшн" },
-          { id: "branch", label: "Филиал", city: "Екатеринбург", address: "ул. Малышева, 51", recipient: "Иванов Пётр", phone: "+7 (922) 111-22-33", comment: "" },
-        ],
-      },
-    },
-  });
-
-  const started = now - 86_400_000;
-  createChat({
-    number: o1.number,
-    name: "Анна Викторовна",
-    createdAt: started,
-    total: o1.total,
-    items: o1.items,
-    orderText: `Заявка № ${o1.number} (демо)`,
-    mailOpened: true,
-    owner: DEMO.email,
-    messages: [
-      ...openingMessages({ name: "Анна Викторовна", number: o1.number, items: o1.items, total: o1.total }, started),
-      { id: messageId(), role: "user", text: "Нужно к 25 числу, нанесение — логотип на ручках и кружках.", at: started + 60_000 },
-      { id: messageId(), role: "agent", text: "Отлично, успеваем к 25 числу. Для ручек предложу тампопечать, для кружек — деколь. Пришлите логотип в векторе на pro-style@bk.ru — подготовлю расчёт и макеты.", at: started + 75_000 },
-    ],
-  });
-
-  const fav = new Set(getFavoritesSnapshot().map((f) => f.id));
-  for (const p of [P.star, P.mug, P.ball]) {
-    if (!fav.has(p.id)) {
-      const { price, ...rest } = p;
-      toggleFavorite({ ...rest, price, stock: 1000 });
-    }
-  }
 }
+
+/** Переписка по первой заявке после приветствия и разбора корзины. */
+export const DEMO_DIALOG = [
+  { role: "user" as const, text: "Нужно к 25 числу, нанесение — логотип на ручках и кружках.", offset: 60_000 },
+  {
+    role: "manager" as const,
+    text: "Отлично, успеваем к 25 числу. Для ручек предложу тампопечать, для кружек — деколь. Пришлите логотип в векторе прямо сюда в чат — подготовлю расчёт и макеты.",
+    offset: 75_000,
+  },
+];

@@ -20,7 +20,7 @@ function focusFirst<K extends string>(order: K[], errs: Partial<Record<K, string
 
 type LoginErrors = Partial<Record<"email" | "password", string>>;
 
-export function LoginForm() {
+export function LoginForm({ redirect = "/account", showRegister = true }: { redirect?: string; showRegister?: boolean } = {}) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -43,7 +43,7 @@ export function LoginForm() {
       document.getElementById(`f-${res.field}`)?.focus();
       return;
     }
-    router.push("/account");
+    router.push(redirect);
   }
 
   return (
@@ -83,12 +83,14 @@ export function LoginForm() {
       <button type="submit" disabled={busy} aria-busy={busy} className={`${submitCls} mt-2`}>
         {busy ? "Входим…" : "Войти"}
       </button>
+      {showRegister ? (
       <p className="text-center text-[14px] text-muted">
         Нет кабинета?{" "}
         <Link href="/account/register" className="font-semibold text-brand hover:text-brand-hover">
           Создать
         </Link>
       </p>
+      ) : null}
     </form>
   );
 }

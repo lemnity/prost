@@ -3,14 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Container } from "@/components/ui/container";
-import { seedDemo } from "@/lib/account/demo";
+import { signInDemo } from "@/lib/account/store";
 
 /** Создаёт демо-кабинет в этом браузере и открывает его. */
 export function DemoLogin() {
   const router = useRouter();
   useEffect(() => {
     let alive = true;
-    void seedDemo().then(() => alive && router.replace("/account"));
+    void signInDemo().then((r) => alive && r.ok && router.replace("/account"));
     return () => {
       alive = false;
     };

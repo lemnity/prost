@@ -12,13 +12,13 @@ import { site } from "@/content/site";
 import { addToCart, cartCount } from "@/lib/cart/store";
 import { greetName, isCurrentOrder, setOrderStatus, type OrderStatus, type SavedOrder } from "@/lib/account/store";
 import { useSession } from "@/lib/account/use-account";
-import { useChats } from "@/lib/chat/use-chats";
 
 export const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
 
 const STATUS: Record<OrderStatus | "archive", { label: string; cls: string }> = {
   new: { label: "Отправлена менеджеру", cls: "bg-new-bg text-new-text" },
+  work: { label: "В работе", cls: "bg-amber-100 text-amber-800" },
   done: { label: "Выполнена", cls: "bg-surface text-ink" },
   cancelled: { label: "Отменена", cls: "bg-brand-soft text-brand" },
   archive: { label: "В архиве", cls: "bg-surface text-muted" },
@@ -32,10 +32,9 @@ export function OrderCard({ order: o, current, open: initial = false }: { order:
   const [open, setOpen] = useState(initial);
   const [done, setDone] = useState(false);
   const [confirm, setConfirm] = useState(false);
-  const hasChat = !!useChats()[o.number];
   const n = cartCount(o.items);
   const id = `order-${o.number}`;
-  const status = STATUS[current ? "new" : o.status && o.status !== "new" ? o.status : "archive"];
+  const status = STATUS[current ? (o.status === "work" ? "work" : "new") : o.status && o.status !== "new" && o.status !== "work" ? o.status : "archive"];
   return (
     <article className="rounded-[14px] border border-line bg-white">
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 p-4 md:p-5">
@@ -84,12 +83,10 @@ export function OrderCard({ order: o, current, open: initial = false }: { order:
             {done ? "Добавлено в корзину" : "Повторить заказ"}
           </button>
           {done ? <Link href="/account/cart" className={buttonClass({ variant: "outline" })}>Перейти в корзину</Link> : null}
-          {hasChat ? (
-            <Link href={`/account/chat?order=${encodeURIComponent(o.number)}`} className={buttonClass({ variant: "outline" })}>
-              <MessageCircle size={16} aria-hidden="true" />
-              Чат по заявке
-            </Link>
-          ) : null}
+          <Link href={`/account/chat?order=${encodeURIComponent(o.number)}`} className={buttonClass({ variant: "outline" })}>
+            <MessageCircle size={16} aria-hidden="true" />
+            Чат по заявке
+          </Link>
           {current ? (
             <div className="flex flex-wrap items-center gap-3 sm:ml-auto">
               {confirm ? (

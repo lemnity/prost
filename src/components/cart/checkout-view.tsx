@@ -11,20 +11,17 @@ import { asset } from "@/lib/asset";
 import { plural } from "@/lib/plural";
 import { formatPriceValue } from "@/lib/format";
 import { site } from "@/content/site";
-import { MIN_ORDER, cartCount, cartDiscount, cartTotal, setPromo, type CartItem } from "@/lib/cart/store";
+import { MIN_ORDER, cartCount, cartDiscount, cartTotal, clearCart, setPromo, type CartItem } from "@/lib/cart/store";
 import { useCart, useHydrated, usePromo } from "@/lib/cart/use-cart";
 import {
-  buildOrder,
   deliveryLabel,
-  orderNumber,
   paymentLabel,
   type Delivery,
   type OrderData,
   type Payment,
 } from "@/lib/cart/order-text";
 import { buttonClass } from "@/components/ui/button";
-import { defaultAddress, fullName, greetName, saveOrder } from "@/lib/account/store";
-import { startChat } from "@/lib/chat/agent";
+import { api, defaultAddress, fullName, refreshSession } from "@/lib/account/store";
 import { useSession } from "@/lib/account/use-account";
 
 const field =
@@ -276,6 +273,8 @@ export function CheckoutView() {
   const [errors, setErrors] = useState<Errors>({});
   const router = useRouter();
   const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const session = useSession();
   const [prefilled, setPrefilled] = useState(false);
   // Данные кабинета подставляются один раз, не перетирая уже введённое.
@@ -316,7 +315,7 @@ export function CheckoutView() {
       />
     );
 
-  function submit(e: FormEvent<HTMLFormElement>) {
+  async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const clean: OrderData = {
       ...d,
@@ -330,36 +329,32 @@ export function CheckoutView() {
       document.getElementById(`f-${first}`)?.focus();
       return;
     }
-    const { text, href } = buildOrder(items, clean, promo);
-    const number = orderNumber();
-    saveOrder({
-      number,
-      date: new Date().toISOString(),
-      total,
-      items: [...items],
-      delivery: deliveryLabel[clean.delivery],
-      payment: paymentLabel[clean.payment],
-      status: "new",
-      ...(clean.delivery !== "pickup" ? { address: [clean.delivery === "region" ? clean.city : "", clean.address].filter(Boolean).join(", ") } : {}),
-    });
-    const name = session ? greetName(session.profile) : clean.name.split(/\s+/)[0];
-    startChat({
-      number,
-      name,
-      total,
-      items: [...items],
-      orderText: text,
-      mailOpened: href !== null,
-      owner: session?.profile.email ?? null,
-    });
+    setBusy(true);
+    setSubmitError("");
+    const r = await api<{ number: string }>("/api/orders", { method: "POST", body: JSON.stringify({ data: clean, items, promo }) });
+    if (!r.ok) {
+      setBusy(false);
+      setSubmitError(r.error);
+      return;
+    }
     setSent(true);
-    if (href) window.open(href, "_self");
-    router.push(`/account/chat?order=${encodeURIComponent(number)}`);
+    clearCart();
+    void refreshSession();
+    router.push(`/account/chat?order=${encodeURIComponent(r.data.number)}`);
   }
 
   const count = cartCount(items);
   const submitBtn = (
-    <button type="submit" className={`${btnPrimary} w-full`}>Отправить заказ</button>
+    <>
+      <button type="submit" disabled={busy} aria-busy={busy} className={`${btnPrimary} w-full disabled:cursor-wait`}>
+        {busy ? "Отправляем…" : "Отправить заказ"}
+      </button>
+      {submitError ? (
+        <p role="alert" className="mt-2 text-[13px] text-brand">
+          {submitError}. Или позвоните: <a href={site.phone.href} className="font-semibold underline">{site.phone.label}</a>
+        </p>
+      ) : null}
+    </>
   );
 
   return (

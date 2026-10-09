@@ -7,9 +7,8 @@ import { ChevronDown, Heart, LogOut, MessageCircle, Package, ShoppingCart, Truck
 import { Container } from "@/components/ui/container";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { buttonClass } from "@/components/ui/button";
-import { useHydrated } from "@/lib/cart/use-cart";
 import { fullName, isCurrentOrder, signOut } from "@/lib/account/store";
-import { useSession } from "@/lib/account/use-account";
+import { useSession, useSessionLoaded } from "@/lib/account/use-account";
 import { cartCount } from "@/lib/cart/store";
 import { useCart } from "@/lib/cart/use-cart";
 import { useFavorites } from "@/lib/favorites/use-favorites";
@@ -46,7 +45,7 @@ export function AccountShell({
   guest?: boolean;
   children: ReactNode;
 }) {
-  const hydrated = useHydrated();
+  const hydrated = useSessionLoaded();
   const session = useSession();
   const [now] = useState(() => Date.now());
   const counts: Partial<Record<AccountSection, number>> = {

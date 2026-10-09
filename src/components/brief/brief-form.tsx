@@ -10,6 +10,7 @@ import {
   BRANDBOOK, BUDGETS, CITIES, KINDS, buildBrief, type BriefData,
 } from "@/lib/brief-text";
 import { selectClass } from "@/components/ui/button";
+import { api } from "@/lib/account/store";
 
 const field =
   "mt-1.5 block w-full rounded-lg border border-line bg-white px-3.5 py-3 text-[15px] text-ink placeholder:text-faint focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand aria-[invalid=true]:border-brand";
@@ -139,7 +140,8 @@ export function BriefForm() {
   const [d, setD] = useState<BriefData>(INITIAL);
   const [consent, setConsent] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
-  const [done, setDone] = useState<ReturnType<typeof buildBrief> | null>(null);
+  const [done, setDone] = useState<(ReturnType<typeof buildBrief> & { sent: boolean }) | null>(null);
+  const [busy, setBusy] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
   function set<K extends keyof BriefData>(k: K, v: BriefData[K]) {
@@ -147,7 +149,7 @@ export function BriefForm() {
     setErrors((p) => (p[k] ? { ...p, [k]: undefined } : p));
   }
 
-  function submit(e: FormEvent) {
+  async function submit(e: FormEvent) {
     e.preventDefault();
     const clean = { ...d, company: d.company.trim(), website: d.website.trim(), name: d.name.trim(), qty: d.qty.trim(), idea: d.idea.trim(), occasion: d.occasion.trim() };
     const errs = validate(clean, consent);
@@ -159,9 +161,31 @@ export function BriefForm() {
       return;
     }
     const built = buildBrief(clean);
-    setDone(built);
+    setBusy(true);
+    const r = await api("/api/leads", { method: "POST", body: JSON.stringify({ kind: "brief", text: built.text, data: { company: clean.company, name: clean.name, phone: clean.phone, email: clean.email } }) });
+    setBusy(false);
+    setDone({ ...built, sent: r.ok });
     window.scrollTo({ top: 0, behavior: "smooth" });
-    if (built.href) window.location.href = built.href;
+    // Сервер недоступен — запасной путь через почтовую программу.
+    if (!r.ok && built.href) window.open(built.href, "_self");
+  }
+
+  if (done?.sent) {
+    return (
+      <div className="rounded-[14px] bg-surface p-5 md:p-8" role="status">
+        <div className="flex items-center gap-3">
+          <CheckCircle2 size={32} className="shrink-0 text-new-text" aria-hidden="true" />
+          <h2 className="text-[22px] font-bold md:text-[26px]">Бриф отправлен</h2>
+        </div>
+        <p className="mt-3 max-w-[60ch] text-[15px] text-muted">
+          Спасибо! Менеджер изучит задачу и свяжется с вами в рабочее время. Примеры и логотип можно прислать на{" "}
+          <a href={`mailto:${site.email}`} className="font-medium text-ink hover:text-brand">{site.email}</a>.
+        </p>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <button type="button" onClick={() => { setDone(null); setD(INITIAL); setConsent(false); }} className={btnOutline}>Заполнить новый бриф</button>
+        </div>
+      </div>
+    );
   }
 
   if (done) {
@@ -275,7 +299,9 @@ export function BriefForm() {
           </span>
         </label>
         {errors.consent ? <p id="b-consent-err" className="mt-1.5 text-[13px] text-brand">{errors.consent}</p> : null}
-        <button type="submit" className={`${btnPrimary} mt-5 w-full sm:w-auto`}>Отправить бриф</button>
+        <button type="submit" disabled={busy} aria-busy={busy} className={`${btnPrimary} mt-5 w-full sm:w-auto disabled:cursor-wait`}>
+          {busy ? "Отправляем…" : "Отправить бриф"}
+        </button>
       </section>
     </form>
   );

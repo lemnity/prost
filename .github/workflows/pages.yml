@@ -1,8 +1,7 @@
 name: Deploy to GitHub Pages
 
+# Боевой сайт — prostyle.agency (свой сервер). Статическую витрину на Pages собираем только вручную.
 on:
-  push:
-    branches: [feat/homepage, main]
   workflow_dispatch:
 
 permissions:

@@ -10,12 +10,11 @@ import { asset } from "@/lib/asset";
 import { formatPriceValue, formatQty } from "@/lib/format";
 import { plural } from "@/lib/plural";
 import { site } from "@/content/site";
-import { cartCount, clearCart } from "@/lib/cart/store";
-import { useCart } from "@/lib/cart/use-cart";
-import { AGENT, agentReply } from "@/lib/chat/agent";
-import { appendMessages, getChatsSnapshot, messageId, type Chat, type ChatMessage } from "@/lib/chat/store";
-import { ACCEPT, MAX_FILES, MAX_FILE_SIZE, extOf, formatSize, isImage, loadFile, saveFiles, type ChatFile } from "@/lib/chat/files";
-import { useChats, useNow } from "@/lib/chat/use-chats";
+import { cartCount } from "@/lib/cart/store";
+import { AGENT } from "@/lib/chat/agent";
+import { ACCEPT, MAX_FILES, MAX_FILE_SIZE, extOf, formatSize, isImage, type ChatFileMeta as ChatFile, type ChatInfo as Chat } from "@/lib/chat/types";
+import { useChat, useChatList } from "@/lib/chat/use-chat";
+import { useNow } from "@/lib/chat/use-now";
 
 const time = (ms: number) => new Date(ms).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
 
@@ -35,11 +34,11 @@ function Avatar({ size = "md" }: { size?: "sm" | "md" }) {
 
 export function ChatView() {
   const params = useSearchParams();
-  const chats = useChats();
-  const list = Object.values(chats).sort((a, b) => b.createdAt - a.createdAt);
+  const { chats: list, loaded } = useChatList();
   const wanted = params.get("order");
-  const chat = (wanted && chats[wanted]) || list[0];
+  const chat = list.find((c) => c.number === wanted) ?? list[0];
 
+  if (!loaded) return <div aria-busy="true" className="h-[480px] animate-pulse rounded-[14px] bg-surface motion-reduce:animate-none" />;
   if (!chat) {
     return (
       <div className="flex flex-col items-center rounded-[14px] bg-surface px-5 py-12 text-center">
@@ -80,15 +79,16 @@ export function ChatView() {
 }
 
 function ChatWindow({ chat }: { chat: Chat }) {
+  const { messages, error, send: post } = useChat(chat.number);
   const [draft, setDraft] = useState("");
   const [waiting, setWaiting] = useState(false);
   const [pending, setPending] = useState<Pending[]>([]);
   const [fileError, setFileError] = useState("");
   const [drag, setDrag] = useState(false);
-  const until = chat.messages.reduce((t, m) => Math.max(t, m.at), 0);
+  const until = messages.reduce((t, m) => Math.max(t, m.at), 0);
   const now = useNow(until, waiting);
-  const visible = chat.messages.filter((m) => m.at <= now);
-  const typing = waiting || chat.messages.some((m) => m.at > now && (m.typeAt ?? 0) <= now);
+  const visible = messages.filter((m) => m.at <= now);
+  const typing = waiting || messages.some((m) => m.at > now && (m.typeAt ?? 0) <= now);
   const logRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -139,19 +139,11 @@ function ChatWindow({ chat }: { chat: Chat }) {
     setPending([]);
     setFileError("");
     setWaiting(true);
-    let meta: ChatFile[] = [];
-    try {
-      meta = files.length ? await saveFiles(files) : [];
-    } catch {
-      setFileError("Не удалось сохранить файлы в браузере — отправьте их на почту");
+    const sentOk = await post(text, files);
+    if (!sentOk) {
+      setDraft(text);
+      setFileError("Сообщение не отправлено — проверьте связь и попробуйте ещё раз");
     }
-    const mine: ChatMessage = { id: messageId(), role: "user", text, at: Date.now(), ...(meta.length ? { files: meta } : {}) };
-    appendMessages(chat.number, [mine]);
-    const reply = await agentReply({ ...chat, messages: [...chat.messages, mine] }, text, files, meta);
-    // Ответы идут по очереди: следующий начинает «печататься» после предыдущего.
-    const busyUntil = getChatsSnapshot()[chat.number]?.messages.reduce((t, m) => Math.max(t, m.at), 0) ?? 0;
-    const shift = Math.max(0, busyUntil + 1200 - (reply.typeAt ?? reply.at));
-    appendMessages(chat.number, [{ ...reply, typeAt: (reply.typeAt ?? reply.at) + shift, at: reply.at + shift }]);
     setWaiting(false);
   }
 
@@ -267,7 +259,7 @@ function ChatWindow({ chat }: { chat: Chat }) {
             ))}
           </ul>
         ) : null}
-        {fileError ? <p role="alert" className="mb-2 text-[13px] text-brand">{fileError}</p> : null}
+        {fileError || error ? <p role="alert" className="mb-2 text-[13px] text-brand">{fileError || error}</p> : null}
         <div className="flex items-end gap-2">
           <input
             ref={fileRef}
@@ -332,7 +324,6 @@ function ChatWindow({ chat }: { chat: Chat }) {
 }
 
 function OrderSummary({ chat }: { chat: Chat }) {
-  const cart = useCart();
   const [copied, setCopied] = useState(false);
   const n = cartCount(chat.items);
   return (
@@ -343,9 +334,8 @@ function OrderSummary({ chat }: { chat: Chat }) {
       </p>
       <p className="mt-2 text-[20px] font-bold">от {formatPriceValue(chat.total)}</p>
       <p className="mt-3 text-[13px] leading-snug text-muted">
-        {chat.mailOpened
-          ? `Заявка подготовлена в вашем почтовом клиенте для отправки на ${site.email}. Если письмо не ушло — скопируйте текст ниже.`
-          : `Скопируйте текст заявки и отправьте на ${site.email} или позвоните ${site.phone.label}.`}
+        Заявка отправлена менеджеру. Ответы придут в этот чат, срочные вопросы — по телефону{" "}
+        <a href={site.phone.href} className="font-medium text-ink hover:text-brand">{site.phone.label}</a>.
       </p>
       <button
         type="button"
@@ -361,11 +351,6 @@ function OrderSummary({ chat }: { chat: Chat }) {
         {copied ? "Текст заявки скопирован" : "Скопировать текст заявки"}
       </button>
       <p role="status" className="sr-only">{copied ? "Текст заявки скопирован" : ""}</p>
-      {cart.length ? (
-        <button type="button" onClick={() => clearCart()} className="mt-3 w-full text-center text-[13px] font-medium text-muted underline hover:text-brand">
-          Очистить корзину
-        </button>
-      ) : null}
     </section>
   );
 }
@@ -423,28 +408,12 @@ function Attachments({ files, mine = false }: { files: ChatFile[]; mine?: boolea
 }
 
 function StoredFile({ file, mine, image = false }: { file: ChatFile; mine: boolean; image?: boolean }) {
-  const [url, setUrl] = useState<string | null>(null);
-  const [missing, setMissing] = useState(false);
-  useEffect(() => {
-    let alive = true;
-    let u: string | null = null;
-    void loadFile(file.id).then((blob) => {
-      if (!alive) return;
-      if (!blob) return setMissing(true);
-      u = URL.createObjectURL(blob);
-      setUrl(u);
-    });
-    return () => {
-      alive = false;
-      if (u) URL.revokeObjectURL(u);
-    };
-  }, [file.id]);
-
-  if (image && url) {
+  const url = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/files/${file.id}`;
+  if (image) {
     return (
       <a href={url} target="_blank" rel="noopener" title={file.name} className="block overflow-hidden rounded-[10px]">
-        {/* eslint-disable-next-line @next/next/no-img-element -- вложение из IndexedDB (blob:) */}
-        <img src={url} alt={file.name} className="aspect-square w-full max-w-[240px] bg-white object-cover" />
+        {/* eslint-disable-next-line @next/next/no-img-element -- вложение с сервера, доступ по сессии */}
+        <img src={url} alt={file.name} loading="lazy" className="aspect-square w-full max-w-[240px] bg-white object-cover" />
       </a>
     );
   }
@@ -456,19 +425,17 @@ function StoredFile({ file, mine, image = false }: { file: ChatFile; mine: boole
       <span className="min-w-0">
         <span className="block truncate text-[13px] font-medium">{file.name}</span>
         <span className={`block text-[11px] ${mine ? "text-white/75" : "text-muted"}`}>
-          {missing ? "Файл недоступен в этом браузере" : formatSize(file.size)}
+          {formatSize(file.size)}
         </span>
       </span>
-      {url ? <Download size={16} aria-hidden="true" className="ml-auto shrink-0 opacity-70" /> : null}
+      <Download size={16} aria-hidden="true" className="ml-auto shrink-0 opacity-70" />
     </>
   );
   const cls = `flex max-w-[280px] items-center gap-2.5 rounded-[10px] p-1.5 pr-3 ${mine ? "bg-white/10" : "bg-surface"}`;
-  return url ? (
+  return (
     <a href={url} download={file.name} className={`${cls} hover:opacity-90`}>
       {body}
     </a>
-  ) : (
-    <div className={cls}>{body}</div>
   );
 }
 

@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 import Link from "next/link";
-import { ArrowRight, Clock, Mail, MapPin, Phone } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock, Mail, MapPin, Phone } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { YandexMap, yandexRouteUrl } from "@/components/ui/yandex-map";
 import { PhoneInput } from "@/components/ui/phone-input";
@@ -10,6 +10,7 @@ import { site } from "@/content/site";
 import { SocialLinks } from "@/components/layout/social-links";
 import { offices, type CityId, type Office } from "@/content/company";
 import { buttonClass, selectClass } from "@/components/ui/button";
+import { api } from "@/lib/account/store";
 
 const ids = offices.map((o) => o.id);
 const formCities = offices.filter((o) => !o.soon);
@@ -72,6 +73,9 @@ function Cards({ o }: { o: Office }) {
 export function ContactsSection() {
   const [city, setCity] = useState<CityId>("tyumen");
   const [formCity, setFormCity] = useState<CityId>("tyumen");
+  const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [sendError, setSendError] = useState("");
 
   const select = useCallback((id: CityId, focus = false) => {
     setCity(id);
@@ -107,6 +111,24 @@ export function ContactsSection() {
 
   const target = offices.find((o) => o.id === formCity)!;
   const mailAction = `mailto:${site.email}?subject=${encodeURIComponent(`Заявка с сайта ProStyle — ${target.city}`)}`;
+
+  async function submitCallback(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const data = Object.fromEntries(
+      ["Имя", "Телефон", "Компания", "Комментарий"].map((k) => [k, String(fd.get(k) ?? "").trim()]),
+    );
+    data["Город"] = target.city;
+    const text = Object.entries(data).filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join("\n");
+    setBusy(true);
+    setSendError("");
+    const r = await api("/api/leads", { method: "POST", body: JSON.stringify({ kind: "callback", text, data }) });
+    setBusy(false);
+    if (r.ok) return setSent(true);
+    // Сервер недоступен — запасной путь через почтовую программу.
+    setSendError("Не удалось отправить — откроем письмо в почтовой программе");
+    window.open(`${mailAction}&body=${encodeURIComponent(text)}`, "_self");
+  }
 
   return (
     <>
@@ -196,10 +218,16 @@ export function ContactsSection() {
             Перезвоним в рабочее время и поможем подобрать подарки под ваш бюджет.
           </p>
           <div className="grid gap-4 lg:grid-cols-[2fr_1fr] lg:gap-6">
+            {sent ? (
+              <div role="status" className="flex flex-col items-start gap-3 rounded-[10px] bg-surface p-5 md:p-6">
+                <CheckCircle2 size={32} aria-hidden="true" className="text-new-text" />
+                <p className="text-[20px] font-bold">Заявка принята</p>
+                <p className="text-sm text-muted">Перезвоним в рабочее время: {(target.hours ?? site.hours).toLowerCase()}.</p>
+                <button type="button" onClick={() => setSent(false)} className={buttonClass({ variant: "outline" })}>Отправить ещё одну</button>
+              </div>
+            ) : (
             <form
-              action={mailAction}
-              method="post"
-              encType="text/plain"
+              onSubmit={submitCallback}
               className="grid gap-4 rounded-[10px] bg-surface p-5 sm:grid-cols-2 md:p-6"
             >
               <label className="block text-sm font-medium text-ink sm:col-span-2">
@@ -249,13 +277,16 @@ export function ContactsSection() {
               <div className="sm:col-span-2">
                 <button
                   type="submit"
-                  className={`${buttonClass({ size: "lg", px: "px-10", full: true })} sm:w-auto!`}
+                  disabled={busy}
+                  aria-busy={busy}
+                  className={`${buttonClass({ size: "lg", px: "px-10", full: true })} sm:w-auto! disabled:cursor-wait`}
                 >
-                  Отправить заявку
+                  {busy ? "Отправляем…" : "Отправить заявку"}
                 </button>
-                <p className="mt-2 text-xs text-muted">Откроется ваш почтовый клиент с готовым письмом</p>
+                {sendError ? <p role="alert" className="mt-2 text-xs text-brand">{sendError}</p> : null}
               </div>
             </form>
+            )}
             <div className="flex h-full flex-col gap-3">
               <aside className="rounded-[14px] bg-surface p-5 md:p-6">
                 <h3 className="text-[17px] font-semibold text-ink">Или позвоните</h3>

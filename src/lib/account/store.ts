@@ -1,10 +1,8 @@
 import type { CartItem } from "@/lib/cart/store";
 
 /**
- * Личный кабинет. Пока у сайта нет сервера, учётные записи живут в браузере
- * (как корзина и избранное); пароль хранится только как PBKDF2-хэш.
- * Когда появится API, заменить реализацию signIn/signUp/updateProfile/saveOrder —
- * интерфейс для компонентов останется прежним.
+ * Личный кабинет: данные на сервере (/api/me, /api/auth/*), сессия — httpOnly cookie.
+ * Здесь — клиентский снимок сессии для useSyncExternalStore и действия кабинета.
  */
 
 export type Profile = {
@@ -52,7 +50,8 @@ export const fullName = (p: Profile) => [p.lastName, p.name, p.middleName].filte
 export const greetName = (p: Profile) => [p.name, p.middleName].filter(Boolean).join(" ");
 
 /** new — отправлена менеджеру; done — получена; cancelled — отменена. */
-export type OrderStatus = "new" | "done" | "cancelled";
+/** new — отправлена; work — в работе у менеджера; done — выполнена; cancelled — отменена. */
+export type OrderStatus = "new" | "work" | "done" | "cancelled";
 
 export type SavedOrder = {
   number: string;
@@ -74,197 +73,125 @@ const STALE_DAYS = 60;
 /** Текущая ли заявка (не закрыта и не старше STALE_DAYS). */
 export function isCurrentOrder(o: SavedOrder, now: number): boolean {
   const status = o.status ?? "new";
-  return status === "new" && now - Date.parse(o.date) < STALE_DAYS * 86_400_000;
+  return (status === "new" || status === "work") && now - Date.parse(o.date) < STALE_DAYS * 86_400_000;
 }
 
-type Account = { profile: Profile; salt: string; hash: string; orders: SavedOrder[]; createdAt: string };
-type Db = { accounts: Record<string, Account>; session: string | null };
+export type Session = { profile: Profile; orders: readonly SavedOrder[]; createdAt: string; role: "user" | "admin" } | null;
 
-export type Session = { profile: Profile; orders: readonly SavedOrder[]; createdAt: string } | null;
+type MePayload = { user: { profile: Profile; createdAt: string; role: "user" | "admin" } | null; orders?: SavedOrder[] };
 
-export const ACCOUNT_KEY = "prostyle-account-v1";
-const MAX_ORDERS = 50;
-
-let db: Db = { accounts: {}, session: null };
 let session: Session = null;
+/** Ответ /api/me получен (до этого не показываем «войдите»). */
 let loaded = false;
+let loading: Promise<void> | null = null;
 const subs = new Set<() => void>();
+const emit = () => subs.forEach((cb) => cb());
 
-const normEmail = (e: string) => e.trim().toLowerCase();
-
-function isDb(x: unknown): x is Db {
-  if (typeof x !== "object" || x === null) return false;
-  const o = x as Record<string, unknown>;
-  return typeof o.accounts === "object" && o.accounts !== null && (o.session === null || typeof o.session === "string");
+function apply(p: MePayload) {
+  session = p.user ? Object.freeze({ ...p.user, orders: p.orders ?? [] }) : null;
+  loaded = true;
+  emit();
 }
 
-function derive() {
-  const acc = db.session ? db.accounts[db.session] : undefined;
-  session = acc ? Object.freeze({ profile: acc.profile, orders: acc.orders, createdAt: acc.createdAt }) : null;
-}
-
-function read() {
+export async function api<T>(path: string, init: RequestInit = {}): Promise<{ ok: true; data: T } | { ok: false; status: number; error: string; field?: string }> {
   try {
-    const raw = localStorage.getItem(ACCOUNT_KEY);
-    const data: unknown = raw ? JSON.parse(raw) : null;
-    db = isDb(data) ? data : { accounts: {}, session: null };
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}${path}`, {
+      credentials: "same-origin",
+      ...init,
+      headers: init.body && !(init.body instanceof FormData) ? { "Content-Type": "application/json", ...init.headers } : init.headers,
+    });
+    const data = (await res.json().catch(() => ({}))) as T & { error?: string; field?: string };
+    if (!res.ok) return { ok: false, status: res.status, error: data.error ?? "Ошибка сервера, попробуйте ещё раз", field: data.field };
+    return { ok: true, data };
   } catch {
-    db = { accounts: {}, session: null };
+    return { ok: false, status: 0, error: "Нет связи с сервером. Проверьте интернет и попробуйте ещё раз" };
   }
-  derive();
 }
 
-function commit() {
-  try {
-    localStorage.setItem(ACCOUNT_KEY, JSON.stringify(db));
-  } catch {}
-  derive();
-  subs.forEach((cb) => cb());
+/** Перечитать сессию с сервера. */
+export function refreshSession(): Promise<void> {
+  loading = api<MePayload>("/api/me", { cache: "no-store" }).then((r) => {
+    if (r.ok) apply(r.data);
+    else if (!loaded) apply({ user: null });
+    loading = null;
+  });
+  return loading;
 }
 
 function ensure() {
-  if (!loaded && typeof window !== "undefined") {
-    loaded = true;
-    read();
-  }
+  if (!loaded && !loading && typeof window !== "undefined") void refreshSession();
 }
 
-function onStorage(e: StorageEvent) {
-  if (e.key === ACCOUNT_KEY || e.key === null) {
-    read();
-    subs.forEach((cb) => cb());
-  }
+function onFocus() {
+  if (document.visibilityState === "visible") void refreshSession();
 }
 
 export function subscribeAccount(cb: () => void) {
   subs.add(cb);
-  if (subs.size === 1) window.addEventListener("storage", onStorage);
+  ensure();
+  if (subs.size === 1) document.addEventListener("visibilitychange", onFocus);
   return () => {
     subs.delete(cb);
-    if (subs.size === 0) window.removeEventListener("storage", onStorage);
+    if (subs.size === 0) document.removeEventListener("visibilitychange", onFocus);
   };
 }
 
 export function getSessionSnapshot(): Session {
-  ensure();
   return session;
 }
 export const getSessionServerSnapshot = (): Session => null;
+export const getLoadedSnapshot = () => loaded;
+export const getLoadedServerSnapshot = () => false;
 
-const hex = (b: ArrayBuffer | Uint8Array) =>
-  Array.from(b instanceof Uint8Array ? b : new Uint8Array(b), (x) => x.toString(16).padStart(2, "0")).join("");
+export type AuthResult = { ok: true } | { ok: false; field: string; error: string };
 
-async function hashPassword(password: string, salt: string): Promise<string> {
-  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
-  const bits = await crypto.subtle.deriveBits(
-    { name: "PBKDF2", hash: "SHA-256", salt: new TextEncoder().encode(salt), iterations: 120_000 },
-    key,
-    256,
-  );
-  return hex(bits);
+const result = (r: Awaited<ReturnType<typeof api<MePayload>>>, field = "password"): AuthResult => {
+  if (r.ok) {
+    apply(r.data);
+    return { ok: true };
+  }
+  return { ok: false, field: r.field ?? field, error: r.error };
+};
+
+export async function signUp(profile: Omit<Profile, "email"> & { email: string }, password: string): Promise<AuthResult> {
+  return result(await api<MePayload>("/api/auth/register", { method: "POST", body: JSON.stringify({ ...profile, password }) }), "email");
 }
 
-export type AuthResult = { ok: true } | { ok: false; field: "email" | "password"; error: string };
-
-export async function signUp(profile: Profile, password: string): Promise<AuthResult> {
-  ensure();
-  const email = normEmail(profile.email);
-  if (db.accounts[email]) {
-    return { ok: false, field: "email", error: "Кабинет с таким email уже есть — войдите" };
-  }
-  const salt = hex(crypto.getRandomValues(new Uint8Array(16)));
-  const hash = await hashPassword(password, salt);
-  db = {
-    accounts: { ...db.accounts, [email]: { profile: { ...profile, email, ...(profile.marketing ? { marketingAt: new Date().toISOString() } : {}) }, salt, hash, orders: [], createdAt: new Date().toISOString() } },
-    session: email,
-  };
-  commit();
-  return { ok: true };
+export async function signIn(email: string, password: string): Promise<AuthResult> {
+  return result(await api<MePayload>("/api/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }));
 }
 
-export async function signIn(emailRaw: string, password: string): Promise<AuthResult> {
-  ensure();
-  const email = normEmail(emailRaw);
-  const acc = db.accounts[email];
-  if (!acc) return { ok: false, field: "email", error: "Кабинет с таким email не найден" };
-  if ((await hashPassword(password, acc.salt)) !== acc.hash) {
-    return { ok: false, field: "password", error: "Неверный пароль" };
-  }
-  db = { ...db, session: email };
-  commit();
-  return { ok: true };
+export async function signInDemo(): Promise<AuthResult> {
+  return result(await api<MePayload>("/api/auth/demo", { method: "POST" }));
 }
 
 export function signOut() {
-  ensure();
-  db = { ...db, session: null };
-  commit();
+  apply({ user: null });
+  void api("/api/auth/logout", { method: "POST" });
 }
 
-export function updateProfile(patch: Omit<Profile, "email" | "marketingAt">) {
-  ensure();
-  const email = db.session;
-  const acc = email ? db.accounts[email] : undefined;
-  if (!email || !acc) return;
-  const marketingAt = patch.marketing
-    ? acc.profile.marketing ? acc.profile.marketingAt : new Date().toISOString()
-    : undefined;
-  const profile = { ...acc.profile, ...patch, email, marketingAt };
-  db = { ...db, accounts: { ...db.accounts, [email]: { ...acc, profile } } };
-  commit();
+export async function updateProfile(patch: Omit<Profile, "email" | "marketingAt">): Promise<AuthResult> {
+  return result(await api<MePayload>("/api/me", { method: "PATCH", body: JSON.stringify({ profile: patch }) }), "name");
 }
 
-/** Сохраняет отправленный заказ в историю текущего кабинета (если пользователь вошёл). */
-export function saveOrder(order: SavedOrder) {
-  ensure();
-  const email = db.session;
-  const acc = email ? db.accounts[email] : undefined;
-  if (!email || !acc) return;
-  const orders = [order, ...acc.orders.filter((o) => o.number !== order.number)].slice(0, MAX_ORDERS);
-  db = { ...db, accounts: { ...db.accounts, [email]: { ...acc, orders } } };
-  commit();
-}
-
-function patchAccount(fn: (acc: Account) => Account) {
-  ensure();
-  const email = db.session;
-  const acc = email ? db.accounts[email] : undefined;
-  if (!email || !acc) return;
-  db = { ...db, accounts: { ...db.accounts, [email]: fn(acc) } };
-  commit();
-}
-
-export function setOrderStatus(number: string, status: OrderStatus) {
-  patchAccount((acc) => ({ ...acc, orders: acc.orders.map((o) => (o.number === number ? { ...o, status } : o)) }));
-}
-
-export function updateDelivery(delivery: DeliveryPrefs) {
-  patchAccount((acc) => ({ ...acc, profile: { ...acc.profile, delivery } }));
+export async function updateDelivery(delivery: DeliveryPrefs): Promise<AuthResult> {
+  if (session) {
+    session = Object.freeze({ ...session, profile: { ...session.profile, delivery } });
+    emit();
+  }
+  return result(await api<MePayload>("/api/me", { method: "PATCH", body: JSON.stringify({ delivery }) }), "address");
 }
 
 export async function changePassword(current: string, next: string): Promise<AuthResult> {
-  ensure();
-  const email = db.session;
-  const acc = email ? db.accounts[email] : undefined;
-  if (!email || !acc) return { ok: false, field: "password", error: "Войдите в кабинет" };
-  if ((await hashPassword(current, acc.salt)) !== acc.hash) {
-    return { ok: false, field: "password", error: "Текущий пароль указан неверно" };
-  }
-  const salt = hex(crypto.getRandomValues(new Uint8Array(16)));
-  const hash = await hashPassword(next, salt);
-  patchAccount((a) => ({ ...a, salt, hash }));
-  return { ok: true };
+  const r = await api<{ ok: true }>("/api/me/password", { method: "POST", body: JSON.stringify({ current, next }) });
+  return r.ok ? { ok: true } : { ok: false, field: r.field ?? "current", error: r.error };
 }
 
-/** Создаёт (или пересоздаёт) кабинет с готовыми данными и входит в него — для демо-доступа. */
-export async function importAccount(data: { profile: Profile; password: string; orders: SavedOrder[]; createdAt: string }) {
-  ensure();
-  const email = normEmail(data.profile.email);
-  const salt = hex(crypto.getRandomValues(new Uint8Array(16)));
-  const hash = await hashPassword(data.password, salt);
-  db = {
-    accounts: { ...db.accounts, [email]: { profile: { ...data.profile, email }, salt, hash, orders: data.orders, createdAt: data.createdAt } },
-    session: email,
-  };
-  commit();
+export async function setOrderStatus(number: string, status: "done" | "cancelled") {
+  if (session) {
+    session = Object.freeze({ ...session, orders: session.orders.map((o) => (o.number === number ? { ...o, status } : o)) });
+    emit();
+  }
+  await api(`/api/orders/${encodeURIComponent(number)}`, { method: "PATCH", body: JSON.stringify({ status }) });
+  void refreshSession();
 }

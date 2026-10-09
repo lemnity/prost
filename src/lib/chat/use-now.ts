@@ -1,11 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
-import { getChatsServerSnapshot, getChatsSnapshot, subscribeChats } from "./store";
-
-export function useChats() {
-  return useSyncExternalStore(subscribeChats, getChatsSnapshot, getChatsServerSnapshot);
-}
+import { useEffect, useState } from "react";
 
 /** Текущее время; тикает, пока не наступит until (последнее отложенное сообщение) или пока active. */
 export function useNow(until: number, active = false) {
