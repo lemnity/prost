@@ -74,6 +74,28 @@ const SCHEMA = [
     INDEX (user_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   ) ENGINE=InnoDB`,
+  `CREATE TABLE IF NOT EXISTS oasis_products (
+    article VARCHAR(64) PRIMARY KEY,
+    oasis_id VARCHAR(32) NOT NULL,
+    group_id VARCHAR(32) NULL,
+    name VARCHAR(400) NOT NULL,
+    price DECIMAL(12,2) NOT NULL,
+    old_price DECIMAL(12,2) NULL,
+    stock INT NOT NULL DEFAULT 0,
+    remote INT NOT NULL DEFAULT 0,
+    deleted TINYINT(1) NOT NULL DEFAULT 0,
+    synced_at DATETIME NOT NULL,
+    INDEX (oasis_id)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+  `CREATE TABLE IF NOT EXISTS sync_log (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    source VARCHAR(32) NOT NULL,
+    started_at DATETIME NOT NULL,
+    finished_at DATETIME NULL,
+    items INT NOT NULL DEFAULT 0,
+    error TEXT NULL,
+    INDEX (source, id)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
   `CREATE TABLE IF NOT EXISTS leads (
     id INT AUTO_INCREMENT PRIMARY KEY,
     kind VARCHAR(16) NOT NULL,

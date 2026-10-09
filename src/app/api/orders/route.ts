@@ -34,7 +34,7 @@ export async function POST(req: Request) {
   };
   if (!data.name || !data.phone) return fail(400, "Укажите имя и телефон");
 
-  const items = priceItems(body.items);
+  const items = await priceItems(body.items);
   const total = Math.round(cartTotal(items) * 100) / 100;
   const promo = str(body.promo, 32).toUpperCase();
   const user = await currentUser();

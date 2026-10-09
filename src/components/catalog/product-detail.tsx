@@ -11,6 +11,7 @@ import { Countdown } from "@/components/home/countdown";
 import type { SaleRemaining } from "@/lib/sale";
 import { ProductImage } from "@/components/ui/product-image";
 import { buttonClass } from "@/components/ui/button";
+import { useLiveStock } from "@/lib/catalog/use-live-stock";
 import { FavoriteButton } from "@/components/favorites/favorite-button";
 
 type SizeRow = { size: string; stock: number; free: number; remote: number };
@@ -53,7 +54,7 @@ function availOf(v: VariantView, row: SizeRow | undefined): Avail {
 export function ProductDetail({
   title,
   brand,
-  variants,
+  variants: staticVariants,
   initial,
   saleInitial,
   children,
@@ -70,12 +71,25 @@ export function ProductDetail({
   const [index, setIndex] = useState(initial);
   const select = (i: number) => {
     setIndex(i);
-    const href = variants[i]?.href;
+    const href = staticVariants[i]?.href;
     if (href && i !== initial) router.push(href, { scroll: false });
   };
   const thumb = (u: string) => u.replace("size=2", "size=1");
   const [pick, setPick] = useState<{ key: string; size: string } | null>(null);
   const [bad, setBad] = useState<ReadonlySet<string>>(new Set());
+  // Живые данные склада Oasis поверх статики сборки (цена — кроме товаров распродажи).
+  const live = useLiveStock(staticVariants.map((x) => x.sku));
+  const variants = staticVariants.map((x) => {
+        const l = live[x.sku.trim().toLowerCase()];
+        if (!l) return x;
+        const sale = !!x.oldPrice && x.oldPrice > x.price;
+        const single = !x.info || x.info.length <= 1;
+        return {
+          ...x,
+          ...(sale || !(l.price > 0) ? {} : { price: l.price }),
+          ...(single ? { stock: l.deleted ? 0 : l.stock, info: [{ size: x.info?.[0]?.size ?? "", stock: l.deleted ? 0 : l.stock, free: l.deleted ? 0 : l.stock, remote: l.deleted ? 0 : l.remote }] } : {}),
+        };
+      });
   const v = variants[index] ?? variants[0];
   const multi = variants.length > 1;
   const rows = v.info ?? [];

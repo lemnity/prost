@@ -2,6 +2,7 @@ import { exec, json, query, type Row } from "./db";
 import type { CartItem } from "@/lib/cart/store";
 import type { SavedOrder, OrderStatus } from "@/lib/account/store";
 import { getProductByUrl } from "@/lib/catalog/products";
+import { liveByArticles, normArticle } from "./oasis";
 
 type OrderRow = Row & {
   number: string;
@@ -44,8 +45,9 @@ export const toAdmin = (r: OrderRow): AdminOrder => ({
   userId: r.user_id,
 });
 
-/** Цены — из каталога, если товар в нём есть (клиентским ценам не доверяем). */
-export function priceItems(items: CartItem[]): CartItem[] {
+/** Цены — со склада Oasis (живые) или из каталога; клиентским ценам не доверяем. Распродажа недели — по цене акции. */
+export async function priceItems(items: CartItem[]): Promise<CartItem[]> {
+  const live = await liveByArticles(items.map((i) => String(i.sku ?? ""))).catch(() => ({}) as Awaited<ReturnType<typeof liveByArticles>>);
   return items.slice(0, 200).map((i) => {
     const p = typeof i.url === "string" ? getProductByUrl(i.url) : null;
     const qty = Math.min(99999, Math.max(1, Math.floor(Number(i.qty)) || 1));
@@ -58,7 +60,10 @@ export function priceItems(items: CartItem[]): CartItem[] {
       qty,
       ...(i.preorder ? { preorder: true } : {}),
     };
-    if (p) return { ...base, price: p.price, ...(p.oldPrice && p.oldPrice > p.price ? { oldPrice: p.oldPrice } : {}) };
+    const l = live[normArticle(base.sku)];
+    if (p?.oldPrice && p.oldPrice > p.price) return { ...base, price: p.price, oldPrice: p.oldPrice };
+    if (l && l.price > 0) return { ...base, price: l.price };
+    if (p) return { ...base, price: p.price };
     const price = Math.max(0, Number(i.price) || 0);
     return { ...base, price, ...(i.oldPrice && Number(i.oldPrice) > price ? { oldPrice: Number(i.oldPrice) } : {}) };
   });
