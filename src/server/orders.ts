@@ -68,7 +68,11 @@ export async function nextOrderNumber(): Promise<string> {
   const d = new Date();
   const p = (n: number) => String(n).padStart(2, "0");
   const prefix = `PS-${p(d.getUTCFullYear() % 100)}${p(d.getUTCMonth() + 1)}${p(d.getUTCDate())}`;
-  const rows = await query<Row & { n: number }>("SELECT COUNT(*) AS n FROM orders WHERE number LIKE ?", [`${prefix}-%`]);
+  // Номер — от максимального за день (не от количества: после удаления заявок номера не совпадут).
+  const rows = await query<Row & { n: number | null }>(
+    "SELECT MAX(CAST(SUBSTRING_INDEX(number, '-', -1) AS UNSIGNED)) AS n FROM orders WHERE number LIKE ?",
+    [`${prefix}-%`],
+  );
   return `${prefix}-${String(Number(rows[0]?.n ?? 0) + 1).padStart(3, "0")}`;
 }
 

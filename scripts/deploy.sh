@@ -25,6 +25,6 @@ ln -sfn "/opt/prostyle/releases/$REL" /opt/prostyle/current.new && mv -Tf /opt/p
 systemctl restart prostyle
 for i in $(seq 1 30); do curl -fsS -o /dev/null http://127.0.0.1:3010/api/me && break; sleep 1; done
 curl -fsS -o /dev/null http://127.0.0.1:3010/api/me && echo "релиз $REL запущен"
-# Храним три последних релиза.
-ls -1dt /opt/prostyle/releases/* | tail -n +4 | xargs -r rm -rf
+# Храним два последних релиза.
+ls -1dt /opt/prostyle/releases/* | tail -n +3 | xargs -r rm -rf
 REMOTE
