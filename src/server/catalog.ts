@@ -67,8 +67,25 @@ const ORDER: Record<Sort, string> = {
   new: "id DESC",
 };
 
+type Listing = { items: Product[]; total: number };
+
+/** Кэш выдачи на 10 минут: склад обновляется раз в час, а запрос по всему каталогу тяжёлый для слабого сервера. */
+const CACHE_MS = 10 * 60_000;
+const cache = new Map<string, { at: number; value: Promise<Listing> }>();
+
 /** Список товаров раздела/поиска: одна карточка на модель (color_group_id). */
-export async function listProducts(p: ListParams): Promise<{ items: Product[]; total: number }> {
+export function listProducts(p: ListParams): Promise<Listing> {
+  const key = JSON.stringify(p);
+  const hit = cache.get(key);
+  if (hit && Date.now() - hit.at < CACHE_MS) return hit.value;
+  if (cache.size > 500) cache.clear();
+  const value = queryListing(p);
+  cache.set(key, { at: Date.now(), value });
+  value.catch(() => cache.delete(key));
+  return value;
+}
+
+async function queryListing(p: ListParams): Promise<Listing> {
   const where = ["p.deleted = 0"];
   const args: unknown[] = [];
   let join = "";
