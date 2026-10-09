@@ -7,6 +7,8 @@ const pages = process.env.GITHUB_PAGES === "true";
 const basePath = pages ? "/prost" : "";
 
 const nextConfig: NextConfig = {
+  // Боевая сборка — в отдельную папку (scripts/deploy.sh), чтобы не мешать запущенному dev-серверу.
+  ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
   ...(pages ? { output: "export", basePath, trailingSlash: true } : { output: "standalone" }),
   env: { NEXT_PUBLIC_BASE_PATH: basePath },
   images: {
@@ -19,7 +21,7 @@ const nextConfig: NextConfig = {
   },
   turbopack: { root: path.resolve(__dirname) },
   // Пути вложений вычисляются во время работы — трассировщик иначе тащит в сборку весь проект.
-  outputFileTracingExcludes: { "*": ["./out/**", "./docs/**", "./src/**", "./loading/**", "./scripts/**", "./*.md", "./.github/**"] },
+  outputFileTracingExcludes: { "*": ["./.next/**", "./out/**", "./docs/**", "./src/**", "./loading/**", "./scripts/**", "./*.md", "./.github/**"] },
 };
 
 export default nextConfig;

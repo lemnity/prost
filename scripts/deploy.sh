@@ -7,16 +7,18 @@ KEY="${DEPLOY_KEY:-$HOME/.ssh/prostyle_deploy}"
 SSH="ssh -i $KEY -o BatchMode=yes"
 REL="$(date +%Y%m%d-%H%M%S)"
 cd "$(dirname "$0")/.."
+DIST=.next-prod
+export NEXT_DIST_DIR="$DIST"
 
 if [[ "${SKIP_BUILD:-}" != "1" ]]; then
-  rm -rf .next out
+  rm -rf "$DIST" out
   npm run build
 fi
-cp -r public .next/standalone/
-mkdir -p .next/standalone/.next && rm -rf .next/standalone/.next/static && cp -r .next/static .next/standalone/.next/static
+cp -r public "$DIST/standalone/"
+mkdir -p "$DIST/standalone/$DIST" && rm -rf "$DIST/standalone/$DIST/static" && cp -r "$DIST/static" "$DIST/standalone/$DIST/static"
 
 $SSH "$HOST" "mkdir -p /opt/prostyle/releases"
-rsync -az --delete -e "$SSH" --link-dest=/opt/prostyle/current/ .next/standalone/ "$HOST:/opt/prostyle/releases/$REL/"
+rsync -az --delete -e "$SSH" --link-dest=/opt/prostyle/current/ "$DIST/standalone/" "$HOST:/opt/prostyle/releases/$REL/"
 $SSH "$HOST" bash -s "$REL" <<'REMOTE'
 set -euo pipefail
 REL="$1"

@@ -49,6 +49,12 @@ export function SiteFooter() {
               {site.email}
             </a>
           </li>
+          <li className="pt-1">
+            <Link href="/admin" rel="nofollow" className="inline-flex items-center gap-1.5 text-[12px] text-muted hover:text-brand">
+              <LockKeyhole size={13} aria-hidden="true" />
+              Вход для админов
+            </Link>
+          </li>
         </ul>
         <SocialLinks size={32} className="col-span-2 items-start gap-3 xl:col-span-1" />
       </Container>
@@ -65,11 +71,7 @@ export function SiteFooter() {
               ))}
             </ul>
           </nav>
-          <div className="flex items-center justify-center gap-5 lg:shrink-0 lg:justify-end">
-            <Link href="/admin" className="inline-flex items-center gap-1.5 text-muted hover:text-brand" rel="nofollow">
-              <LockKeyhole size={13} aria-hidden="true" />
-              Вход для админов
-            </Link>
+          <div className="flex justify-center lg:shrink-0 lg:justify-end">
             <DevCredit />
           </div>
         </div>
