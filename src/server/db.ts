@@ -7,7 +7,7 @@ function pool(): Pool {
   if (!g.__psPool) {
     const url = process.env.DATABASE_URL;
     if (!url) throw new Error("DATABASE_URL не задан");
-    g.__psPool = mysql.createPool({ uri: url, connectionLimit: 5, charset: "utf8mb4", timezone: "Z", dateStrings: false });
+    g.__psPool = mysql.createPool({ uri: url, connectionLimit: 5, charset: "utf8mb4_unicode_ci", timezone: "Z", dateStrings: false });
   }
   return g.__psPool;
 }
@@ -20,14 +20,14 @@ const SCHEMA = [
     role ENUM('user','admin') NOT NULL DEFAULT 'user',
     profile JSON NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
   `CREATE TABLE IF NOT EXISTS sessions (
     token_hash CHAR(64) PRIMARY KEY,
     user_id INT NOT NULL,
     expires_at DATETIME NOT NULL,
     INDEX (user_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-  ) ENGINE=InnoDB`,
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
   `CREATE TABLE IF NOT EXISTS orders (
     id INT AUTO_INCREMENT PRIMARY KEY,
     number VARCHAR(32) NOT NULL UNIQUE,
@@ -45,7 +45,7 @@ const SCHEMA = [
     status VARCHAR(16) NOT NULL DEFAULT 'new',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX (user_id), INDEX (guest_hash), INDEX (status)
-  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
   `CREATE TABLE IF NOT EXISTS messages (
     id INT AUTO_INCREMENT PRIMARY KEY,
     order_number VARCHAR(32) NOT NULL,
@@ -56,7 +56,7 @@ const SCHEMA = [
     visible_at BIGINT NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX (order_number, id)
-  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
   `CREATE TABLE IF NOT EXISTS files (
     id CHAR(24) PRIMARY KEY,
     order_number VARCHAR(32) NOT NULL,
@@ -65,7 +65,7 @@ const SCHEMA = [
     mime VARCHAR(120) NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX (order_number)
-  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
   `CREATE TABLE IF NOT EXISTS email_tokens (
     token_hash CHAR(64) PRIMARY KEY,
     user_id INT NOT NULL,
@@ -73,7 +73,7 @@ const SCHEMA = [
     expires_at DATETIME NOT NULL,
     INDEX (user_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-  ) ENGINE=InnoDB`,
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
   `CREATE TABLE IF NOT EXISTS oc_categories (
     id INT PRIMARY KEY,
     parent_id INT NULL,
@@ -85,7 +85,7 @@ const SCHEMA = [
     sort INT NOT NULL DEFAULT 0,
     product_count INT NOT NULL DEFAULT 0,
     INDEX (parent_id), INDEX (slug)
-  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
   `CREATE TABLE IF NOT EXISTS oc_products (
     id VARCHAR(32) PRIMARY KEY,
     article VARCHAR(64) NOT NULL,
@@ -111,13 +111,13 @@ const SCHEMA = [
     updated_at DATETIME NULL,
     synced_at DATETIME NOT NULL,
     INDEX (article), INDEX (group_id), INDEX (color_group_id), INDEX (primary_cat), INDEX (deleted, rating)
-  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
   `CREATE TABLE IF NOT EXISTS oc_product_categories (
     product_id VARCHAR(32) NOT NULL,
     category_id INT NOT NULL,
     PRIMARY KEY (product_id, category_id),
     INDEX (category_id)
-  ) ENGINE=InnoDB`,
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
   `CREATE TABLE IF NOT EXISTS oasis_products (
     article VARCHAR(64) PRIMARY KEY,
     oasis_id VARCHAR(32) NOT NULL,
@@ -130,7 +130,7 @@ const SCHEMA = [
     deleted TINYINT(1) NOT NULL DEFAULT 0,
     synced_at DATETIME NOT NULL,
     INDEX (oasis_id)
-  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
   `CREATE TABLE IF NOT EXISTS sync_log (
     id INT AUTO_INCREMENT PRIMARY KEY,
     source VARCHAR(32) NOT NULL,
@@ -139,7 +139,7 @@ const SCHEMA = [
     items INT NOT NULL DEFAULT 0,
     error TEXT NULL,
     INDEX (source, id)
-  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
   `CREATE TABLE IF NOT EXISTS leads (
     id INT AUTO_INCREMENT PRIMARY KEY,
     kind VARCHAR(16) NOT NULL,
@@ -147,7 +147,7 @@ const SCHEMA = [
     status VARCHAR(16) NOT NULL DEFAULT 'new',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX (kind, status)
-  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
 ];
 
 /** Изменения уже созданных таблиц (MySQL 8 не умеет ADD COLUMN IF NOT EXISTS — дубликаты пропускаем). */
