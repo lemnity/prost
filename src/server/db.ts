@@ -118,6 +118,14 @@ const SCHEMA = [
     PRIMARY KEY (product_id, category_id),
     INDEX (category_id)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+  `CREATE TABLE IF NOT EXISTS category_map (
+    supplier VARCHAR(16) NOT NULL,
+    supplier_cat VARCHAR(64) NOT NULL,
+    supplier_name VARCHAR(255) NOT NULL,
+    category_id INT NULL,
+    auto TINYINT(1) NOT NULL DEFAULT 1,
+    PRIMARY KEY (supplier, supplier_cat)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
   `CREATE TABLE IF NOT EXISTS oasis_products (
     article VARCHAR(64) PRIMARY KEY,
     oasis_id VARCHAR(32) NOT NULL,
@@ -153,6 +161,9 @@ const SCHEMA = [
 /** Изменения уже созданных таблиц (MySQL 8 не умеет ADD COLUMN IF NOT EXISTS — дубликаты пропускаем). */
 const ALTERS = [
   "ALTER TABLE users ADD COLUMN email_verified_at DATETIME NULL",
+  // Несколько складов: у товара — поставщик; разделы поставщиков сопоставляются с единым деревом (oc_categories).
+  "ALTER TABLE oc_products ADD COLUMN supplier VARCHAR(16) NOT NULL DEFAULT 'oasis' AFTER id",
+  "ALTER TABLE oc_products ADD INDEX supplier_idx (supplier)",
 ];
 
 function migrate(): Promise<void> {
@@ -163,7 +174,7 @@ function migrate(): Promise<void> {
         try {
           await pool().query(sql);
         } catch (e) {
-          if ((e as { errno?: number }).errno !== 1060) throw e; // 1060 — поле уже есть
+          if (![1060, 1061].includes((e as { errno?: number }).errno ?? 0)) throw e; // 1060/1061 — поле/индекс уже есть
         }
       }
     })().catch((e) => {

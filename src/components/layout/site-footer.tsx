@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MapPin } from "lucide-react";
+import { LockKeyhole, MapPin } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { site } from "@/content/site";
 import { CurrentYear } from "./current-year";
@@ -65,7 +65,11 @@ export function SiteFooter() {
               ))}
             </ul>
           </nav>
-          <div className="flex justify-center lg:shrink-0 lg:justify-end">
+          <div className="flex items-center justify-center gap-5 lg:shrink-0 lg:justify-end">
+            <Link href="/admin" className="inline-flex items-center gap-1.5 text-muted hover:text-brand" rel="nofollow">
+              <LockKeyhole size={13} aria-hidden="true" />
+              Вход для админов
+            </Link>
             <DevCredit />
           </div>
         </div>
