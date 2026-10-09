@@ -1,14 +1,20 @@
-import { getCatalogTree, getProductOfDay } from "@/lib/catalog";
+import { getCatalogTree } from "@/lib/catalog";
+import { catByName, resolveCat } from "@/lib/catalog/oasis-tree";
 import type { MenuData } from "@/lib/catalog/menu";
+import { productsOfDay } from "@/server/catalog";
 
-export const dynamic = "force-static";
+// «Товар дня» берётся из базы на сутки, поэтому меню собирается при запросе (браузер кэширует на час).
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   const tree = await getCatalogTree();
+  const ids = new Map(tree.map((c) => [c.id, (resolveCat(c.id) ?? catByName(c.title))?.id]));
+  const picks = await productsOfDay([...ids.values()].filter((v): v is number => !!v)).catch(() => ({}) as Awaited<ReturnType<typeof productsOfDay>>);
   const potd: MenuData["potd"] = {};
   for (const c of tree) {
-    const p = await getProductOfDay(c.id);
-    if (p) potd[c.id] = { title: p.title, image: p.image, url: p.url, priceFrom: p.priceFrom };
+    const id = ids.get(c.id);
+    const p = id ? picks[id] : undefined;
+    if (p) potd[c.id] = p;
   }
-  return Response.json({ tree, potd } satisfies MenuData);
+  return Response.json({ tree, potd } satisfies MenuData, { headers: { "Cache-Control": "public, max-age=3600" } });
 }

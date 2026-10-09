@@ -1,5 +1,5 @@
 // Дерево каталога — единое (основа Oasis), из снимка src/data/oasis-tree.json; подборки главной — статические.
-import { newProducts, saleProducts, productOfDay, newYearPicks, popularCategories } from "./static-data";
+import { newProducts, saleProducts, newYearPicks, popularCategories } from "./static-data";
 import { topCategories, topNodes } from "./oasis-tree";
 import type { CatalogNode, Category, Product } from "./types";
 
@@ -29,10 +29,6 @@ export async function getPopularCategories(opts: { all?: boolean } = {}): Promis
 
 export async function getCatalogTree(): Promise<CatalogNode[]> {
   return topNodes();
-}
-
-export async function getProductOfDay(categoryId: string): Promise<Product | null> {
-  return productOfDay[categoryId] ?? null;
 }
 
 export async function getNewYearPicks(limit = 7): Promise<Product[]> {

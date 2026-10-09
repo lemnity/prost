@@ -214,3 +214,28 @@ export async function rowByArticle(article: string): Promise<OcRow | null> {
   const [r] = await query<OcRow>("SELECT * FROM oc_products WHERE article = ? AND deleted = 0 LIMIT 1", [article]);
   return r ?? null;
 }
+
+export type DayPick = { title: string; image: string; url: string; priceFrom: number };
+let dayCache: { day: string; value: Promise<Record<number, DayPick>> } | null = null;
+
+/** «Товар дня» для разделов меню: случайный на сутки (по Москве) товар с фото, которого много на складе. */
+export function productsOfDay(categoryIds: number[]): Promise<Record<number, DayPick>> {
+  const day = new Date().toLocaleDateString("ru-RU", { timeZone: "Europe/Moscow" });
+  if (dayCache?.day === day) return dayCache.value;
+  const value = (async () => {
+    if (!categoryIds.length) return {};
+    const rows = await query<OcRow & { category_id: number }>(
+      `SELECT * FROM (
+         SELECT pc.category_id, p.*, ROW_NUMBER() OVER (PARTITION BY pc.category_id ORDER BY CRC32(CONCAT(p.id, ?))) rn
+         FROM oc_product_categories pc
+         JOIN oc_products p ON p.id = pc.product_id AND p.deleted = 0 AND p.cover IS NOT NULL AND p.price > 0 AND p.stock + p.remote >= 50
+         WHERE pc.category_id IN (?)
+       ) x WHERE rn = 1`,
+      [day, categoryIds],
+    );
+    return Object.fromEntries(rows.map((r) => [r.category_id, { title: r.name, image: coverOf(r), url: urlOf(r), priceFrom: Number(r.price) }]));
+  })();
+  dayCache = { day, value };
+  value.catch(() => (dayCache = null));
+  return value;
+}
