@@ -61,7 +61,8 @@ export function syncOasis(): Promise<{ items: number }> {
             old > price ? old : null,
             msk,
             Math.max(0, total - msk),
-            p.is_deleted || p.is_stopped ? 1 : 0,
+            // is_stopped — производство остановлено, но остатки продаются; снят только is_deleted.
+            p.is_deleted ? 1 : 0,
             now,
           ];
         });
