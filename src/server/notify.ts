@@ -2,7 +2,8 @@ import nodemailer, { type Transporter } from "nodemailer";
 
 /**
  * Почта и уведомления. Настройки — в /opt/prostyle/.env:
- *  SMTP_HOST, SMTP_PORT (465/587), SMTP_USER, SMTP_PASS, MAIL_FROM — ящик-отправитель;
+ *  SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, MAIL_FROM — отправка (127.0.0.1:25 — свой Postfix с DKIM, без логина);
+ *  MAIL_REPLY_TO — куда приходят ответы клиентов на письма;
  *  MAIL_TO   — менеджерам (через запятую), по умолчанию pro-style@bk.ru и pro-style24@bk.ru;
  *  MAIL_COPY — скрытая копия всех писем клиентам, по умолчанию pro-style24@bk.ru;
  *  TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID — дубль уведомлений в Telegram (по желанию).
@@ -15,9 +16,17 @@ let transport: Transporter | null | undefined;
 function smtp(): Transporter | null {
   if (transport !== undefined) return transport;
   const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
-  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) return (transport = null);
-  const port = Number(SMTP_PORT || 465);
-  transport = nodemailer.createTransport({ host: SMTP_HOST, port, secure: port === 465, auth: { user: SMTP_USER, pass: SMTP_PASS } });
+  if (!SMTP_HOST) return (transport = null);
+  const port = Number(SMTP_PORT || (SMTP_USER ? 465 : 25));
+  const local = SMTP_HOST === "127.0.0.1" || SMTP_HOST === "localhost";
+  transport = nodemailer.createTransport({
+    host: SMTP_HOST,
+    port,
+    secure: port === 465,
+    // Свой Postfix на этом же сервере — без логина и без TLS; внешний SMTP — с авторизацией.
+    ...(SMTP_USER && SMTP_PASS ? { auth: { user: SMTP_USER, pass: SMTP_PASS } } : {}),
+    ...(local ? { ignoreTLS: true } : {}),
+  });
   return transport;
 }
 
@@ -32,9 +41,10 @@ export async function sendMail({ to, subject, text, html, copy = true }: Mail): 
     return false;
   }
   try {
-    const from = process.env.MAIL_FROM || `ProStyle <${process.env.SMTP_USER}>`;
+    const from = process.env.MAIL_FROM || `ProStyle <${process.env.SMTP_USER || "noreply@prostyle.agency"}>`;
+    const replyTo = process.env.MAIL_REPLY_TO || undefined;
     const bcc = copy && COPY && !recipients.includes(COPY) ? COPY : undefined;
-    const info = await t.sendMail({ from, to: recipients, bcc, subject, text, html });
+    const info = await t.sendMail({ from, replyTo, to: recipients, bcc, subject, text, html });
     // Тестовый SMTP (ethereal.email) — ссылка на предпросмотр письма в лог.
     if (process.env.SMTP_HOST?.includes("ethereal")) console.info(`[mail] предпросмотр: ${nodemailer.getTestMessageUrl(info)}`);
     return true;
