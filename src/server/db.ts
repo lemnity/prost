@@ -74,6 +74,50 @@ const SCHEMA = [
     INDEX (user_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   ) ENGINE=InnoDB`,
+  `CREATE TABLE IF NOT EXISTS oc_categories (
+    id INT PRIMARY KEY,
+    parent_id INT NULL,
+    root INT NULL,
+    level TINYINT NOT NULL,
+    slug VARCHAR(190) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    path VARCHAR(500) NOT NULL,
+    sort INT NOT NULL DEFAULT 0,
+    product_count INT NOT NULL DEFAULT 0,
+    INDEX (parent_id), INDEX (slug)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+  `CREATE TABLE IF NOT EXISTS oc_products (
+    id VARCHAR(32) PRIMARY KEY,
+    article VARCHAR(64) NOT NULL,
+    group_id VARCHAR(32) NULL,
+    color_group_id VARCHAR(32) NULL,
+    slug VARCHAR(120) NOT NULL,
+    name VARCHAR(400) NOT NULL,
+    full_name VARCHAR(500) NULL,
+    description MEDIUMTEXT NULL,
+    price DECIMAL(12,2) NOT NULL,
+    old_price DECIMAL(12,2) NULL,
+    rating INT NOT NULL DEFAULT 0,
+    size VARCHAR(64) NULL,
+    colors JSON NULL,
+    attributes JSON NULL,
+    images JSON NULL,
+    categories JSON NULL,
+    primary_cat INT NULL,
+    brand_id INT NULL,
+    stock INT NOT NULL DEFAULT 0,
+    remote INT NOT NULL DEFAULT 0,
+    deleted TINYINT(1) NOT NULL DEFAULT 0,
+    updated_at DATETIME NULL,
+    synced_at DATETIME NOT NULL,
+    INDEX (article), INDEX (group_id), INDEX (color_group_id), INDEX (primary_cat), INDEX (deleted, rating)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+  `CREATE TABLE IF NOT EXISTS oc_product_categories (
+    product_id VARCHAR(32) NOT NULL,
+    category_id INT NOT NULL,
+    PRIMARY KEY (product_id, category_id),
+    INDEX (category_id)
+  ) ENGINE=InnoDB`,
   `CREATE TABLE IF NOT EXISTS oasis_products (
     article VARCHAR(64) PRIMARY KEY,
     oasis_id VARCHAR(32) NOT NULL,
@@ -129,6 +173,8 @@ function migrate(): Promise<void> {
   }
   return g.__psMigrated;
 }
+
+export const getPool = (): Pool => pool();
 
 export async function query<T extends RowDataPacket>(sql: string, params: unknown[] = []): Promise<T[]> {
   await migrate();
