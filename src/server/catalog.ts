@@ -230,10 +230,19 @@ export function productsOfDay(categoryIds: number[]): Promise<Record<number, Day
          FROM oc_product_categories pc
          JOIN oc_products p ON p.id = pc.product_id AND p.deleted = 0 AND p.cover IS NOT NULL AND p.price > 0 AND p.stock + p.remote >= 50
          WHERE pc.category_id IN (?)
-       ) x WHERE rn = 1`,
+       ) x WHERE rn <= 5 ORDER BY category_id, rn`,
       [day, categoryIds],
     );
-    return Object.fromEntries(rows.map((r) => [r.category_id, { title: r.name, image: coverOf(r), url: urlOf(r), priceFrom: Number(r.price) }]));
+    // Разделы пересекаются (наборы, коллекции) — один товар не показываем дважды.
+    const used = new Set<string>();
+    const out: Record<number, DayPick> = {};
+    for (const id of categoryIds) {
+      const r = rows.find((x) => x.category_id === id && !used.has(x.color_group_id ?? x.id));
+      if (!r) continue;
+      used.add(r.color_group_id ?? r.id);
+      out[id] = { title: r.name.trim(), image: coverOf(r), url: urlOf(r), priceFrom: Number(r.price) };
+    }
+    return out;
   })();
   dayCache = { day, value };
   value.catch(() => (dayCache = null));
