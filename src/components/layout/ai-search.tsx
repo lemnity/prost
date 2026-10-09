@@ -88,11 +88,11 @@ export function AiSearch() {
     headerInput.current?.focus();
   }
 
-  function openWith(text: string, send = false) {
+  /** Открыть чат: сначала приветствие, затем запрос из поля поиска (если есть) уходит помощнику. */
+  function openWith(text: string) {
     setOpen(true);
-    if (send && text.trim()) void ask(text);
-    else setDraft(text);
     if (headerInput.current) headerInput.current.value = "";
+    if (text.trim()) setTimeout(() => void ask(text), 450);
   }
 
   async function ask(text: string) {
@@ -124,7 +124,7 @@ export function AiSearch() {
         role="search"
         onSubmit={(e) => {
           e.preventDefault();
-          openWith(headerInput.current?.value ?? "", true);
+          openWith(headerInput.current?.value ?? "");
         }}
         className="flex h-12 min-w-0 flex-1 items-center overflow-hidden rounded-[10px] bg-white focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-ink"
       >
@@ -135,7 +135,6 @@ export function AiSearch() {
           autoComplete="off"
           aria-label="Поиск по товарам или вопрос ИИ-помощнику"
           placeholder={hint || "Поиск по товарам и артикулам"}
-          onChange={(e) => e.target.value && openWith(e.target.value)}
           className="h-full min-w-0 flex-1 bg-transparent px-4 text-sm text-ink outline-none placeholder:text-faint"
         />
         <button
@@ -164,10 +163,13 @@ export function AiSearch() {
             </div>
 
             <div ref={list} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 md:px-5" aria-live="polite">
-              {!turns.length ? (
-                <div className="py-2">
-                  <p className="text-[15px]">Опишите задачу своими словами — повод, кому, бюджет и тираж. Или введите название товара или артикул.</p>
-                  <ul className="mt-4 flex flex-wrap gap-2">
+              <div className="mb-4 grid gap-3">
+                <p className="max-w-[90%] rounded-[16px] rounded-bl-[4px] bg-surface px-4 py-2.5 text-[14px]">
+                  Здравствуйте! Я ИИ-помощник ProStyle. Подберу корпоративные подарки и сувениры из нашего каталога под вашу задачу: повод, кому, бюджет и тираж.
+                  Пишите своими словами — или введите название товара либо артикул.
+                </p>
+                {!turns.length && !busy ? (
+                  <ul className="flex flex-wrap gap-2">
                     {HINTS.map((h) => (
                       <li key={h}>
                         <button type="button" onClick={() => void ask(h)} className="rounded-full border border-line px-3.5 py-2 text-left text-[13px] hover:border-brand hover:text-brand">
@@ -176,8 +178,8 @@ export function AiSearch() {
                       </li>
                     ))}
                   </ul>
-                </div>
-              ) : null}
+                ) : null}
+              </div>
               <div className="grid gap-4">
                 {turns.map((t, i) =>
                   t.role === "user" ? (
@@ -205,10 +207,13 @@ export function AiSearch() {
                   ),
                 )}
                 {busy ? (
-                  <p className="flex w-fit items-center gap-1 rounded-[16px] bg-surface px-4 py-3" aria-label="Помощник печатает">
-                    {[0, 1, 2].map((d) => (
-                      <span key={d} className="size-1.5 rounded-full bg-muted motion-safe:animate-bounce" style={{ animationDelay: `${d * 150}ms` }} />
-                    ))}
+                  <p role="status" className="flex w-fit items-center gap-2 rounded-[16px] rounded-bl-[4px] bg-surface px-4 py-2.5 text-[14px] text-muted">
+                    Ищу подходящие товары
+                    <span aria-hidden="true" className="flex gap-1">
+                      {[0, 1, 2].map((d) => (
+                        <span key={d} className="size-1.5 rounded-full bg-brand motion-safe:animate-bounce" style={{ animationDelay: `${d * 150}ms` }} />
+                      ))}
+                    </span>
                   </p>
                 ) : null}
               </div>
