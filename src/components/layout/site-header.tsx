@@ -5,7 +5,6 @@ import {
   Heart,
   Mail,
   PhoneCall,
-  Search,
   User,
 } from "lucide-react";
 import { Container } from "@/components/ui/container";
@@ -21,6 +20,7 @@ import { CategoryNav } from "./category-nav";
 import { CategoryNavGate } from "./category-nav-gate";
 import { CatalogMenu } from "./catalog-menu";
 import { CatalogRows } from "./catalog-panel";
+import { AiSearch } from "./ai-search";
 
 const iconBtn =
   "grid size-12 shrink-0 place-items-center rounded-[10px] bg-white/10 text-white hover:bg-white/20";
@@ -113,26 +113,7 @@ export function SiteHeader() {
             </svg>
           </Link>
           <CatalogMenu rows={<CatalogRows />} version={TREE_VERSION} />
-          <form
-            action="/search"
-            role="search"
-            className="flex h-12 min-w-0 flex-1 items-center overflow-hidden rounded-[10px] bg-white focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-ink"
-          >
-            <input
-              type="search"
-              name="q"
-              aria-label="Поиск по товарам"
-              placeholder="Поиск по товарам и артикулам"
-              className="h-full min-w-0 flex-1 bg-transparent px-4 text-sm text-ink outline-none placeholder:text-faint"
-            />
-            <button
-              type="submit"
-              aria-label="Найти"
-              className="grid size-12 shrink-0 place-items-center rounded-r-[10px] bg-field text-ink hover:bg-field-hover focus-visible:outline-ink focus-visible:-outline-offset-2"
-            >
-              <Search size={20} aria-hidden />
-            </button>
-          </form>
+          <AiSearch />
           <ul className="hidden items-center gap-3 md:flex">
             {actions.map(({ label, href, Icon, mobile, tip }) => (
               <li key={href} className={`${mobile ? "" : "hidden md:block"} ${tip ? "group relative" : ""}`}>
