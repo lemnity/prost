@@ -28,9 +28,9 @@ export async function verifyPassword(password: string, stored: string): Promise<
   return timingSafeEqual(actual, expected);
 }
 
-export type DbUser = { id: number; email: string; role: "user" | "admin"; profile: Profile; createdAt: string };
+export type DbUser = { id: number; email: string; role: "user" | "admin"; profile: Profile; createdAt: string; emailVerified: boolean };
 
-type UserRow = Row & { id: number; email: string; role: "user" | "admin"; profile: unknown; created_at: Date; password_hash: string };
+type UserRow = Row & { id: number; email: string; role: "user" | "admin"; profile: unknown; created_at: Date; password_hash: string; email_verified_at: Date | null };
 
 export const toUser = (r: UserRow): DbUser => ({
   id: r.id,
@@ -38,6 +38,7 @@ export const toUser = (r: UserRow): DbUser => ({
   role: r.role,
   profile: { ...json<Profile>(r.profile), email: r.email },
   createdAt: new Date(r.created_at).toISOString(),
+  emailVerified: !!r.email_verified_at,
 });
 
 export async function findUserByEmail(email: string): Promise<UserRow | null> {

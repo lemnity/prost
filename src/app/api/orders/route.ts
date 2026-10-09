@@ -2,7 +2,8 @@ import { currentUser, guestHash, tooManyAttempts } from "@/server/auth";
 import { clientIp, fail, ok, readJson, sameOrigin, str } from "@/server/http";
 import { insertOrder, nextOrderNumber, priceItems } from "@/server/orders";
 import { openChat } from "@/server/chat";
-import { notifyManager } from "@/server/notify";
+import { notifyManager, sendMail } from "@/server/notify";
+import { orderEmail } from "@/server/emails";
 import { buildOrder, deliveryLabel, paymentLabel, type Delivery, type OrderData, type Payment } from "@/lib/cart/order-text";
 import { cartTotal, type CartItem } from "@/lib/cart/store";
 import { greetName } from "@/lib/account/store";
@@ -56,6 +57,21 @@ export async function POST(req: Request) {
     orderText: text,
   });
   await openChat({ number, name: user ? greetName(user.profile) : data.name.split(/\s+/)[0], items, total });
-  void notifyManager(`Новая заявка ${number} — ${data.company || data.name}`, `${text}\n\nАдминка: ${process.env.SITE_URL ?? ""}/admin?order=${number}`);
+  const site = process.env.SITE_URL || "https://prostyle.agency";
+  const mail = orderEmail({
+    number,
+    name: user ? greetName(user.profile) : data.name.split(/\s+/)[0],
+    items,
+    total,
+    delivery: deliveryLabel[data.delivery],
+    payment: paymentLabel[data.payment],
+    address,
+    comment: data.comment,
+    chatLink: `${site}/account/chat?order=${number}`,
+  });
+  // Клиенту — «Ваш заказ» (со скрытой копией менеджеру), менеджерам — уведомление со ссылкой в админку.
+  const customerEmail = data.email || user?.email || "";
+  if (customerEmail) void sendMail({ to: customerEmail, ...mail });
+  void notifyManager(`Новая заявка ${number} — ${data.company || data.name}`, `${text}\n\nАдминка: ${site}/admin?order=${number}`);
   return ok({ number });
 }

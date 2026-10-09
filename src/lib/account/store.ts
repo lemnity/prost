@@ -76,9 +76,9 @@ export function isCurrentOrder(o: SavedOrder, now: number): boolean {
   return (status === "new" || status === "work") && now - Date.parse(o.date) < STALE_DAYS * 86_400_000;
 }
 
-export type Session = { profile: Profile; orders: readonly SavedOrder[]; createdAt: string; role: "user" | "admin" } | null;
+export type Session = { profile: Profile; orders: readonly SavedOrder[]; createdAt: string; role: "user" | "admin"; emailVerified: boolean } | null;
 
-type MePayload = { user: { profile: Profile; createdAt: string; role: "user" | "admin" } | null; orders?: SavedOrder[] };
+type MePayload = { user: { profile: Profile; createdAt: string; role: "user" | "admin"; emailVerified: boolean } | null; orders?: SavedOrder[] };
 
 let session: Session = null;
 /** Ответ /api/me получен (до этого не показываем «войдите»). */
@@ -194,4 +194,10 @@ export async function setOrderStatus(number: string, status: "done" | "cancelled
   }
   await api(`/api/orders/${encodeURIComponent(number)}`, { method: "PATCH", body: JSON.stringify({ status }) });
   void refreshSession();
+}
+
+/** Отправить письмо подтверждения почты ещё раз. */
+export async function resendVerification(): Promise<{ ok: boolean; error?: string }> {
+  const r = await api<{ ok: true }>("/api/auth/verify", { method: "POST" });
+  return r.ok ? { ok: true } : { ok: false, error: r.error };
 }

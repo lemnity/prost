@@ -3,6 +3,7 @@ import { findUserByEmail, hashPassword, startSession, tooManyAttempts } from "@/
 import { clientIp, fail, ok, readJson, sameOrigin, str } from "@/server/http";
 import { EMAIL, cleanProfile } from "@/server/profile";
 import { mePayload } from "@/server/me";
+import { sendVerification } from "@/server/verify";
 
 export async function POST(req: Request) {
   if (!(await sameOrigin())) return fail(403, "Запрос с другого сайта");
@@ -19,5 +20,6 @@ export async function POST(req: Request) {
   const profile = { ...res.profile, ...(res.profile.marketing ? { marketingAt: new Date().toISOString() } : {}) };
   const r = await exec("INSERT INTO users (email, password_hash, profile) VALUES (?, ?, ?)", [email, await hashPassword(password), JSON.stringify(profile)]);
   await startSession(r.insertId);
+  void sendVerification({ id: r.insertId, email, profile });
   return ok(await mePayload());
 }

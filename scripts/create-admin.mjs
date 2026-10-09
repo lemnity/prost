@@ -23,8 +23,8 @@ if (!rows.length) {
   process.exit(1);
 }
 await db.query(
-  `INSERT INTO users (email, password_hash, role, profile) VALUES (?, ?, 'admin', ?)
-   ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), role = 'admin'`,
+  `INSERT INTO users (email, password_hash, role, profile, email_verified_at) VALUES (?, ?, 'admin', ?, UTC_TIMESTAMP())
+   ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), role = 'admin', email_verified_at = COALESCE(email_verified_at, UTC_TIMESTAMP())`,
   [email.toLowerCase(), passwordHash, JSON.stringify(profile)],
 );
 await db.end();

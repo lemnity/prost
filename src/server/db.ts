@@ -66,6 +66,14 @@ const SCHEMA = [
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX (order_number)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+  `CREATE TABLE IF NOT EXISTS email_tokens (
+    token_hash CHAR(64) PRIMARY KEY,
+    user_id INT NOT NULL,
+    kind VARCHAR(16) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    INDEX (user_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  ) ENGINE=InnoDB`,
   `CREATE TABLE IF NOT EXISTS leads (
     id INT AUTO_INCREMENT PRIMARY KEY,
     kind VARCHAR(16) NOT NULL,
@@ -76,10 +84,22 @@ const SCHEMA = [
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
 ];
 
+/** Изменения уже созданных таблиц (MySQL 8 не умеет ADD COLUMN IF NOT EXISTS — дубликаты пропускаем). */
+const ALTERS = [
+  "ALTER TABLE users ADD COLUMN email_verified_at DATETIME NULL",
+];
+
 function migrate(): Promise<void> {
   if (!g.__psMigrated) {
     g.__psMigrated = (async () => {
       for (const sql of SCHEMA) await pool().query(sql);
+      for (const sql of ALTERS) {
+        try {
+          await pool().query(sql);
+        } catch (e) {
+          if ((e as { errno?: number }).errno !== 1060) throw e; // 1060 — поле уже есть
+        }
+      }
     })().catch((e) => {
       g.__psMigrated = undefined;
       throw e;

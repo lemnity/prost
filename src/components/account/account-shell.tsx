@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import Image from "next/image";
 import { ChevronDown, Heart, LogOut, MessageCircle, Package, ShoppingCart, Truck, UserRound } from "lucide-react";
 import { Container } from "@/components/ui/container";
@@ -14,6 +14,7 @@ import { useCart } from "@/lib/cart/use-cart";
 import { useFavorites } from "@/lib/favorites/use-favorites";
 import { FAVORITES_HREF } from "@/lib/favorites/store";
 import { AGENT } from "@/lib/chat/agent";
+import { VerifyNotice } from "./verify-notice";
 import { asset } from "@/lib/asset";
 
 export type AccountSection = "orders" | "cart" | "favorites" | "delivery" | "profile" | "chat";
@@ -111,7 +112,12 @@ export function AccountShell({
               </div>
               <SectionList section={section} counts={counts} />
             </nav>
-            <div className="min-w-0">{children}</div>
+            <div className="min-w-0">
+              <Suspense fallback={null}>
+                <VerifyNotice />
+              </Suspense>
+              {children}
+            </div>
           </div>
         )}
       </Container>

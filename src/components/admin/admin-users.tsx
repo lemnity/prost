@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { api, fullName, type Profile } from "@/lib/account/store";
 
-type U = { id: number; email: string; role: string; profile: Profile; createdAt: string; orders: number };
+type U = { id: number; email: string; role: string; profile: Profile; createdAt: string; orders: number; emailVerified: boolean };
 
 export function AdminUsers() {
   const [users, setUsers] = useState<U[] | null>(null);
@@ -31,7 +31,9 @@ export function AdminUsers() {
               <td className="px-4 py-3">
                 {fullName(u.profile) || "—"}
                 {u.role === "admin" ? <span className="ml-2 rounded-full bg-ink px-2 py-0.5 text-[11px] text-white">админ</span> : null}
-                <span className="block text-[12px] text-muted">{u.email}</span>
+                <span className="block text-[12px] text-muted">
+                  {u.email} · {u.emailVerified ? <span className="text-new-text">почта подтверждена</span> : <span className="text-amber-700">не подтверждена</span>}
+                </span>
               </td>
               <td className="px-4 py-3">{u.profile.company || "—"}{u.profile.inn ? <span className="block text-[12px] text-muted">ИНН {u.profile.inn}</span> : null}</td>
               <td className="px-4 py-3">{u.profile.phone || "—"}</td>

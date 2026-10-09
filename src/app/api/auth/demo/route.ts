@@ -14,10 +14,10 @@ export async function POST() {
   const created = new Date(now - 120 * 86_400_000);
   let [u] = await query<Row & { id: number }>("SELECT id FROM users WHERE email = ?", [DEMO.email]);
   if (!u) {
-    const r = await exec("INSERT INTO users (email, password_hash, profile, created_at) VALUES (?, ?, ?, ?)", [DEMO.email, await hashPassword(DEMO.password), JSON.stringify(profile), created]);
+    const r = await exec("INSERT INTO users (email, password_hash, profile, created_at, email_verified_at) VALUES (?, ?, ?, ?, UTC_TIMESTAMP())", [DEMO.email, await hashPassword(DEMO.password), JSON.stringify(profile), created]);
     u = { id: r.insertId } as Row & { id: number };
   } else {
-    await exec("UPDATE users SET profile = ?, password_hash = ? WHERE id = ?", [JSON.stringify(profile), await hashPassword(DEMO.password), u.id]);
+    await exec("UPDATE users SET profile = ?, password_hash = ?, email_verified_at = COALESCE(email_verified_at, UTC_TIMESTAMP()) WHERE id = ?", [JSON.stringify(profile), await hashPassword(DEMO.password), u.id]);
   }
   await exec("DELETE FROM messages WHERE order_number LIKE 'PS-DEMO-%'");
   await exec("DELETE FROM orders WHERE number LIKE 'PS-DEMO-%'");
