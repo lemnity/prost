@@ -4,6 +4,9 @@ import { clientIp, fail, ok, readJson, sameOrigin, str } from "@/server/http";
 import { EMAIL, cleanProfile } from "@/server/profile";
 import { mePayload } from "@/server/me";
 import { sendVerification } from "@/server/verify";
+import { notifyManager } from "@/server/notify";
+import { newUserAdminEmail } from "@/server/emails";
+import { fullName } from "@/lib/account/store";
 
 export async function POST(req: Request) {
   if (!(await sameOrigin())) return fail(403, "Запрос с другого сайта");
@@ -21,5 +24,7 @@ export async function POST(req: Request) {
   const r = await exec("INSERT INTO users (email, password_hash, profile) VALUES (?, ?, ?)", [email, await hashPassword(password), JSON.stringify(profile)]);
   await startSession(r.insertId);
   void sendVerification({ id: r.insertId, email, profile });
+  const mail = newUserAdminEmail({ fullName: fullName(profile), email, phone: profile.phone, company: profile.company, inn: profile.inn, marketing: !!profile.marketing, date: new Date() });
+  void notifyManager(mail.subject, mail.text, mail.html);
   return ok(await mePayload());
 }
