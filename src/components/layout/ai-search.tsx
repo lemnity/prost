@@ -27,6 +27,8 @@ export function AiSearch() {
   const [draft, setDraft] = useState("");
   const [turns, setTurns] = useState<Turn[]>([]);
   const [busy, setBusy] = useState(false);
+  /** Приветствие Виктории — после первого запроса (или сразу, если чат открыт без запроса). */
+  const [greeted, setGreeted] = useState(false);
   const headerInput = useRef<HTMLInputElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
   const list = useRef<HTMLDivElement>(null);
@@ -101,6 +103,7 @@ export function AiSearch() {
     if (!q || busy) return;
     const next: Turn[] = [...turns, { role: "user", content: q }];
     setTurns(next);
+    if (!turns.length && !greeted) setTimeout(() => setGreeted(true), 700);
     setDraft("");
     setBusy(true);
     try {
@@ -117,6 +120,38 @@ export function AiSearch() {
       setBusy(false);
     }
   }
+
+  const greeting = (
+    <p className="max-w-[90%] rounded-[16px] rounded-bl-[4px] bg-surface px-4 py-2.5 text-[14px]">
+      Здравствуйте! Меня зовут {AGENT.firstName}, я менеджер ProStyle. Помогу подобрать корпоративные подарки и сувениры из нашего каталога.
+      Расскажите, для кого и к какому поводу ищете, какой бюджет и тираж — подскажу лучшие варианты. Можно просто написать название товара или артикул.
+    </p>
+  );
+
+  const renderTurn = (t: Turn, i: number) =>
+    t.role === "user" ? (
+      <p key={i} className="ml-auto max-w-[85%] whitespace-pre-wrap rounded-[16px] rounded-br-[4px] bg-navy px-4 py-2.5 text-[14px] text-white">
+        {t.content}
+      </p>
+    ) : (
+      <div key={i} className="grid gap-3">
+        <p className="max-w-[90%] whitespace-pre-wrap rounded-[16px] rounded-bl-[4px] bg-surface px-4 py-2.5 text-[14px]">{t.content}</p>
+        {t.products?.length ? (
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {t.products.map((p) => (
+              <li key={p.id} onClickCapture={(e) => (e.target as HTMLElement).closest("a") && setOpen(false)}>
+                <ProductCard product={p} />
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        {t.query ? (
+          <Link href={`/search?q=${encodeURIComponent(t.query)}`} onClick={() => setOpen(false)} className="inline-flex items-center gap-1.5 self-start text-[13px] font-medium text-brand hover:text-brand-hover">
+            <Search size={14} aria-hidden /> Все результаты поиска «{t.query.length > 40 ? `${t.query.slice(0, 40)}…` : t.query}»
+          </Link>
+        ) : null}
+      </div>
+    );
 
   return (
     <>
@@ -166,50 +201,32 @@ export function AiSearch() {
             </div>
 
             <div ref={list} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 md:px-5" aria-live="polite">
-              <div className="mb-4 grid gap-3">
-                <p className="max-w-[90%] rounded-[16px] rounded-bl-[4px] bg-surface px-4 py-2.5 text-[14px]">
-                  Здравствуйте! Меня зовут {AGENT.firstName}, я менеджер ProStyle. Помогу подобрать корпоративные подарки и сувениры из нашего каталога.
-                  Расскажите, для кого и к какому поводу ищете, какой бюджет и тираж — подскажу лучшие варианты. Можно просто написать название товара или артикул.
-                </p>
-                {!turns.length && !busy ? (
-                  <ul className="flex flex-wrap gap-2">
-                    {HINTS.map((h) => (
-                      <li key={h}>
-                        <button type="button" onClick={() => void ask(h)} className="rounded-full border border-line px-3.5 py-2 text-left text-[13px] hover:border-brand hover:text-brand">
-                          {h}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </div>
               <div className="grid gap-4">
-                {turns.map((t, i) =>
-                  t.role === "user" ? (
-                    <p key={i} className="ml-auto max-w-[85%] whitespace-pre-wrap rounded-[16px] rounded-br-[4px] bg-navy px-4 py-2.5 text-[14px] text-white">
-                      {t.content}
-                    </p>
-                  ) : (
-                    <div key={i} className="grid gap-3">
-                      <p className="max-w-[90%] whitespace-pre-wrap rounded-[16px] rounded-bl-[4px] bg-surface px-4 py-2.5 text-[14px]">{t.content}</p>
-                      {t.products?.length ? (
-                        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                          {t.products.map((p) => (
-                            <li key={p.id} onClickCapture={(e) => (e.target as HTMLElement).closest("a") && setOpen(false)}>
-                              <ProductCard product={p} />
-                            </li>
-                          ))}
-                        </ul>
-                      ) : null}
-                      {t.query ? (
-                        <Link href={`/search?q=${encodeURIComponent(t.query)}`} onClick={() => setOpen(false)} className="inline-flex items-center gap-1.5 self-start text-[13px] font-medium text-brand hover:text-brand-hover">
-                          <Search size={14} aria-hidden /> Все результаты поиска «{t.query.length > 40 ? `${t.query.slice(0, 40)}…` : t.query}»
-                        </Link>
-                      ) : null}
-                    </div>
-                  ),
+                {!turns.length ? (
+                  <>
+                    {greeting}
+                    <ul className="flex flex-wrap gap-2">
+                      {HINTS.map((h) => (
+                        <li key={h}>
+                          <button type="button" onClick={() => void ask(h)} className="rounded-full border border-line px-3.5 py-2 text-left text-[13px] hover:border-brand hover:text-brand">
+                            {h}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : (
+                  <>
+                    {renderTurn(turns[0], 0)}
+                    {greeted ? (
+                      <>
+                    {greeting}
+                        {turns.slice(1).map((t, i) => renderTurn(t, i + 1))}
+                      </>
+                    ) : null}
+                  </>
                 )}
-                {busy ? (
+                {busy && greeted ? (
                   <p role="status" className="flex w-fit items-center gap-2 rounded-[16px] rounded-bl-[4px] bg-surface px-4 py-2.5 text-[14px] text-muted">
                     Виктория подбирает товары
                     <span aria-hidden="true" className="flex gap-1">
