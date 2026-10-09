@@ -17,8 +17,9 @@ function layout(preheader: string, body: string): string {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f2;padding:24px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:14px;overflow:hidden">
 <tr><td style="padding:24px 28px;border-bottom:1px solid #ececea">
-  <a href="${SITE()}" style="text-decoration:none;color:#444551;font-size:22px;font-weight:bold;letter-spacing:.5px">PRO STYLE<span style="color:${BRAND}">&#9632;</span></a>
-  <div style="font-size:10px;letter-spacing:3px;color:${BRAND};margin-top:2px">BUSINESS GIFTS</div>
+  <a href="${SITE()}" style="text-decoration:none">
+    <img src="${SITE()}/images/brand/logo-email.png" width="180" height="44" alt="PRO STYLE — Business Gifts" style="display:block;border:0;outline:none;width:180px;height:44px;color:#444551;font-size:20px;font-weight:bold">
+  </a>
 </td></tr>
 <tr><td style="padding:28px">${body}</td></tr>
 <tr><td style="padding:20px 28px;background:#fafaf9;border-top:1px solid #ececea;font-size:12px;line-height:18px;color:${MUTED}">
