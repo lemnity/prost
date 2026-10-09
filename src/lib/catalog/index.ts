@@ -5,7 +5,15 @@ import type { CatalogNode, Category, Product } from "./types";
 
 export type { CatalogNode, Category, Product } from "./types";
 
+/** Новинки поставщиков в наличии (как на /catalog/new). При сборке базы нет — запасной статический список. */
 export async function getNewProducts(limit = 6): Promise<Product[]> {
+  try {
+    const { listProducts } = await import("@/server/catalog");
+    const { items } = await listProducts({ sort: "new", inStock: true, perPage: limit });
+    if (items.length) return items;
+  } catch {
+    // нет DATABASE_URL (сборка) или база недоступна
+  }
   return newProducts.slice(0, limit);
 }
 
