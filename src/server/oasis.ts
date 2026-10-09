@@ -100,7 +100,8 @@ export function syncOasisCatalog(): Promise<{ items: number }> {
         return known[0]?.id ?? null;
       };
 
-      const started = new Date();
+      // Округляем до секунды: DATETIME в MySQL без миллисекунд, иначе «synced_at < started» верно для всех.
+      const started = new Date(Math.floor(Date.now() / 1000) * 1000);
       let total = 0;
       for (let offset = 0; ; offset += PAGE) {
         const page = await api<OcProduct[]>("products", { fields: FULL_FIELDS, limit: String(PAGE), offset: String(offset) });
