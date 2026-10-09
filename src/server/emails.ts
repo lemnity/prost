@@ -85,8 +85,9 @@ export function orderEmail(o: OrderMail) {
   const html = layout(
     `Заказ № ${o.number} принят — менеджер свяжется с вами`,
     `<h1 style="margin:0 0 16px;font-size:24px;line-height:30px">Спасибо за заказ!</h1>
-${p(`Здравствуйте${o.name ? `, ${esc(o.name)}` : ""}! Мы получили ваш заказ <b>№ ${esc(o.number)}</b>. Персональный менеджер Виктория уже изучает корзину и свяжется с вами в рабочее время (${esc(site.hours.toLowerCase())}).`)}
-${button(o.chatLink, "Открыть чат с менеджером")}
+${p(`Здравствуйте${o.name ? `, ${esc(o.name)}` : ""}! Мы получили ваш заказ <b>№ ${esc(o.number)}</b>. Персональный менеджер уже изучает корзину и свяжется с вами в рабочее время (${esc(site.hours.toLowerCase())}).`)}
+${p("Также у вас есть свой виртуальный менеджер Виктория, которая доступна в вашем личном кабинете и может ответить на все интересующие вопросы.")}
+${button(o.chatLink, "Написать Виктории")}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 16px">${rows}
 ${discount > 0 ? `<tr><td style="padding:10px 0 0;font-size:14px;color:${BRAND}">Скидка</td><td align="right" style="padding:10px 0 0;font-size:14px;color:${BRAND}">−${formatPriceValue(discount)}</td></tr>` : ""}
 <tr><td style="padding:10px 0 0;font-size:16px;font-weight:bold">Итого</td><td align="right" style="padding:10px 0 0;font-size:18px;font-weight:bold;white-space:nowrap">от ${formatPriceValue(o.total)}</td></tr></table>
@@ -94,7 +95,7 @@ ${p(`<b>Получение:</b> ${esc(o.delivery)}${o.address ? ` — ${esc(o.ad
 ${p("Цены указаны без нанесения логотипа — менеджер рассчитает нанесение и пришлёт макет. Логотип можно отправить прямо в чат.", `font-size:13px;color:${MUTED}`)}`,
   );
   const lines = o.items.map((i) => `• ${i.title} — ${i.qty} шт × ${formatPriceValue(i.price)} = ${formatPriceValue(i.qty * i.price)}`).join("\n");
-  const text = `Здравствуйте${o.name ? `, ${o.name}` : ""}!\n\nМы получили ваш заказ № ${o.number}. Менеджер свяжется с вами в рабочее время.\n\n${lines}\n${discount > 0 ? `Скидка: −${formatPriceValue(discount)}\n` : ""}Итого: от ${formatPriceValue(o.total)}\n\nПолучение: ${o.delivery}${o.address ? ` — ${o.address}` : ""}\nОплата: ${o.payment}\n\nЧат с менеджером: ${o.chatLink}\n\nProStyle, ${site.phone.label}`;
+  const text = `Здравствуйте${o.name ? `, ${o.name}` : ""}!\n\nМы получили ваш заказ № ${o.number}. Персональный менеджер уже изучает корзину и свяжется с вами в рабочее время (${site.hours.toLowerCase()}).\n\nТакже у вас есть свой виртуальный менеджер Виктория, которая доступна в вашем личном кабинете и может ответить на все интересующие вопросы.\n\n${lines}\n${discount > 0 ? `Скидка: −${formatPriceValue(discount)}\n` : ""}Итого: от ${formatPriceValue(o.total)}\n\nПолучение: ${o.delivery}${o.address ? ` — ${o.address}` : ""}\nОплата: ${o.payment}\n\nЧат с менеджером: ${o.chatLink}\n\nProStyle, ${site.phone.label}`;
   return { subject, html, text };
 }
 
