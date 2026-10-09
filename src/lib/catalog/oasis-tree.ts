@@ -12,6 +12,8 @@ export type TreeCat = { id: number; parent: number | null; root: number | null; 
 
 const ROOT = { products: 2891, holidays: 2269, vip: 1906 } as const;
 const cats = (snapshot as { categories: TreeCat[] }).categories;
+/** Версия снимка дерева — для сброса кэша меню в браузере. */
+export const TREE_VERSION = String(Date.parse((snapshot as { generatedAt?: string }).generatedAt ?? "") || 0);
 const byId = new Map(cats.map((c) => [c.id, c]));
 const kids = new Map<number, TreeCat[]>();
 for (const c of cats) if (c.parent) kids.set(c.parent, [...(kids.get(c.parent) ?? []), c]);
@@ -63,6 +65,8 @@ export function productHref(primaryCat: number | null, slug: string, id: string)
 export function idFromItem(segment: string): string | null {
   if (!segment.startsWith("item-")) return null;
   const tail = segment.slice(segment.lastIndexOf("-") + 1);
+  // Oasis — цифры (дефис заменён на «x»), gifts.ru — «g» + цифры.
+  if (/^g[0-9]+$/.test(tail)) return tail;
   return /^[0-9x]+$/.test(tail) ? tail.replace(/x/g, "-") : null;
 }
 
@@ -81,8 +85,29 @@ const vip = byId.get(ROOT.vip);
 /** Верхние разделы: «Продукция» + «Праздники» и «ВИП», если в них есть товары. */
 const tops = () => [...childrenOf(ROOT.products).filter((c) => c.count >= 5), ...[holidays, vip].filter((c): c is TreeCat => !!c && c.count > 0)];
 
+/** Обложки крупных разделов — наши фото на белом фоне (фото товаров склада бывают на сером фоне и разного формата). */
+const COVERS: Record<string, string> = {
+  prazdniki: "/images/categories/prazdniki.webp",
+  "podarochnie-nabori": "/images/categories/nabory.webp",
+  "delovie-podarki": "/images/categories/nagrady.webp",
+  "dlya-doma": "/images/categories/dom.webp",
+  "dlya-otdiha": "/images/categories/otdyh.webp",
+  zonti: "/images/categories/zonty.webp",
+  "kuhnya-i-posuda": "/images/categories/posuda.webp",
+  "lichnie-aksessuari": "/images/categories/promo.webp",
+  "muzhskie-aksessuari": "/images/categories/elitnye.webp",
+  tekstil: "/images/categories/odezhda.webp",
+  "ofisnie-aksessuari": "/images/categories/ezhednevniki.webp",
+  "pishuschie-instrumenti": "/images/categories/ruchki.webp",
+  sumki: "/images/categories/sumki.webp",
+  "tovari-dlya-detei": "/images/categories/detyam.webp",
+  upakovka: "/images/categories/upakovka.webp",
+  tehnologii: "/images/categories/elektronika.webp",
+  selection: "/images/categories/korporativnye.webp",
+};
+
 /** Служебные разделы — в меню есть, на главной не показываем. */
-const NOT_ON_HOME = new Set(["selection", "nastraivaemie-nabori", "kastomizaciya"]);
+const NOT_ON_HOME = new Set(["selection", "nastraivaemie-nabori", "kastomizaciya", "prazdniki"]); // «Праздники» — сезонная плитка
 
 /** Верхнее меню каталога. */
 export function topNodes(): CatalogNode[] {
@@ -98,7 +123,7 @@ export function topNodes(): CatalogNode[] {
 export function topCategories({ home = false } = {}): (Category & { count: number })[] {
   return tops()
     .filter((c) => !home || !NOT_ON_HOME.has(c.slug))
-    .map((c) => ({ id: c.slug, title: c.name, href: catHref(c.id), image: c.image || childrenOf(c.id).find((k) => k.image)?.image || "", count: c.count }));
+    .map((c) => ({ id: c.slug, title: c.name, href: catHref(c.id), image: COVERS[c.slug] ?? (c.image || childrenOf(c.id).find((k) => k.image)?.image || ""), count: c.count }));
 }
 
 /** Поиск раздела по названию (переадресация со старых адресов каталога). */

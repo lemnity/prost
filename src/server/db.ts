@@ -118,6 +118,13 @@ const SCHEMA = [
     PRIMARY KEY (product_id, category_id),
     INDEX (category_id)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+  `CREATE TABLE IF NOT EXISTS oc_product_facets (
+    product_id VARCHAR(32) NOT NULL,
+    kind CHAR(1) NOT NULL,
+    value VARCHAR(32) NOT NULL,
+    PRIMARY KEY (product_id, kind, value),
+    INDEX kind_value (kind, value)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
   `CREATE TABLE IF NOT EXISTS category_map (
     supplier VARCHAR(16) NOT NULL,
     supplier_cat VARCHAR(64) NOT NULL,
@@ -164,6 +171,8 @@ const ALTERS = [
   // Несколько складов: у товара — поставщик; разделы поставщиков сопоставляются с единым деревом (oc_categories).
   "ALTER TABLE oc_products ADD COLUMN supplier VARCHAR(16) NOT NULL DEFAULT 'oasis' AFTER id",
   "ALTER TABLE oc_products ADD INDEX supplier_idx (supplier)",
+  // «Новинка» у поставщика (gifts.ru — статус «новинка»): такие товары первыми в подборке «Новинки».
+  "ALTER TABLE oc_products ADD COLUMN is_new TINYINT(1) NOT NULL DEFAULT 0",
 ];
 
 function migrate(): Promise<void> {

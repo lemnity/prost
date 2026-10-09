@@ -11,8 +11,8 @@ export const COLLECTIONS: Record<string, Collection> = {
   new: { title: "Новинки", sort: "new", sale: false, inStock: true },
   hits: { title: "Хиты", sort: "popular", sale: false, inStock: true },
   sale: { title: "Распродажа", sort: "popular", sale: true, inStock: false },
-  // В разделах Oasis «Праздники» товаров нет — собираем по названию и разделу «Новогодние наборы».
-  "novyy-god": { title: "Новогодние подарки", sort: "popular", sale: false, inStock: false, theme: { words: ["новогод", "ёлоч", "елоч", "рождеств", "дед мороз", "снегов"], cats: [5286] } },
+  // Новогодние товары: раздел «Праздники / Новый год» (gifts.ru), «Новогодние наборы» (Oasis) и по названию.
+  "novyy-god": { title: "Новогодние подарки", sort: "popular", sale: false, inStock: false, theme: { words: ["новогод", "ёлоч", "елоч", "рождеств", "дед мороз", "снегов"], cats: [5286, 2289] } },
 };
 export const isCollection = (s: string): s is keyof typeof COLLECTIONS => Object.hasOwn(COLLECTIONS, s);
 
@@ -45,7 +45,7 @@ const LEGACY_TOPS: Record<string, string> = {
   "puteshestvie-i-otdy-x": "/catalog/dlya-puteshestvii",
   promo: "/catalog/lichnie-aksessuari",
   vip: "/catalog/delovie-podarki",
-  "suveniry-k-prazdnikam": "/catalog/podarochnie-nabori",
+  "suveniry-k-prazdnikam": "/catalog/prazdniki",
   chasy: "/catalog/ofisnie-aksessuari",
   "uhod-i-zdorovie": "/catalog/lichnie-aksessuari",
   detyam: "/catalog/tovari-dlya-detei",

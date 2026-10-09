@@ -1,3 +1,4 @@
+import { rebuildFacets } from "./facets";
 import { exec, getPool, query, type Row } from "./db";
 import { slugify } from "@/lib/translit";
 
@@ -60,15 +61,24 @@ const oldPriceOf = (p: OcProduct) => {
   return old > price ? old : null;
 };
 
-async function logStart(source: string) {
+export async function logStart(source: string) {
   return (await exec("INSERT INTO sync_log (source, started_at) VALUES (?, UTC_TIMESTAMP())", [source])).insertId;
 }
-async function logEnd(id: number, items: number, error?: string) {
+export async function logEnd(id: number, items: number, error?: string) {
   await exec("UPDATE sync_log SET finished_at = UTC_TIMESTAMP(), items = ?, error = ? WHERE id = ?", [items, error ? error.slice(0, 2000) : null, id]);
 }
 
 const running: Record<string, Promise<{ items: number }> | null> = {};
-function single(name: string, fn: () => Promise<{ items: number }>) {
+/** Количество товаров в разделах (все склады): модели, как в выдаче, — размеры и цвета одной модели не множатся. */
+export async function recountCategories() {
+  await exec("UPDATE oc_categories SET product_count = 0");
+  await exec(
+    `UPDATE oc_categories c JOIN (SELECT pc.category_id, COUNT(DISTINCT COALESCE(p.color_group_id, p.id)) n FROM oc_product_categories pc JOIN oc_products p ON p.id = pc.product_id AND p.deleted = 0 GROUP BY pc.category_id) x
+     ON x.category_id = c.id SET c.product_count = x.n`,
+  );
+}
+
+export function single(name: string, fn: () => Promise<{ items: number }>) {
   if (!running[name]) running[name] = fn().finally(() => (running[name] = null));
   return running[name]!;
 }
@@ -140,12 +150,9 @@ export function syncOasisCatalog(): Promise<{ items: number }> {
         if (page.length < PAGE) break;
       }
       if (total < 1000) throw new Error(`Oasis вернул подозрительно мало товаров: ${total}`);
-      await exec("UPDATE oc_products SET deleted = 1, stock = 0, remote = 0 WHERE synced_at < ?", [started]);
-      await exec("UPDATE oc_categories SET product_count = 0");
-      await exec(
-        `UPDATE oc_categories c JOIN (SELECT pc.category_id, COUNT(*) n FROM oc_product_categories pc JOIN oc_products p ON p.id = pc.product_id AND p.deleted = 0 GROUP BY pc.category_id) x
-         ON x.category_id = c.id SET c.product_count = x.n`,
-      );
+      await exec("UPDATE oc_products SET deleted = 1, stock = 0, remote = 0 WHERE supplier = 'oasis' AND synced_at < ?", [started]);
+      await recountCategories();
+      await rebuildFacets();
       await logEnd(log, total);
       return { items: total };
     } catch (e) {
@@ -175,7 +182,7 @@ export function syncOasis(): Promise<{ items: number }> {
           `UPDATE oc_products p JOIN tmp_stock t ON t.id = p.id
            SET p.price = t.price, p.old_price = t.old_price, p.stock = t.stock, p.remote = t.remote, p.deleted = t.deleted`,
         );
-        await conn.query("UPDATE oc_products p LEFT JOIN tmp_stock t ON t.id = p.id SET p.deleted = 1, p.stock = 0, p.remote = 0 WHERE t.id IS NULL");
+        await conn.query("UPDATE oc_products p LEFT JOIN tmp_stock t ON t.id = p.id SET p.deleted = 1, p.stock = 0, p.remote = 0 WHERE p.supplier = 'oasis' AND t.id IS NULL");
         await conn.query("DROP TEMPORARY TABLE IF EXISTS tmp_stock");
       } finally {
         conn.release();
@@ -219,14 +226,19 @@ export async function lastSync() {
       lastSuccessAt: ok ? ok.finished_at.toISOString() : null,
     };
   };
-  const [cnt] = await query<Row & { total: number; active: number; in_stock: number }>(
-    "SELECT COUNT(*) total, SUM(deleted = 0) active, SUM(deleted = 0 AND stock + remote > 0) in_stock FROM oc_products",
+  const counts = await query<Row & { supplier: string; total: number; active: number; in_stock: number }>(
+    "SELECT supplier, COUNT(*) total, SUM(deleted = 0) active, SUM(deleted = 0 AND stock + remote > 0) in_stock FROM oc_products GROUP BY supplier",
   );
+  const cnt = counts.reduce((a, r) => ({ total: a.total + Number(r.total), active: a.active + Number(r.active ?? 0), in_stock: a.in_stock + Number(r.in_stock ?? 0) }), { total: 0, active: 0, in_stock: 0 });
+  const bySupplier = Object.fromEntries(counts.map((r) => [r.supplier, { total: Number(r.total), active: Number(r.active ?? 0), inStock: Number(r.in_stock ?? 0) }]));
   return {
     stock: await one("oasis"),
     catalog: await one("oasis-catalog"),
+    giftsStock: await one("gifts"),
+    giftsCatalog: await one("gifts-catalog"),
     total: Number(cnt?.total ?? 0),
     active: Number(cnt?.active ?? 0),
     inStock: Number(cnt?.in_stock ?? 0),
+    bySupplier,
   };
 }

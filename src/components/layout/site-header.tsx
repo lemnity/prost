@@ -1,3 +1,4 @@
+import { TREE_VERSION } from "@/lib/catalog/oasis-tree";
 import Link from "next/link";
 import {
   ClipboardList,
@@ -111,7 +112,7 @@ export function SiteHeader() {
               <path fillRule="evenodd" clipRule="evenodd" d="M129.59 0H166.16C169.931 0 173.016 3.08323 173.016 6.85281V43.4057C173.016 47.1755 169.931 50.2585 166.16 50.2585H129.59C125.819 50.2585 122.734 47.1755 122.734 43.4057V6.85281C122.734 3.08323 125.819 0 129.59 0Z" fill="#D02E31"/>
             </svg>
           </Link>
-          <CatalogMenu rows={<CatalogRows />} />
+          <CatalogMenu rows={<CatalogRows />} version={TREE_VERSION} />
           <form
             action="/search"
             role="search"

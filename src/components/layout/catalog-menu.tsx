@@ -29,10 +29,11 @@ const getDesktop = () => window.matchMedia(MQ).matches;
 
 // Подкатегории и «Товар дня» — статический JSON, грузится один раз:
 // в простое после загрузки страницы или при первом наведении/фокусе.
+// ?v — версия дерева каталога: после обновления разделов браузер не возьмёт старое меню из кэша.
 const MENU_URL = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/catalog-menu.json`;
 let menuPromise: Promise<MenuData> | null = null;
-function loadMenu(): Promise<MenuData> {
-  menuPromise ??= fetch(MENU_URL)
+function loadMenu(version: string): Promise<MenuData> {
+  menuPromise ??= fetch(`${MENU_URL}?v=${version}`)
     .then((r) => {
       if (!r.ok) throw new Error(String(r.status));
       return r.json() as Promise<MenuData>;
@@ -44,7 +45,7 @@ function loadMenu(): Promise<MenuData> {
   return menuPromise;
 }
 
-export function CatalogMenu({ rows }: { rows: ReactNode }) {
+export function CatalogMenu({ rows, version }: { rows: ReactNode; version: string }) {
   const hydrated = useSyncExternalStore(
     noopSubscribe,
     () => true,
@@ -60,10 +61,10 @@ export function CatalogMenu({ rows }: { rows: ReactNode }) {
   const [menu, setMenu] = useState<{ data: MenuData; dayLeft: SaleRemaining } | null>(null);
 
   const ensureMenu = useCallback(() => {
-    loadMenu()
+    loadMenu(version)
       .then((data) => setMenu((m) => m ?? { data, dayLeft: getSaleRemaining(new Date(), "day") }))
       .catch(() => {});
-  }, []);
+  }, [version]);
 
   useEffect(() => {
     const idle = () => ensureMenu();

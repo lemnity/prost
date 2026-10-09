@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { OcListing, parseListing } from "@/components/catalog/oc-listing";
 import { catHref, childrenOf } from "@/lib/catalog/oasis-tree";
-import { listProducts } from "@/server/catalog";
+import { listWithFacets } from "@/server/catalog";
 import { COLLECTIONS, isCollection, legacyRedirect, resolveCat, subSections, topSections } from "@/server/catalog-routes";
 
 type Props = { params: Promise<{ category: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
@@ -21,8 +21,8 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   if (isCollection(category)) {
     const col = COLLECTIONS[category];
     const query = { ...q, sort: q.sort === "popular" ? col.sort : q.sort, inStock: q.inStock || col.inStock };
-    const { items, total } = await listProducts({ ...query, sale: col.sale, theme: col.theme });
-    return <OcListing title={col.title} crumbs={[...crumbs, { label: col.title }]} path={`/catalog/${category}`} query={q} items={items} total={total} sections={topSections()} />;
+    const { items, total, facets } = await listWithFacets({ ...query, sale: col.sale, theme: col.theme });
+    return <OcListing title={col.title} crumbs={[...crumbs, { label: col.title }]} path={`/catalog/${category}`} query={q} items={items} total={total} facets={facets} sections={topSections()} />;
   }
 
   const cat = resolveCat(category);
@@ -31,7 +31,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
     notFound();
   }
   const filter = q.c ? childrenOf(cat.id).find((c) => String(c.id) === q.c) : undefined;
-  const { items, total } = await listProducts({ ...q, category: filter?.id ?? cat.id });
+  const { items, total, facets } = await listWithFacets({ ...q, category: filter?.id ?? cat.id });
   return (
     <OcListing
       title={cat.name}
@@ -40,6 +40,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       query={q}
       items={items}
       total={total}
+      facets={facets}
       sections={subSections(cat)}
     />
   );

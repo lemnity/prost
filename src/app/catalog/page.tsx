@@ -36,19 +36,20 @@ export default async function CatalogPage() {
             const count = counts.get(cat.id) ?? 0;
             return (
               <li key={cat.id} className="flex flex-col rounded-[10px] bg-surface p-4">
-                <Link href={cat.href} className="group flex items-center gap-3">
-                  {image ? (
-                    <Image
-                      src={asset(image)}
-                      alt=""
-                      width={72}
-                      height={72}
-                      sizes="72px"
-                      className="size-[72px] shrink-0 object-contain motion-safe:transition-transform motion-safe:group-hover:scale-105"
-                    />
-                  ) : null}
+                <Link href={cat.href} className="group flex min-h-[80px] items-center gap-3.5">
+                  <span className="relative size-[80px] shrink-0 overflow-hidden rounded-[10px] bg-white">
+                    {image ? (
+                      <Image
+                        src={asset(image)}
+                        alt=""
+                        fill
+                        sizes="80px"
+                        className="object-contain p-1.5 mix-blend-multiply motion-safe:transition-transform motion-safe:group-hover:scale-105"
+                      />
+                    ) : null}
+                  </span>
                   <span className="min-w-0">
-                    <span className="block text-[15px] font-semibold leading-snug text-ink group-hover:text-brand">
+                    <span className="line-clamp-2 text-[15px] font-semibold leading-snug text-ink group-hover:text-brand">
                       {cat.title}
                     </span>
                     <span className="mt-1 block text-[13px] text-muted">{productsLabel(count)}</span>
@@ -66,7 +67,7 @@ export default async function CatalogPage() {
                 {rest > 0 ? (
                   <Link
                     href={cat.href}
-                    className="mt-3 inline-flex items-center gap-1 self-start text-[13px] font-medium text-brand hover:text-brand-hover"
+                    className="mt-auto inline-flex items-center gap-1 self-start pt-3 text-[13px] font-medium text-brand hover:text-brand-hover"
                   >
                     Ещё {rest}
                     <ArrowRight size={14} aria-hidden="true" />

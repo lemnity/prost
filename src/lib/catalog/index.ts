@@ -16,7 +16,7 @@ export async function getWeeklySale(limit = 6): Promise<Product[]> {
 /** Сезонные плитки главной: новогодняя (с отсчётом) и праздничная (ближайшие праздники). */
 const SEASONAL = [
   { ...popularCategories[0], count: 0 },
-  { ...popularCategories[1], href: "/catalog/podarochnie-nabori", count: 0 },
+  { ...popularCategories[1], href: "/catalog/prazdniki", count: 0 },
 ];
 
 /** Плитки главной: 2 сезонные + 18 крупнейших разделов (всего 20 — под сетку); страница «Каталог» — все разделы. */

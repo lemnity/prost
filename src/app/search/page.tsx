@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { OcListing, parseListing } from "@/components/catalog/oc-listing";
-import { listProducts } from "@/server/catalog";
+import { listWithFacets } from "@/server/catalog";
 import { topSections } from "@/server/catalog-routes";
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
@@ -14,7 +14,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 export default async function SearchPage({ searchParams }: Props) {
   const q = parseListing(await searchParams);
   const text = q.q?.trim() ?? "";
-  const { items, total } = text.length >= 2 ? await listProducts({ ...q, q: text }) : { items: [], total: 0 };
+  const { items, total, facets } = text.length >= 2 ? await listWithFacets({ ...q, q: text }) : { items: [], total: 0, facets: undefined };
   return (
     <OcListing
       title={text ? `Поиск: «${text}»` : "Поиск"}
@@ -23,6 +23,7 @@ export default async function SearchPage({ searchParams }: Props) {
       query={q}
       items={items}
       total={total}
+      facets={facets}
       sections={topSections()}
     />
   );

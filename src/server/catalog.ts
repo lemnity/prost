@@ -1,6 +1,7 @@
 import { json, query, type Row } from "./db";
 import { productHref } from "@/lib/catalog/oasis-tree";
 import type { Product } from "@/lib/catalog/types";
+import type { FacetKind } from "@/lib/catalog/facets";
 
 type Img = { big?: string; superbig?: string; small?: string; thumbnail?: string };
 type Attr = { name: string; value: string; dim?: string };
@@ -57,14 +58,17 @@ export function toProduct(r: OcRow): Product {
 }
 
 export type Sort = "popular" | "cheap" | "expensive" | "stock" | "new";
-export type ListParams = { category?: number; q?: string; /** Подборка: название содержит любое из слов или товар в одном из разделов. */ theme?: { words: string[]; cats: number[] }; priceFrom?: number; priceTo?: number; inStock?: boolean; sale?: boolean; sort?: Sort; page?: number; perPage?: number };
+export type ListParams = { category?: number; q?: string; /** Подборка: название содержит любое из слов или товар в одном из разделов. */ theme?: { words: string[]; cats: number[] }; priceFrom?: number; priceTo?: number; inStock?: boolean; sale?: boolean; isNew?: boolean;
+  /** Фильтры по меткам: внутри группы — ИЛИ, между группами — И. */
+  facets?: Partial<Record<FacetKind, string[]>>;
+  sort?: Sort; page?: number; perPage?: number };
 
 const ORDER: Record<Sort, string> = {
   popular: "(stock + remote > 0) DESC, rating DESC, id",
   cheap: "price ASC, id",
   expensive: "price DESC, id",
   stock: "(stock + remote) DESC, id",
-  new: "id DESC",
+  new: "is_new DESC, (supplier = 'oasis') DESC, id DESC",
 };
 
 type Listing = { items: Product[]; total: number };
@@ -85,7 +89,8 @@ export function listProducts(p: ListParams): Promise<Listing> {
   return value;
 }
 
-async function queryListing(p: ListParams): Promise<Listing> {
+/** Условия выборки; skip — группа меток, которую не учитываем (для счётчиков этой же группы). */
+function whereOf(p: ListParams, skip?: FacetKind) {
   const where = ["p.deleted = 0"];
   const args: unknown[] = [];
   let join = "";
@@ -119,7 +124,17 @@ async function queryListing(p: ListParams): Promise<Listing> {
   }
   if (p.inStock) where.push("p.stock + p.remote > 0");
   if (p.sale) where.push("p.old_price > p.price");
-  const base = `FROM oc_products p ${join} WHERE ${where.join(" AND ")}`;
+  if (p.isNew) where.push("p.is_new = 1");
+  for (const [kind, values] of Object.entries(p.facets ?? {}) as [FacetKind, string[]][]) {
+    if (kind === skip || !values?.length) continue;
+    where.push("EXISTS (SELECT 1 FROM oc_product_facets f WHERE f.product_id = p.id AND f.kind = ? AND f.value IN (?))");
+    args.push(kind, values);
+  }
+  return { base: `FROM oc_products p ${join} WHERE ${where.join(" AND ")}`, args };
+}
+
+async function queryListing(p: ListParams): Promise<Listing> {
+  const { base, args } = whereOf(p);
   const perPage = Math.min(60, p.perPage ?? 24);
   const page = Math.max(1, p.page ?? 1);
   const [cnt] = await query<Row & { n: number }>(`SELECT COUNT(DISTINCT COALESCE(p.color_group_id, p.id)) n ${base}`, args);
@@ -130,6 +145,42 @@ async function queryListing(p: ListParams): Promise<Listing> {
     [...args, perPage, (page - 1) * perPage],
   );
   return { items: rows.map(toProduct), total: Number(cnt?.n ?? 0) };
+}
+
+export type FacetCounts = Record<FacetKind, { value: string; n: number }[]> & { isNew: number };
+const facetCache = new Map<string, { at: number; value: Promise<FacetCounts> }>();
+
+/** Счётчики фильтров раздела: для каждой группы — с учётом остальных выбранных фильтров. */
+export function listFacets(p: ListParams): Promise<FacetCounts> {
+  const key = JSON.stringify({ ...p, sort: undefined, page: undefined, perPage: undefined });
+  const hit = facetCache.get(key);
+  if (hit && Date.now() - hit.at < CACHE_MS) return hit.value;
+  if (facetCache.size > 500) facetCache.clear();
+  const value = (async () => {
+    const out = { isNew: 0 } as FacetCounts;
+    for (const kind of ["c", "m", "p"] as FacetKind[]) {
+      const { base, args } = whereOf(p, kind);
+      out[kind] = (
+        await query<Row & { value: string; n: number }>(
+          `SELECT f.value, COUNT(DISTINCT COALESCE(p.color_group_id, p.id)) n ${base.replace("FROM oc_products p", "FROM oc_products p JOIN oc_product_facets f ON f.product_id = p.id AND f.kind = ?")} GROUP BY f.value`,
+          [kind, ...args],
+        )
+      ).map((r) => ({ value: r.value, n: Number(r.n) }));
+    }
+    const { base, args } = whereOf({ ...p, isNew: true });
+    const [nw] = await query<Row & { n: number }>(`SELECT COUNT(DISTINCT COALESCE(p.color_group_id, p.id)) n ${base}`, args);
+    out.isNew = Number(nw?.n ?? 0);
+    return out;
+  })();
+  facetCache.set(key, { at: Date.now(), value });
+  value.catch(() => facetCache.delete(key));
+  return value;
+}
+
+/** Выдача и счётчики фильтров одним вызовом (запросы идут параллельно). */
+export async function listWithFacets(p: ListParams): Promise<Listing & { facets: FacetCounts }> {
+  const [list, facets] = await Promise.all([listProducts(p), listFacets(p)]);
+  return { ...list, facets };
 }
 
 export async function getProductRow(id: string): Promise<OcRow | null> {

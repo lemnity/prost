@@ -5,14 +5,17 @@ import { Breadcrumbs, type Crumb } from "@/components/ui/breadcrumbs";
 import { ProductCard } from "@/components/catalog/product-card";
 import { ConsultationCta } from "@/components/home/consultation-cta";
 import { buttonClass, selectClass } from "@/components/ui/button";
-import { AutoSubmitSelect } from "./auto-submit";
+import { AutoSubmitCheckbox, AutoSubmitSelect } from "./auto-submit";
+import { X } from "lucide-react";
+import { FACETS, type FacetKind } from "@/lib/catalog/facets";
+import type { FacetCounts } from "@/server/catalog";
 import { SectionSidebar } from "./section-sidebar";
 import { SectionSelect, type SectionLink } from "./section-select";
 import { productsLabel } from "@/lib/format";
 import type { Product } from "@/lib/catalog/types";
 import type { Sort } from "@/server/catalog";
 
-export type ListingQuery = { sort: Sort; page: number; priceFrom?: number; priceTo?: number; inStock: boolean; c?: string; q?: string };
+export type ListingQuery = { sort: Sort; page: number; priceFrom?: number; priceTo?: number; inStock: boolean; isNew?: boolean; facets?: Partial<Record<FacetKind, string[]>>; c?: string; q?: string };
 
 const SORTS: { value: Sort; label: string }[] = [
   { value: "popular", label: "Популярные" },
@@ -29,12 +32,16 @@ export function parseListing(sp: Record<string, string | string[] | undefined>):
     return Number.isFinite(v) && v > 0 ? v : undefined;
   };
   const sort = (one("sort") as Sort) ?? "popular";
+  const all = (k: string) => [sp[k] ?? []].flat().filter((v): v is string => typeof v === "string" && /^[a-z0-9-]{1,32}$/.test(v)).slice(0, 20);
+  const facets = Object.fromEntries(FACETS.map((f) => [f.kind, all(f.param)]).filter(([, v]) => v.length));
   return {
     sort: SORTS.some((s) => s.value === sort) ? sort : "popular",
     page: Math.max(1, Math.min(500, Math.floor(num("page") ?? 1))),
     priceFrom: num("from"),
     priceTo: num("to"),
     inStock: one("stock") === "1",
+    isNew: one("new") === "1",
+    facets,
     c: one("c"),
     q: one("q")?.slice(0, 100),
   };
@@ -48,6 +55,8 @@ function pageHref(path: string, q: ListingQuery, page: number) {
   if (q.priceFrom) sp.set("from", String(q.priceFrom));
   if (q.priceTo) sp.set("to", String(q.priceTo));
   if (q.inStock) sp.set("stock", "1");
+  if (q.isNew) sp.set("new", "1");
+  for (const f of FACETS) for (const v of q.facets?.[f.kind] ?? []) sp.append(f.param, v);
   if (page > 1) sp.set("page", String(page));
   const s = sp.toString();
   return s ? `${path}?${s}` : path;
@@ -63,6 +72,7 @@ export function OcListing({
   total,
   sections,
   chips,
+  facets,
   perPage = 24,
 }: {
   title: string;
@@ -73,6 +83,7 @@ export function OcListing({
   total: number;
   sections?: SectionLink[];
   chips?: SectionLink[];
+  facets?: FacetCounts;
   perPage?: number;
 }) {
   const pages = Math.max(1, Math.ceil(total / perPage));
@@ -90,9 +101,47 @@ export function OcListing({
         </div>
       </fieldset>
       <label className="flex items-center gap-2.5 text-[14px]">
-        <input type="checkbox" name="stock" value="1" defaultChecked={query.inStock} className="size-4 accent-[#D02E31]" />
+        <AutoSubmitCheckbox name="stock" value="1" defaultChecked={query.inStock} className="size-4 accent-[#D02E31]" />
         Только в наличии
       </label>
+      {facets && (facets.isNew > 0 || query.isNew) ? (
+        <label className="-mt-2 flex items-center gap-2.5 text-[14px]">
+          <AutoSubmitCheckbox name="new" value="1" defaultChecked={query.isNew} className="size-4 accent-[#D02E31]" />
+          Новинки <span className="tabular-nums text-muted">{facets.isNew}</span>
+        </label>
+      ) : null}
+      {facets
+        ? FACETS.map((g) => {
+            const counts = new Map(facets[g.kind].map((r) => [r.value, r.n]));
+            const chosen = query.facets?.[g.kind] ?? [];
+            // Цвета — в порядке палитры, материалы и нанесение — самые частые в разделе сверху.
+            const options = g.tags
+              .filter((t) => counts.has(t.id) || chosen.includes(t.id))
+              .sort((a, b) => (g.kind === "c" ? 0 : (counts.get(b.id) ?? 0) - (counts.get(a.id) ?? 0)));
+            if (!options.length) return null;
+            const row = (t: (typeof options)[number]) => (
+              <label key={t.id} className="flex items-center gap-2.5 py-1 text-[14px]">
+                <AutoSubmitCheckbox name={g.param} value={t.id} defaultChecked={chosen.includes(t.id)} className="size-4 shrink-0 accent-[#D02E31]" />
+                {"swatch" in t && t.swatch ? <span aria-hidden="true" className="size-3.5 shrink-0 rounded-full ring-1 ring-black/15" style={{ background: t.swatch }} /> : null}
+                <span className="min-w-0 flex-1 first-letter:uppercase">{t.label}</span>
+                <span className="tabular-nums text-[12px] text-muted">{counts.get(t.id) ?? 0}</span>
+              </label>
+            );
+            const head = options.slice(0, 7), more = options.slice(7);
+            return (
+              <fieldset key={g.kind} className="border-t border-line pt-3">
+                <legend className="mb-1 text-[13px] font-semibold">{g.label}</legend>
+                {head.map(row)}
+                {more.length ? (
+                  <details open={more.some((t) => chosen.includes(t.id))} className="[&[open]>summary]:hidden">
+                    <summary className="cursor-pointer list-none py-1 text-[13px] font-medium text-brand">Ещё {more.length}</summary>
+                    {more.map(row)}
+                  </details>
+                ) : null}
+              </fieldset>
+            );
+          })
+        : null}
       <label className="grid gap-1.5 text-[13px] font-semibold">
         Сортировка
         <AutoSubmitSelect name="sort" defaultValue={query.sort} className={selectClass({ size: "sm" })}>
@@ -134,6 +183,28 @@ export function OcListing({
                 {filters}
               </details>
             </div>
+            {(() => {
+              const active = FACETS.flatMap((g) =>
+                (query.facets?.[g.kind] ?? []).map((v) => ({
+                  key: `${g.kind}-${v}`,
+                  label: g.tags.find((t) => t.id === v)?.label ?? v,
+                  href: pageHref(path, { ...query, facets: { ...query.facets, [g.kind]: query.facets![g.kind]!.filter((x) => x !== v) } }, 1),
+                })),
+              );
+              if (query.isNew) active.unshift({ key: "new", label: "Новинки", href: pageHref(path, { ...query, isNew: false }, 1) });
+              if (query.inStock) active.unshift({ key: "stock", label: "В наличии", href: pageHref(path, { ...query, inStock: false }, 1) });
+              return active.length ? (
+                <ul aria-label="Выбранные фильтры" className="mb-4 flex flex-wrap gap-2">
+                  {active.map((a) => (
+                    <li key={a.key}>
+                      <Link href={a.href} className="inline-flex h-8 items-center gap-1 rounded-full bg-surface pl-3 pr-2 text-[13px] first-letter:uppercase hover:text-brand">
+                        {a.label} <X size={14} aria-label="убрать" />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : null;
+            })()}
             {chips?.length ? (
               <ul className="no-scrollbar -mx-4 mb-4 flex gap-2 overflow-x-auto px-4 md:mx-0 md:flex-wrap md:px-0">
                 {chips.map((c) => (

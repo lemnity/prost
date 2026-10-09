@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { OcListing, parseListing } from "@/components/catalog/oc-listing";
 import { OcProductPage, ocProductMetadata } from "@/components/catalog/oc-product-page";
 import { catHref, childrenOf, getCat } from "@/lib/catalog/oasis-tree";
-import { listProducts } from "@/server/catalog";
+import { listWithFacets } from "@/server/catalog";
 import { ensureCanonical, legacyRedirect, productFromItem, resolveCat, subSections } from "@/server/catalog-routes";
 
 type Props = { params: Promise<{ category: string; sub: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
@@ -40,7 +40,7 @@ export default async function SubPage({ params, searchParams }: Props) {
   const q = parseListing(await searchParams);
   const kids = childrenOf(cat.id);
   const filter = q.c ? kids.find((c) => String(c.id) === q.c) : undefined;
-  const { items, total } = await listProducts({ ...q, category: filter?.id ?? cat.id });
+  const { items, total, facets } = await listWithFacets({ ...q, category: filter?.id ?? cat.id });
   const chips = kids.length
     ? [{ title: "Все", href: catHref(cat.id), active: !filter }, ...kids.map((k) => ({ title: k.name, href: catHref(k.id), active: k.id === filter?.id, count: k.count }))]
     : undefined;
@@ -58,6 +58,7 @@ export default async function SubPage({ params, searchParams }: Props) {
       query={q}
       items={items}
       total={total}
+      facets={facets}
       sections={subSections(parent, cat.id)}
       chips={chips}
     />
