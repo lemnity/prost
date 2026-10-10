@@ -121,10 +121,18 @@ export function AiSearch() {
     }
   }
 
-  const greeting = (
-    <p className="max-w-[90%] rounded-[16px] rounded-bl-[4px] bg-surface px-4 py-2.5 text-[14px]">
+  const bubble = "max-w-[90%] rounded-[16px] rounded-bl-[4px] bg-surface px-4 py-2.5 text-[14px]";
+  /** Окно открыто без запроса — приглашение рассказать о задаче. */
+  const invite = (
+    <p className={bubble}>
       Здравствуйте! Меня зовут {AGENT.firstName}, я менеджер ProStyle. Помогу подобрать корпоративные подарки и сувениры из нашего каталога.
       Расскажите, для кого и к какому поводу ищете, какой бюджет и тираж — подскажу лучшие варианты. Можно просто написать название товара или артикул.
+    </p>
+  );
+  /** Запрос уже есть — коротко представиться и взяться за него. */
+  const hello = (
+    <p className={bubble}>
+      Здравствуйте! Меня зовут {AGENT.firstName}, я менеджер ProStyle. Сейчас посмотрю, что у нас есть по вашему запросу.
     </p>
   );
 
@@ -204,7 +212,7 @@ export function AiSearch() {
               <div className="grid gap-4">
                 {!turns.length ? (
                   <>
-                    {greeting}
+                    {invite}
                     <ul className="flex flex-wrap gap-2">
                       {HINTS.map((h) => (
                         <li key={h}>
@@ -220,7 +228,7 @@ export function AiSearch() {
                     {renderTurn(turns[0], 0)}
                     {greeted ? (
                       <>
-                    {greeting}
+                    {hello}
                         {turns.slice(1).map((t, i) => renderTurn(t, i + 1))}
                       </>
                     ) : null}
@@ -228,7 +236,7 @@ export function AiSearch() {
                 )}
                 {busy && greeted ? (
                   <p role="status" className="flex w-fit items-center gap-2 rounded-[16px] rounded-bl-[4px] bg-surface px-4 py-2.5 text-[14px] text-muted">
-                    Виктория подбирает товары
+                    Виктория подбирает варианты
                     <span aria-hidden="true" className="flex gap-1">
                       {[0, 1, 2].map((d) => (
                         <span key={d} className="size-1.5 rounded-full bg-brand motion-safe:animate-bounce" style={{ animationDelay: `${d * 150}ms` }} />
