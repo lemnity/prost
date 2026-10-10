@@ -66,7 +66,7 @@ function Watcher() {
         return;
       const a = (e.target as Element | null)?.closest?.("a[href]");
       if (!(a instanceof HTMLAnchorElement)) return;
-      if (a.hasAttribute("download")) return;
+      if (a.hasAttribute("download") || a.hasAttribute("data-no-loader")) return; // data-no-loader — ссылка обрабатывается на месте (например, «Показать ещё»)
       if (a.target && a.target !== "_self") return;
       const url = new URL(a.href, location.href);
       if (url.origin !== location.origin) return;

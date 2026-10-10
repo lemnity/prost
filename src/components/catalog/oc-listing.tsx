@@ -2,7 +2,8 @@ import Link from "next/link";
 import { SlidersHorizontal } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Breadcrumbs, type Crumb } from "@/components/ui/breadcrumbs";
-import { ProductCard } from "@/components/catalog/product-card";
+import { ProductGrid } from "./product-grid";
+import type { ListRequest } from "@/app/api/catalog/list/route";
 import { ConsultationCta } from "@/components/home/consultation-cta";
 import { buttonClass, selectClass } from "@/components/ui/button";
 import { AutoSubmitCheckbox, AutoSubmitSelect } from "./auto-submit";
@@ -73,6 +74,7 @@ export function OcListing({
   sections,
   chips,
   facets,
+  request,
   perPage = 24,
 }: {
   title: string;
@@ -84,9 +86,10 @@ export function OcListing({
   sections?: SectionLink[];
   chips?: SectionLink[];
   facets?: FacetCounts;
+  /** Раздел/подборка/поиск — для догрузки следующих страниц. */
+  request: Pick<ListRequest, "category" | "collection" | "q">;
   perPage?: number;
 }) {
-  const pages = Math.max(1, Math.ceil(total / perPage));
   const field = "h-10 w-full min-w-0 rounded-lg border border-line bg-white px-3 text-[14px] focus-visible:outline-2 focus-visible:outline-brand";
   const filters = (
     <form method="get" action={path} className="grid gap-4">
@@ -245,39 +248,21 @@ export function OcListing({
               </ul>
             ) : null}
             {items.length ? (
-              <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 2xl:grid-cols-4">
-                {items.map((p) => (
-                  <li key={p.id}>
-                    <ProductCard product={p} />
-                  </li>
-                ))}
-              </ul>
+              <ProductGrid
+                key={pageHref(path, query, query.page)}
+                initial={items}
+                total={total}
+                page={query.page}
+                perPage={perPage}
+                request={{ ...request, q: request.q ?? query.q, priceFrom: query.priceFrom, priceTo: query.priceTo, inStock: query.inStock, isNew: query.isNew, facets: query.facets, sort: query.sort }}
+                nextHref={pageHref(path, query, query.page + 1)}
+              />
             ) : (
               <div className="rounded-[14px] bg-surface px-6 py-12 text-center">
                 <p className="text-[18px] font-semibold">Товары не найдены</p>
                 <p className="mt-2 text-sm text-muted">Измените фильтры или напишите нам — подберём товары под задачу.</p>
               </div>
             )}
-            {pages > 1 ? (
-              <nav aria-label="Страницы" className="mt-8 flex flex-wrap items-center justify-center gap-1.5">
-                {query.page > 1 ? <Link href={pageHref(path, query, query.page - 1)} className="h-10 rounded-lg border border-line px-3 leading-10 hover:border-brand">←</Link> : null}
-                {Array.from({ length: pages }, (_, i) => i + 1)
-                  .filter((n) => n === 1 || n === pages || Math.abs(n - query.page) <= 2)
-                  .map((n, i, arr) => (
-                    <span key={n} className="flex items-center gap-1.5">
-                      {i > 0 && n - arr[i - 1] > 1 ? <span className="px-1 text-muted">…</span> : null}
-                      <Link
-                        href={pageHref(path, query, n)}
-                        aria-current={n === query.page ? "page" : undefined}
-                        className={`h-10 min-w-10 rounded-lg border px-3 text-center leading-10 tabular-nums ${n === query.page ? "border-ink bg-ink text-white" : "border-line hover:border-brand"}`}
-                      >
-                        {n}
-                      </Link>
-                    </span>
-                  ))}
-                {query.page < pages ? <Link href={pageHref(path, query, query.page + 1)} className="h-10 rounded-lg border border-line px-3 leading-10 hover:border-brand">→</Link> : null}
-              </nav>
-            ) : null}
           </div>
         </div>
       </Container>

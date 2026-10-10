@@ -22,7 +22,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
     const col = COLLECTIONS[category];
     const query = { ...q, sort: q.sort === "popular" ? col.sort : q.sort, inStock: q.inStock || col.inStock };
     const { items, total, facets } = await listWithFacets({ ...query, sale: col.sale, theme: col.theme });
-    return <OcListing title={col.title} crumbs={[...crumbs, { label: col.title }]} path={`/catalog/${category}`} query={q} items={items} total={total} facets={facets} sections={topSections()} />;
+    return <OcListing title={col.title} crumbs={[...crumbs, { label: col.title }]} path={`/catalog/${category}`} query={q} items={items} total={total} facets={facets} request={{ collection: category }} sections={topSections()} />;
   }
 
   const cat = resolveCat(category);
@@ -41,6 +41,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       items={items}
       total={total}
       facets={facets}
+      request={{ category: filter?.id ?? cat.id }}
       sections={subSections(cat)}
     />
   );

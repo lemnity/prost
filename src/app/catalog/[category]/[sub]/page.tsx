@@ -59,6 +59,7 @@ export default async function SubPage({ params, searchParams }: Props) {
       items={items}
       total={total}
       facets={facets}
+      request={{ category: filter?.id ?? cat.id }}
       sections={subSections(parent, cat.id)}
       chips={chips}
     />

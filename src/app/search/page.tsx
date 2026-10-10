@@ -24,6 +24,7 @@ export default async function SearchPage({ searchParams }: Props) {
       items={items}
       total={total}
       facets={facets}
+      request={{ q: text }}
       sections={topSections()}
     />
   );
