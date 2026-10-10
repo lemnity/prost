@@ -27,6 +27,6 @@ export async function POST(req: Request) {
     return ok(await answer(history));
   } catch (e) {
     console.error("ai:", (e as Error).message);
-    return fail(502, "Помощник временно недоступен — попробуйте обычный поиск или позвоните нам");
+    return fail(502, "Ой, не успела ответить — повторите, пожалуйста, сообщение");
   }
 }

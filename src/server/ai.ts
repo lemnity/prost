@@ -1,6 +1,7 @@
 import { listProducts } from "./catalog";
 import type { Product } from "@/lib/catalog/types";
 import { INTRO, KNOWLEDGE, STYLE } from "./persona";
+import { weather } from "./weather";
 
 /**
  * ИИ-помощник поиска: модель через шлюз RouterAI (OpenAI-совместимый API, https://routerai.ru/api/v1).
@@ -41,6 +42,14 @@ const TOOLS = [
         },
         required: ["query"],
       },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_weather",
+      description: "Текущая погода и прогноз на сегодня и завтра в городе. Если город не назван — Тюмень.",
+      parameters: { type: "object", properties: { city: { type: "string", description: "Город, например «Тюмень» или «Москва»" } } },
     },
   },
 ];
@@ -111,6 +120,14 @@ export async function runWithCatalog(messages: Msg[], opts: { withLinks?: boolea
         for (const p of items) found.set(p.id, p);
         result = items.length ? items.map((p) => ({ ...brief(p), ...(opts.withLinks ? { url: site + p.url } : {}) })) : "Ничего не найдено";
       }
+      if (call.function.name === "get_weather") {
+        try {
+          const args = JSON.parse(call.function.arguments || "{}") as { city?: string };
+          result = await weather(args.city);
+        } catch {
+          result = { error: "Погода сейчас недоступна" };
+        }
+      }
       messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify(result) });
     }
   }
@@ -127,7 +144,7 @@ export async function answer(history: ChatTurn[]): Promise<AiAnswer> {
       products,
       reply: products.length
         ? `Вот что нашлось по запросу «${last}». Нужен подбор под задачу и бюджет — оставьте заявку, менеджер поможет.`
-        : `По запросу «${last}» ничего не нашлось. Попробуйте другое слово или артикул — или позвоните нам: +7 (3452) 550 995.`,
+        : `По запросу «${last}» ничего не нашлось. Попробуйте другое слово или артикул — или опишите задачу, подберу варианты.`,
     };
   }
   const today = new Date().toLocaleDateString("ru-RU", { timeZone: "Europe/Moscow", day: "numeric", month: "long", year: "numeric" });
