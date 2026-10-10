@@ -169,7 +169,8 @@ export function OcListing({
 
       <Container className="py-6 md:py-8">
         <div className="lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start lg:gap-8">
-          <aside className="hidden lg:sticky lg:top-24 lg:grid lg:gap-6">
+          {/* Колонка по высоте экрана под липкой шапкой; длинные фильтры прокручиваются внутри. */}
+          <aside className="hidden lg:sticky lg:top-24 lg:grid lg:max-h-[calc(100dvh/var(--zoom)-7.5rem)] lg:gap-6 lg:overflow-y-auto lg:overscroll-contain lg:pr-1 lg:[scrollbar-gutter:stable] lg:[scrollbar-width:thin]">
             {sections?.length ? <SectionSidebar items={sections} /> : null}
             <div className="rounded-[14px] bg-surface p-4">{filters}</div>
           </aside>
