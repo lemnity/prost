@@ -27,6 +27,6 @@ export async function POST(req: Request) {
     return ok(await answer(history));
   } catch (e) {
     console.error("ai:", (e as Error).message);
-    return fail(502, "Ой, не успела ответить — повторите, пожалуйста, сообщение");
+    return fail(502, "Ой, не успела ответить, повторите, пожалуйста, сообщение");
   }
 }

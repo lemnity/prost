@@ -25,7 +25,7 @@ const HINTS = [
 ];
 const FIELD_HINTS = HINTS.slice(0, 7);
 
-const HELLO = `Здравствуйте! Меня зовут ${AGENT.firstName}, я менеджер ProStyle — рада помочь.`;
+const HELLO = `Здравствуйте! Меня зовут ${AGENT.firstName}, я менеджер ProStyle, рада помочь.`;
 const BUBBLE = "max-w-[90%] whitespace-pre-wrap rounded-[16px] rounded-bl-[4px] bg-surface px-4 py-2.5 text-[14px]";
 
 type Turn = { role: "user" | "assistant"; content: string; products?: Product[]; query?: string; typed?: boolean };
@@ -92,6 +92,9 @@ export function AiSearch() {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [busy, setBusy] = useState(false);
   const [hello, setHello] = useState<Hello>("none");
+  /** Следующие части ответа (ещё рекомендую, вопрос) — приходят по одной после «печатает». */
+  const queue = useRef<Turn[]>([]);
+  const [between, setBetween] = useState(false);
   const headerInput = useRef<HTMLInputElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
   const list = useRef<HTMLDivElement>(null);
@@ -165,7 +168,7 @@ export function AiSearch() {
 
   async function ask(text: string) {
     const q = text.trim();
-    if (!q || busy) return;
+    if (!q || busy || between || queue.current.length) return;
     const next: Turn[] = [...turns, { role: "user", content: q }];
     setTurns(next);
     setDraft("");
@@ -181,16 +184,29 @@ export function AiSearch() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: next.map(({ role, content }) => ({ role, content })) }),
       });
-      const data = (await res.json()) as { reply?: string; products?: Product[]; error?: string };
-      setTurns([...next, { role: "assistant", content: data.reply ?? data.error ?? "Не удалось получить ответ", products: data.products ?? [], query: q }]);
+      const data = (await res.json()) as { reply?: string; products?: Product[]; parts?: { text: string; products: Product[] }[]; error?: string };
+      const parts = data.parts?.length ? data.parts : [{ text: data.reply ?? data.error ?? "Не удалось получить ответ", products: data.products ?? [] }];
+      const [first, ...rest] = parts.map((p, k): Turn => ({ role: "assistant", content: p.text, products: p.products, query: k === 0 && p.products.length ? q : undefined }));
+      queue.current = rest;
+      setTurns([...next, first]);
     } catch {
-      setTurns([...next, { role: "assistant", content: "Ой, связь прервалась — попробуйте отправить сообщение ещё раз.", query: q }]);
+      setTurns([...next, { role: "assistant", content: "Ой, связь прервалась, попробуйте отправить сообщение ещё раз.", query: q }]);
     } finally {
       setBusy(false);
     }
   }
 
-  const markTyped = (i: number) => setTurns((all) => all.map((t, k) => (k === i ? { ...t, typed: true } : t)));
+  // Часть ответа набрана — через паузу «печатает» показываем следующую.
+  const markTyped = (i: number) => {
+    setTurns((all) => all.map((t, k) => (k === i ? { ...t, typed: true } : t)));
+    const nextPart = queue.current.shift();
+    if (!nextPart) return;
+    setBetween(true);
+    setTimeout(() => {
+      setBetween(false);
+      setTurns((all) => [...all, nextPart]);
+    }, nextPart.products?.length ? 1400 : 1000);
+  };
 
   const renderTurn = (t: Turn, i: number) =>
     t.role === "user" ? (
@@ -217,7 +233,7 @@ export function AiSearch() {
       </div>
     );
 
-  const typing = hello === "dots" || (hello === "done" && busy);
+  const typing = hello === "dots" || (hello === "done" && (busy || between));
 
   return (
     <>
@@ -275,7 +291,7 @@ export function AiSearch() {
                     {!turns.length ? (
                       <>
                         <p className={BUBBLE}>
-                          Здравствуйте! Подскажу с выбором корпоративных подарков и сувениров. Расскажите, для кого и к какому поводу ищете, какой бюджет и тираж — или выберите готовую идею:
+                          Здравствуйте! Подскажу с выбором корпоративных подарков и сувениров. Расскажите, для кого и к какому поводу ищете, какой бюджет и тираж, или выберите готовую идею:
                         </p>
                         <ul className="flex flex-wrap gap-2">
                           {HINTS.map((h) => (

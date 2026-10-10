@@ -1,5 +1,5 @@
 import { json, query, type Row } from "./db";
-import { aiEnabled, runWithCatalog, type Msg } from "./ai";
+import { aiEnabled, noDash, runWithCatalog, type Msg } from "./ai";
 import { getOrderRow, type OrderContact } from "./orders";
 import { KNOWLEDGE, STYLE } from "./persona";
 import { AGENT } from "@/lib/chat/agent";
@@ -69,5 +69,5 @@ export async function victoriaReply(number: string): Promise<string | null> {
     ...history,
   ];
   const { text } = await runWithCatalog(messages, { withLinks: true, maxTokens: 700 });
-  return text ? plain(text) : null;
+  return text ? noDash(plain(text)) : null;
 }

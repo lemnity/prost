@@ -12,7 +12,12 @@ const API = process.env.ROUTERAI_BASE_URL || "https://routerai.ru/api/v1";
 const MAX_STEPS = 4;
 
 export type ChatTurn = { role: "user" | "assistant"; content: string };
-export type AiAnswer = { reply: string; products: Product[]; ai: boolean };
+/** Часть ответа — отдельное сообщение в чате (текст и, если есть, карточки товаров). */
+export type AiPart = { text: string; products: Product[] };
+export type AiAnswer = { reply: string; products: Product[]; parts: AiPart[]; ai: boolean };
+
+/** Без длинного и короткого тире: только обычный дефис. */
+export const noDash = (s: string) => s.replace(/\s*—\s*/g, " - ").replace(/–/g, "-");
 
 export const aiEnabled = () => !!(process.env.ROUTERAI_API_KEY && process.env.ROUTERAI_MODEL);
 
@@ -20,8 +25,15 @@ const SYSTEM = `${INTRO} Ты отвечаешь посетителю сайта
 Ты уже поздоровалась и представилась в начале диалога — не здоровайся и не представляйся снова, сразу переходи к делу.
 
 ${STYLE}
-- Подходящие товары кратко назови с ценой — их карточки покажутся под твоим ответом, ссылки не нужны.
-- Цены за штуку без нанесения. Чтобы оформить заказ, посетитель добавляет товары в корзину и отправляет заявку — после этого ты продолжишь работу с ним в чате заявки, рассчитаешь нанесение и макет.
+- Цены за штуку без нанесения. Чтобы оформить заказ, посетитель добавляет товары в корзину и отправляет заявку, после этого ты продолжишь работу с ним в чате заявки: рассчитаешь нанесение и макет.
+
+Формат ответа: только JSON без пояснений и без markdown, ровно такой:
+{"text": "...", "picks": ["артикул", ...], "more_text": "...", "more": ["артикул", ...], "question": "..."}
+- text: 1–2 живых предложения по сути запроса. НЕ перечисляй в тексте товары и цены, их покажут карточками.
+- picks: до 4 артикулов лучших товаров из результатов search_catalog (пусто, если товары не нужны, например в бытовом разговоре).
+- more_text и more: дополнительная рекомендация, другая идея под ту же задачу (например «Ещё рекомендую обратить внимание на эти варианты:») и до 4 артикулов; если нечего добавить, пустая строка и пустой список.
+- question: завершающее сообщение: уточняющий вопрос по задаче или предложение помочь ещё («Могу ещё что-то подсказать?»).
+- Артикулы бери только из результатов поиска, не выдумывай.
 
 ${KNOWLEDGE}
 Сегодня: {TODAY}.`;
@@ -105,7 +117,7 @@ export async function runWithCatalog(messages: Msg[], opts: { withLinks?: boolea
   for (let step = 0; step < MAX_STEPS; step++) {
     const msg = await complete(messages, opts.maxTokens ?? 600);
     const calls = msg.tool_calls ?? [];
-    if (!calls.length) return { text: (msg.content ?? "").trim(), products: [...found.values()].slice(0, 8) };
+    if (!calls.length) return { text: (msg.content ?? "").trim(), products: [...found.values()] };
     messages.push({ role: "assistant", content: msg.content ?? null, tool_calls: calls });
     for (const call of calls) {
       let result: unknown = { error: "неизвестный инструмент" };
@@ -131,7 +143,7 @@ export async function runWithCatalog(messages: Msg[], opts: { withLinks?: boolea
       messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify(result) });
     }
   }
-  return { text: "", products: [...found.values()].slice(0, 8) };
+  return { text: "", products: [...found.values()] };
 }
 
 /** Ответ помощника на диалог. */
@@ -139,17 +151,50 @@ export async function answer(history: ChatTurn[]): Promise<AiAnswer> {
   const last = [...history].reverse().find((m) => m.role === "user")?.content ?? "";
   if (!aiEnabled()) {
     const products = await searchCatalog({ query: last });
-    return {
-      ai: false,
-      products,
-      reply: products.length
-        ? `Вот что нашлось по запросу «${last}». Нужен подбор под задачу и бюджет — оставьте заявку, менеджер поможет.`
-        : `По запросу «${last}» ничего не нашлось. Попробуйте другое слово или артикул — или опишите задачу, подберу варианты.`,
-    };
+    const reply = products.length
+        ? `Вот что нашлось по запросу «${last}». Нужен подбор под задачу и бюджет? Опишите её, подскажу.`
+        : `По запросу «${last}» ничего не нашлось. Попробуйте другое слово или артикул или опишите задачу, подберу варианты.`;
+    return { ai: false, products, reply, parts: [{ text: reply, products }] };
   }
   const today = new Date().toLocaleDateString("ru-RU", { timeZone: "Europe/Moscow", day: "numeric", month: "long", year: "numeric" });
+  // В истории — только тексты прошлых ответов (без JSON), модель отвечает новым JSON.
   const messages: Msg[] = [{ role: "system", content: SYSTEM.replace("{TODAY}", today) }, ...history.map((m) => ({ role: m.role, content: m.content }))];
   const { text, products } = await runWithCatalog(messages);
-  if (text) return { ai: true, reply: text, products };
-  return { ai: true, reply: "Вот что удалось подобрать. Уточните задачу или бюджет — подберу точнее.", products };
+  const parts = toParts(text, products);
+  return { ai: true, parts, reply: parts.map((p) => p.text).join("\n\n"), products: parts.flatMap((p) => p.products) };
+}
+
+type Structured = { text?: string; picks?: string[]; more_text?: string; more?: string[]; question?: string };
+
+/** JSON модели → сообщения: основное с карточками, «ещё рекомендую» с карточками, завершающий вопрос. */
+function toParts(raw: string, found: Product[]): AiPart[] {
+  const bySku = new Map(found.map((p) => [p.sku.trim().toLowerCase(), p]));
+  const pick = (list?: string[], used = new Set<string>()) =>
+    (Array.isArray(list) ? list : [])
+      .map((a) => bySku.get(String(a).trim().toLowerCase()))
+      .filter((p): p is Product => !!p && !used.has(p.id) && !!used.add(p.id))
+      .slice(0, 4);
+  let data: Structured | null = null;
+  const json = raw.slice(raw.indexOf("{"), raw.lastIndexOf("}") + 1);
+  try {
+    data = json ? (JSON.parse(json) as Structured) : null;
+  } catch {
+    data = null;
+  }
+  if (!data) {
+    // Модель ответила обычным текстом — одно сообщение и найденные товары.
+    const text = noDash(raw.trim()) || "Вот что удалось подобрать.";
+    return [{ text, products: found.slice(0, 4) }];
+  }
+  const used = new Set<string>();
+  const picks = pick(data.picks, used);
+  const more = pick(data.more, used);
+  const parts: AiPart[] = [];
+  const main = noDash(String(data.text ?? "").trim());
+  if (main || picks.length) parts.push({ text: main || "Вот что подобрала:", products: picks });
+  const moreText = noDash(String(data.more_text ?? "").trim());
+  if (more.length) parts.push({ text: moreText || "Ещё рекомендую обратить внимание:", products: more });
+  const question = noDash(String(data.question ?? "").trim());
+  if (question) parts.push({ text: question, products: [] });
+  return parts.length ? parts : [{ text: "Расскажите чуть подробнее о задаче, и я подберу варианты.", products: [] }];
 }
