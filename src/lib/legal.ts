@@ -23,4 +23,5 @@ export const legalLinks = [
   { label: "Возврат и претензии", href: "/claim-resolution-process" },
   { label: "Требования к макетам", href: "/printing-terms" },
   { label: "Реквизиты", href: "/about#requisites" },
+  { label: "Карта сайта", href: "/sitemap" },
 ];

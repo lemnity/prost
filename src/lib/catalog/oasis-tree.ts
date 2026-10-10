@@ -133,3 +133,20 @@ export function catByName(name: string): TreeCat | undefined {
 }
 
 export { ROOT as TREE_ROOT };
+
+/** Адреса всех непустых разделов (для карты сайта); подразделы третьего уровня с «?c=» не включаем. */
+export function categoryPages(): { href: string; name: string; level: number }[] {
+  const out: { href: string; name: string; level: number }[] = [];
+  const walk = (id: number) => {
+    for (const c of childrenOf(id)) {
+      const href = catHref(c.id);
+      if (!href.includes("?")) out.push({ href, name: c.name, level: c.level });
+      walk(c.id);
+    }
+  };
+  for (const t of tops()) {
+    out.push({ href: catHref(t.id), name: t.name, level: t.level });
+    walk(t.id);
+  }
+  return out;
+}

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { SectionLink } from "./section-select";
 
-const VISIBLE = 12;
+const VISIBLE = 5;
 
 function Item({ item }: { item: SectionLink }) {
   const empty = !item.active && !item.count;
@@ -27,7 +27,7 @@ function Item({ item }: { item: SectionLink }) {
   );
 }
 
-/** Левая колонка «Разделы» (lg+). Без JS: «Показать все» через <details>. */
+/** Левая колонка «Разделы» (lg+): первые 5, остальные — по «Показать ещё» (<details>, работает без JS). */
 export function SectionSidebar({ items }: { items: SectionLink[] }) {
   const head = items.slice(0, VISIBLE);
   const rest = items.slice(VISIBLE);
@@ -46,7 +46,7 @@ export function SectionSidebar({ items }: { items: SectionLink[] }) {
       {rest.length ? (
         <details open={activeHidden} className="group flex flex-col">
           <summary className="order-last mt-1 cursor-pointer list-none rounded-lg px-3 py-2 text-[13px] font-medium text-brand hover:text-brand-hover [&::-webkit-details-marker]:hidden">
-            <span className="group-open:hidden">Показать все ({items.length})</span>
+            <span className="group-open:hidden">Показать ещё {rest.length}</span>
             <span className="hidden group-open:inline">Свернуть</span>
           </summary>
           <ul className="mt-0.5 space-y-0.5">
