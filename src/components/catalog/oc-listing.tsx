@@ -3,6 +3,7 @@ import { SlidersHorizontal } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Breadcrumbs, type Crumb } from "@/components/ui/breadcrumbs";
 import { ProductGrid } from "./product-grid";
+import { ListingViewSwitch } from "./listing-view";
 import type { ListRequest } from "@/app/api/catalog/list/route";
 import { ConsultationCta } from "@/components/home/consultation-cta";
 import { buttonClass, selectClass } from "@/components/ui/button";
@@ -174,20 +175,23 @@ export function OcListing({
             <p className="mt-2 text-[14px] text-muted">{total ? `Найдено ${productsLabel(total)}` : "Ничего не найдено"}</p>
           </div>
           {total ? (
-            <form method="get" action={path} className="hidden items-center gap-3 lg:flex">
-              {[...new URLSearchParams(pageHref(path, { ...query, sort: "popular" }, 1).split("?")[1] ?? "")].map(([k, v], i) => (
-                <input key={`${k}-${i}`} type="hidden" name={k} value={v} />
-              ))}
-              <label htmlFor="listing-sort" className="text-[14px] text-muted">Сортировка</label>
-              <AutoSubmitSelect id="listing-sort" name="sort" defaultValue={query.sort} className={`${selectClass({ size: "sm" })} min-w-[200px]`}>
-                {SORTS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
+            <div className="flex items-center gap-4">
+              <form method="get" action={path} className="hidden items-center gap-3 lg:flex">
+                {[...new URLSearchParams(pageHref(path, { ...query, sort: "popular" }, 1).split("?")[1] ?? "")].map(([k, v], i) => (
+                  <input key={`${k}-${i}`} type="hidden" name={k} value={v} />
                 ))}
-              </AutoSubmitSelect>
-              <noscript>
-                <button type="submit" className={buttonClass({ variant: "outline", size: "sm" })}>OK</button>
-              </noscript>
-            </form>
+                <label htmlFor="listing-sort" className="text-[14px] text-muted">Сортировка</label>
+                <AutoSubmitSelect id="listing-sort" name="sort" defaultValue={query.sort} className={`${selectClass({ size: "sm" })} min-w-[200px]`}>
+                  {SORTS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </AutoSubmitSelect>
+                <noscript>
+                  <button type="submit" className={buttonClass({ variant: "outline", size: "sm" })}>OK</button>
+                </noscript>
+              </form>
+              <ListingViewSwitch />
+            </div>
           ) : null}
         </div>
       </Container>
