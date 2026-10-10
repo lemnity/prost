@@ -150,7 +150,8 @@ export function OcListing({
           ))}
         </AutoSubmitSelect>
       </label>
-      <div className="flex gap-2">
+      {/* Кнопки прилипают к низу прокручиваемой колонки фильтров. */}
+      <div className="flex gap-2 lg:sticky lg:bottom-0 lg:z-10 lg:-mx-4 lg:-mb-4 lg:rounded-b-[14px] lg:border-t lg:border-line lg:bg-surface lg:px-4 lg:pb-4 lg:pt-3">
         <button type="submit" className={`${buttonClass({ size: "sm" })} flex-1`}>Показать</button>
         <Link href={pageHref(path, { sort: "popular", page: 1, inStock: false, q: query.q, c: query.c }, 1)} className={buttonClass({ variant: "outline", size: "sm" })}>
           Сбросить
