@@ -82,9 +82,15 @@ export function AiSearch() {
     };
   }, [open]);
 
+  // Новый ответ — показываем его начало (текст Виктории), а не конец списка карточек; иначе — вниз.
   useEffect(() => {
-    list.current?.scrollTo({ top: list.current.scrollHeight, behavior: "smooth" });
-  }, [turns, busy]);
+    const box = list.current;
+    if (!box) return;
+    const answers = box.querySelectorAll<HTMLElement>("[data-answer]");
+    const last = answers[answers.length - 1];
+    if (!busy && last && turns[turns.length - 1]?.role === "assistant") box.scrollTo({ top: last.offsetTop - 12, behavior: "smooth" });
+    else box.scrollTo({ top: box.scrollHeight, behavior: "smooth" });
+  }, [turns, busy, greeted]);
 
   function close() {
     setOpen(false);
@@ -142,7 +148,7 @@ export function AiSearch() {
         {t.content}
       </p>
     ) : (
-      <div key={i} className="grid gap-3">
+      <div key={i} data-answer className="grid gap-3">
         <p className="max-w-[90%] whitespace-pre-wrap rounded-[16px] rounded-bl-[4px] bg-surface px-4 py-2.5 text-[14px]">{t.content}</p>
         {t.products?.length ? (
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -208,7 +214,7 @@ export function AiSearch() {
               </button>
             </div>
 
-            <div ref={list} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 md:px-5" aria-live="polite">
+            <div ref={list} className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 md:px-5" aria-live="polite">
               <div className="grid gap-4">
                 {!turns.length ? (
                   <>
