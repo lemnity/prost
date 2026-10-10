@@ -142,7 +142,8 @@ export function OcListing({
             );
           })
         : null}
-      <label className="grid gap-1.5 text-[13px] font-semibold">
+      {/* На lg сортировка — справа от заголовка; здесь скрыта, но значение уходит с формой. */}
+      <label className="grid gap-1.5 text-[13px] font-semibold lg:hidden">
         Сортировка
         <AutoSubmitSelect name="sort" defaultValue={query.sort} className={selectClass({ size: "sm" })}>
           {SORTS.map((s) => (
@@ -164,11 +165,31 @@ export function OcListing({
     <main id="main">
       <Container className="pt-4 md:pt-6">
         <Breadcrumbs items={crumbs} />
-        <h1 className="mt-4 text-[30px] font-bold leading-[1.12] tracking-tight md:text-[36px]">{title}</h1>
-        <p className="mt-2 text-[14px] text-muted">{total ? `Найдено ${productsLabel(total)}` : "Ничего не найдено"}</p>
+        <div className="mt-4 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+          <div className="min-w-0">
+            <h1 className="text-[30px] font-bold leading-[1.12] tracking-tight md:text-[36px]">{title}</h1>
+            <p className="mt-2 text-[14px] text-muted">{total ? `Найдено ${productsLabel(total)}` : "Ничего не найдено"}</p>
+          </div>
+          {total ? (
+            <form method="get" action={path} className="hidden items-center gap-3 lg:flex">
+              {[...new URLSearchParams(pageHref(path, { ...query, sort: "popular" }, 1).split("?")[1] ?? "")].map(([k, v], i) => (
+                <input key={`${k}-${i}`} type="hidden" name={k} value={v} />
+              ))}
+              <label htmlFor="listing-sort" className="text-[14px] text-muted">Сортировка</label>
+              <AutoSubmitSelect id="listing-sort" name="sort" defaultValue={query.sort} className={`${selectClass({ size: "sm" })} min-w-[200px]`}>
+                {SORTS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </AutoSubmitSelect>
+              <noscript>
+                <button type="submit" className={buttonClass({ variant: "outline", size: "sm" })}>OK</button>
+              </noscript>
+            </form>
+          ) : null}
+        </div>
       </Container>
 
-      <Container className="py-6 md:py-8">
+      <Container className="pb-6 pt-4 md:pb-8 md:pt-5">
         <div className="lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start lg:gap-8">
           {/* Колонка по высоте экрана под липкой шапкой; длинные фильтры прокручиваются внутри. */}
           <aside className="hidden lg:sticky lg:top-24 lg:grid lg:max-h-[calc(100dvh/var(--zoom)-7.5rem)] lg:gap-6 lg:overflow-y-auto lg:overscroll-contain lg:pr-1 lg:[scrollbar-gutter:stable] lg:[scrollbar-width:thin]">
