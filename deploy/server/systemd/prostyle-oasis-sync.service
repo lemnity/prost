@@ -1,0 +1,6 @@
+[Unit]
+Description=ProStyle — синхронизация склада Oasis
+After=prostyle.service
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/prostyle-oasis-sync

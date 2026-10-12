@@ -1,0 +1,4 @@
+#!/bin/sh
+# Синхронизация цен и остатков склада Oasis (вызывается таймером prostyle-oasis-sync.timer).
+TOKEN=$(grep ^OASIS_SYNC_TOKEN= /opt/prostyle/.env | cut -d= -f2-)
+curl -fsS -m 300 -X POST -H "X-Sync-Token: $TOKEN" http://127.0.0.1:3010/api/internal/oasis-sync

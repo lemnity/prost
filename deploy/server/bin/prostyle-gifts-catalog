@@ -1,0 +1,4 @@
+#!/bin/sh
+# полный каталог gifts.ru
+TOKEN=$(grep ^OASIS_SYNC_TOKEN= /opt/prostyle/.env | cut -d= -f2-)
+curl -fsS -m 3000 -X POST -H "X-Sync-Token: $TOKEN" "http://127.0.0.1:3010/api/internal/oasis-sync?supplier=gifts&kind=catalog"

@@ -1,0 +1,23 @@
+[Unit]
+Description=ProStyle (Next.js) — prostyle.agency
+After=network.target mysql.service
+
+[Service]
+Type=simple
+User=prostyle
+Group=prostyle
+WorkingDirectory=/opt/prostyle/current
+EnvironmentFile=/opt/prostyle/.env
+Environment=NODE_OPTIONS=--max-old-space-size=320
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=3
+# Изоляция
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/opt/prostyle /var/lib/prostyle
+
+[Install]
+WantedBy=multi-user.target

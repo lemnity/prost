@@ -1,0 +1,8 @@
+[Unit]
+Description=ProStyle — цены и остатки gifts.ru (таймер)
+[Timer]
+OnCalendar=*-*-* *:20:00
+RandomizedDelaySec=300
+Persistent=true
+[Install]
+WantedBy=timers.target

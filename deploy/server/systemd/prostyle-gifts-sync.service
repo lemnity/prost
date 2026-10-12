@@ -1,0 +1,6 @@
+[Unit]
+Description=ProStyle — цены и остатки gifts.ru
+After=prostyle.service
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/prostyle-gifts-sync

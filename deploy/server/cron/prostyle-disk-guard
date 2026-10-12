@@ -1,0 +1,8 @@
+#!/bin/sh
+# Страховка: диск заполнен больше чем на 90% — чистим кэш страниц Next.js текущего релиза.
+USE=$(df --output=pcent / | tail -1 | tr -dc 0-9)
+if [ "$USE" -gt 90 ]; then
+  C=/opt/prostyle/current/.next-prod/server/route-cache
+  [ -d "$C" ] && find "$C" -mindepth 1 -delete
+  logger -t prostyle-disk-guard "disk ${USE}% — route-cache cleared"
+fi

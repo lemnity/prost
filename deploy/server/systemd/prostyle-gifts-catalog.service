@@ -1,0 +1,6 @@
+[Unit]
+Description=ProStyle — полный каталог gifts.ru
+After=prostyle.service
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/prostyle-gifts-catalog
