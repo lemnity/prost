@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import Image from "next/image";
-import { ChevronDown, Heart, LogOut, MessageCircle, Package, ShoppingCart, Truck, UserRound } from "lucide-react";
+import { ChevronDown, Heart, LogOut, MessageCircle, Package, ShoppingCart, Truck, UserRound, Warehouse } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { buttonClass } from "@/components/ui/button";
@@ -177,6 +177,7 @@ function SectionList({
   /** «Выйти» — только в мобильном меню (на компьютере выход в меню профиля в шапке). */
   signOutItem?: boolean;
 }) {
+  const admin = useSession()?.role === "admin";
   return (
     <ul className="grid gap-1">
       {NAV.map(({ key, label, href, Icon }) => {
@@ -198,6 +199,20 @@ function SectionList({
           </li>
         );
       })}
+      {admin ? (
+        // Администратору — быстрый переход к складу (синхронизация Oasis и gifts.ru, подгрузка разделов).
+        <li className="mt-1 border-t border-line pt-1">
+          <Link
+            href="/admin/stock"
+            onClick={onPick}
+            className="flex h-11 items-center gap-2.5 whitespace-nowrap rounded-[10px] px-3 text-[14px] font-medium text-ink hover:bg-white hover:text-brand"
+          >
+            <Warehouse size={18} aria-hidden="true" />
+            Склад
+            <span className="ml-auto rounded-full bg-ink px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">Админ</span>
+          </Link>
+        </li>
+      ) : null}
       {signOutItem ? (
       <li className="mt-1 border-t border-line pt-1">
         <button
