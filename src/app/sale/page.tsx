@@ -26,8 +26,8 @@ const TERMS = [
   { Icon: Info, title: "Минимальный заказ", text: "Минимальная сумма заказа — 10\u00a0000\u00a0₽, товары распродажи можно сочетать с любыми другими" },
 ];
 
-// Подборка со склада меняется раз в неделю — страница пересобирается каждый час.
-export const revalidate = 3600;
+// Подборка со склада (кэш в памяти, меняется раз в неделю) — страница собирается при запросе.
+export const dynamic = "force-dynamic";
 
 export default async function SalePage() {
   const products = await getWeeklySale(48);

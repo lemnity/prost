@@ -9,7 +9,9 @@ import { Reviews } from "@/components/home/reviews";
 import { Clients } from "@/components/home/clients";
 import { ConsultationCta } from "@/components/home/consultation-cta";
 
-export const revalidate = 3600;
+// Распродажа недели и новинки — из базы (кэш в памяти), поэтому страница собирается при запросе:
+// заготовка со сборки (базы при сборке нет) после перезапуска сервера показывала бы старый запасной список.
+export const dynamic = "force-dynamic";
 
 export default function Home() {
   return (
