@@ -44,7 +44,6 @@ next-env.d.ts
 
 # scratch
 .superpowers/
-CLAUDE.md
 loading/
 
 /.next-prod/
