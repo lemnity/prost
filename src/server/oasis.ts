@@ -99,6 +99,16 @@ export function single(name: string, fn: () => Promise<{ items: number }>) {
   return running[name]!;
 }
 
+/** Очередь больших загрузок (каталоги, разделы): по одной, иначе они блокируют друг друга в базе (deadlock). */
+let heavyQueue: Promise<unknown> = Promise.resolve();
+export function heavy(name: string, fn: () => Promise<{ items: number }>) {
+  return single(name, () => {
+    const run = heavyQueue.then(fn, fn);
+    heavyQueue = run.catch(() => undefined);
+    return run;
+  });
+}
+
 
 type CatNode = { id: number; parent_id: number | null; root: number | null; level: number };
 
@@ -159,7 +169,7 @@ async function saveOasisPage(page: OcProduct[], started: Date, tree: ReturnType<
 
 /** Полная синхронизация каталога. */
 export function syncOasisCatalog(): Promise<{ items: number }> {
-  return single("catalog", async () => {
+  return heavy("catalog", async () => {
     const log = await logStart("oasis-catalog");
     try {
       const cats = await api<OcCategory[]>("categories", { fields: "id,parent_id,root,level,slug,name,path" });
@@ -293,7 +303,7 @@ export async function lastSync() {
  * Товары раздела, которых больше нет у Oasis, помечаются удалёнными.
  */
 export function syncOasisSection(categoryId: number): Promise<{ items: number }> {
-  return single(`section-${categoryId}`, async () => {
+  return heavy(`section-${categoryId}`, async () => {
     const log = await logStart(`oasis-section:${categoryId}`);
     try {
       const cats = await query<Row & CatNode>("SELECT id, parent_id, root, level FROM oc_categories");

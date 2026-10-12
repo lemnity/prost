@@ -2,7 +2,7 @@ import sax from "sax";
 import { rebuildFacets } from "./facets";
 import { exec, getPool, query, type Row } from "./db";
 import { GIFTS_MAP } from "./gifts-map";
-import { coverFrom, logEnd, logStart, recountCategories, ROOTS, saveDetails, single } from "./oasis";
+import { coverFrom, heavy, logEnd, logStart, recountCategories, ROOTS, saveDetails, single } from "./oasis";
 import { slugify } from "@/lib/translit";
 
 /**
@@ -34,7 +34,7 @@ async function open(file: string): Promise<Response> {
     const { Readable } = await import("node:stream");
     return new Response(Readable.toWeb(createReadStream(`${process.env.GIFTS_DIR}/${file}`)) as ReadableStream);
   }
-  const res = await fetch(`${API}/${file}`, { headers: { Authorization: authHeader() }, signal: AbortSignal.timeout(900_000), cache: "no-store" });
+  const res = await fetch(`${API}/${file}`, { headers: { Authorization: authHeader() }, signal: AbortSignal.timeout(1_800_000), cache: "no-store" }); // product.xml ~100 МБ + запись в базу: обычно 3 мин, запас — 30
   if (res.status === 401) throw new Error("gifts.ru: неверный логин/пароль или IP сервера не в белом списке");
   if (!res.ok || !res.body) throw new Error(`gifts.ru ${file}: ответ ${res.status}`);
   return res;
@@ -194,7 +194,7 @@ type CatInfo = { id: number; parent_id: number | null; root: number | null; leve
 
 /** Полная синхронизация каталога gifts.ru. */
 export function syncGiftsCatalog(): Promise<{ items: number }> {
-  return single("gifts-catalog", async () => {
+  return heavy("gifts-catalog", async () => {
     const log = await logStart("gifts-catalog");
     try {
       const { pages, links } = await loadTree();

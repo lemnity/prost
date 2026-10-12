@@ -225,10 +225,20 @@ export async function query<T extends RowDataPacket>(sql: string, params: unknow
   return rows;
 }
 
+/** Взаимная блокировка (1213) или долгое ожидание блокировки (1205): MySQL советует просто повторить. */
+const RETRY_ERRNO = new Set([1205, 1213]);
+
 export async function exec(sql: string, params: unknown[] = []): Promise<ResultSetHeader> {
   await migrate();
-  const [res] = await pool().query<ResultSetHeader>(sql, params);
-  return res;
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const [res] = await pool().query<ResultSetHeader>(sql, params);
+      return res;
+    } catch (e) {
+      if (attempt >= 3 || !RETRY_ERRNO.has((e as { errno?: number }).errno ?? 0)) throw e;
+      await new Promise((r) => setTimeout(r, 300 * attempt));
+    }
+  }
 }
 
 export type Row = RowDataPacket;
