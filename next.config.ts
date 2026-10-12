@@ -20,6 +20,9 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
   turbopack: { root: path.resolve(__dirname) },
+  // Кэш страниц (ISR) — только в памяти (cacheMaxMemorySize, по умолчанию 50 МБ, вытеснение старых записей).
+  // На диск не пишем: роботы обходят десятки тысяч товаров, и кэш на диске за сутки занял весь диск сервера.
+  experimental: { isrFlushToDisk: false },
   // Пути вложений вычисляются во время работы — трассировщик иначе тащит в сборку весь проект.
   outputFileTracingExcludes: { "*": ["./.next/**", "./out/**", "./docs/**", "./src/**", "./loading/**", "./scripts/**", "./*.md", "./.github/**"] },
 };

@@ -9,7 +9,7 @@ import { ConsultationCta } from "@/components/home/consultation-cta";
 import { formatQty } from "@/lib/format";
 import { plural } from "@/lib/plural";
 import { getSaleRemaining } from "@/lib/sale";
-import { getCollectionProducts, toCard } from "@/lib/catalog/products";
+import { getWeeklySale } from "@/lib/catalog";
 
 export const metadata: Metadata = {
   title: "Распродажа недели — скидки на сувениры | ProStyle",
@@ -26,10 +26,11 @@ const TERMS = [
   { Icon: Info, title: "Минимальный заказ", text: "Минимальная сумма заказа — 10\u00a0000\u00a0₽, товары распродажи можно сочетать с любыми другими" },
 ];
 
-export default function SalePage() {
-  const products = getCollectionProducts("sale")
-    .map(toCard)
-    .sort((a, b) => discountOf(b.priceFrom, b.oldPrice) - discountOf(a.priceFrom, a.oldPrice));
+// Подборка со склада меняется раз в неделю — страница пересобирается каждый час.
+export const revalidate = 3600;
+
+export default async function SalePage() {
+  const products = await getWeeklySale(48);
   const maxDiscount = Math.max(0, ...products.map((p) => discountOf(p.priceFrom, p.oldPrice)));
   const stock = products.reduce((s, p) => s + Math.max(0, p.stock), 0);
 

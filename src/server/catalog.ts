@@ -2,6 +2,7 @@ import { json, query, type Row } from "./db";
 import { productHref } from "@/lib/catalog/oasis-tree";
 import type { Product } from "@/lib/catalog/types";
 import type { FacetKind } from "@/lib/catalog/facets";
+import { getSaleEndsAt } from "@/lib/sale";
 
 type Img = { big?: string; superbig?: string; small?: string; thumbnail?: string };
 type Attr = { name: string; value: string; dim?: string };
@@ -247,4 +248,32 @@ export function productsOfDay(categoryIds: number[]): Promise<Record<number, Day
   dayCache = { day, value };
   value.catch(() => (dayCache = null));
   return value;
+}
+
+const discount = (p: Product) => (p.oldPrice && p.oldPrice > p.priceFrom ? 1 - p.priceFrom / p.oldPrice : 0);
+let saleCache: { week: string; value: Promise<Product[]> } | null = null;
+
+/**
+ * Распродажа недели: товары со склада со скидкой от 20%, в наличии от 20 шт., с фото — одна карточка на модель.
+ * Подборка меняется вместе с таймером (воскресенье 23:59 по Тюмени): порядок задаёт ключ недели.
+ * Отсортирована по размеру скидки.
+ */
+export function weeklySale(limit = 48): Promise<Product[]> {
+  const week = getSaleEndsAt(new Date()).toISOString().slice(0, 10);
+  if (saleCache?.week !== week) {
+    const value = (async () => {
+      const rows = await query<OcRow>(
+        `SELECT * FROM (
+           SELECT p.*, ROW_NUMBER() OVER (PARTITION BY COALESCE(p.color_group_id, p.id) ORDER BY (p.stock + p.remote) DESC, p.id) rn
+           FROM oc_products p
+           WHERE p.deleted = 0 AND p.cover IS NOT NULL AND p.old_price > p.price AND p.price <= p.old_price * 0.8 AND p.stock + p.remote >= 20
+         ) x WHERE rn = 1 ORDER BY CRC32(CONCAT(COALESCE(color_group_id, id), ?)) LIMIT 48`,
+        [week],
+      );
+      return rows.map(toProduct).sort((a, b) => discount(b) - discount(a));
+    })();
+    saleCache = { week, value };
+    value.catch(() => (saleCache = null));
+  }
+  return saleCache.value.then((list) => list.slice(0, limit));
 }

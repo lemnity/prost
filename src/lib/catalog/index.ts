@@ -17,7 +17,15 @@ export async function getNewProducts(limit = 6): Promise<Product[]> {
   return newProducts.slice(0, limit);
 }
 
+/** Распродажа недели со склада (новая подборка каждую неделю). При сборке базы нет — запасной статический список. */
 export async function getWeeklySale(limit = 6): Promise<Product[]> {
+  try {
+    const { weeklySale } = await import("@/server/catalog");
+    const items = await weeklySale(limit);
+    if (items.length) return items;
+  } catch {
+    // нет DATABASE_URL (сборка) или база недоступна
+  }
   return saleProducts.slice(0, limit);
 }
 
