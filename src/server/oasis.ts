@@ -99,32 +99,76 @@ export function single(name: string, fn: () => Promise<{ items: number }>) {
   return running[name]!;
 }
 
+
+type CatNode = { id: number; parent_id: number | null; root: number | null; level: number };
+
+/** Предки раздела и основной раздел товара (самый глубокий из «Продукции», иначе из «Праздников»/«ВИП»). */
+function categoryTree(cats: CatNode[]) {
+  const byId = new Map(cats.map((c) => [c.id, c]));
+  const ancestors = (id: number) => {
+    const out: number[] = [];
+    for (let c = byId.get(id); c; c = c.parent_id ? byId.get(c.parent_id) : undefined) out.push(c.id);
+    return out;
+  };
+  const primaryOf = (ids: number[]) => {
+    const known = ids.map((id) => byId.get(id)).filter((c): c is CatNode => !!c);
+    for (const root of [ROOTS.products, ROOTS.holidays, ROOTS.vip]) {
+      const own = known.filter((c) => c.root === root).sort((a, b) => b.level - a.level);
+      if (own[0]) return own[0].id;
+    }
+    return known[0]?.id ?? null;
+  };
+  return { ancestors, primaryOf };
+}
+
+/** Страница товаров Oasis → oc_products, oc_product_details, oc_product_categories. Возвращает число записанных товаров. */
+async function saveOasisPage(page: OcProduct[], started: Date, tree: ReturnType<typeof categoryTree>): Promise<number> {
+  const { ancestors, primaryOf } = tree;
+  const items = page.filter((p) => p.id && p.article);
+  const rows = items.map((p) => {
+    const s = stockOf(p);
+    const ids = Array.isArray(p.categories) ? p.categories : [];
+    return [
+      String(p.id).slice(0, 32), String(p.article).slice(0, 64), p.group_id ?? null, p.color_group_id ?? null,
+      slugify(p.name), String(p.name).slice(0, 400), p.full_name ? String(p.full_name).slice(0, 500) : null, coverFrom(p.images),
+      Number(p.price) || 0, oldPriceOf(p), Number(p.rating) || 0, p.size ? String(p.size).slice(0, 64) : null,
+      JSON.stringify(p.colors ?? []), JSON.stringify(ids),
+      primaryOf(ids), p.brand_id ?? null, s.stock, s.remote, p.is_deleted ? 1 : 0,
+      p.updated_at ? new Date(p.updated_at.replace(" ", "T") + "+03:00") : null, started,
+    ];
+  });
+  if (rows.length) {
+    await exec(
+      `INSERT INTO oc_products (id, article, group_id, color_group_id, slug, name, full_name, cover, price, old_price, rating, size,
+         colors, categories, primary_cat, brand_id, stock, remote, deleted, updated_at, synced_at) VALUES ?
+       ON DUPLICATE KEY UPDATE article = VALUES(article), group_id = VALUES(group_id), color_group_id = VALUES(color_group_id), slug = VALUES(slug),
+         name = VALUES(name), full_name = VALUES(full_name), cover = VALUES(cover), price = VALUES(price), old_price = VALUES(old_price),
+         rating = VALUES(rating), size = VALUES(size), colors = VALUES(colors),
+         categories = VALUES(categories), primary_cat = VALUES(primary_cat), brand_id = VALUES(brand_id), stock = VALUES(stock), remote = VALUES(remote),
+         deleted = VALUES(deleted), updated_at = VALUES(updated_at), synced_at = VALUES(synced_at)`,
+      [rows],
+    );
+    await saveDetails(items.map((p) => [String(p.id).slice(0, 32), p.description ?? null, JSON.stringify(p.attributes ?? []), JSON.stringify(p.images ?? [])]));
+    const ids = rows.map((r) => r[0] as string);
+    await exec("DELETE FROM oc_product_categories WHERE product_id IN (?)", [ids]);
+    const links = page.flatMap((p) => [...new Set((p.categories ?? []).flatMap(ancestors))].map((c) => [String(p.id), c]));
+    if (links.length) await exec("INSERT IGNORE INTO oc_product_categories (product_id, category_id) VALUES ?", [links]);
+  }
+  return rows.length;
+}
+
 /** Полная синхронизация каталога. */
 export function syncOasisCatalog(): Promise<{ items: number }> {
   return single("catalog", async () => {
     const log = await logStart("oasis-catalog");
     try {
       const cats = await api<OcCategory[]>("categories", { fields: "id,parent_id,root,level,slug,name,path" });
-      const byId = new Map(cats.map((c) => [c.id, c]));
       await exec(
         `INSERT INTO oc_categories (id, parent_id, root, level, slug, name, path, sort) VALUES ?
          ON DUPLICATE KEY UPDATE parent_id = VALUES(parent_id), root = VALUES(root), level = VALUES(level), slug = VALUES(slug), name = VALUES(name), path = VALUES(path), sort = VALUES(sort)`,
         [cats.map((c, i) => [c.id, c.parent_id || null, c.root || null, c.level, c.slug.slice(0, 190), c.name.slice(0, 255), (c.path ?? "").slice(0, 500), i])],
       );
-      const ancestors = (id: number) => {
-        const out: number[] = [];
-        for (let c = byId.get(id); c; c = c.parent_id ? byId.get(c.parent_id) : undefined) out.push(c.id);
-        return out;
-      };
-      // Основной раздел для адреса: самый глубокий из «Продукции», иначе из «Праздников»/«ВИП».
-      const primaryOf = (ids: number[]) => {
-        const known = ids.map((id) => byId.get(id)).filter((c): c is OcCategory => !!c);
-        for (const root of [ROOTS.products, ROOTS.holidays, ROOTS.vip]) {
-          const own = known.filter((c) => c.root === root).sort((a, b) => b.level - a.level);
-          if (own[0]) return own[0].id;
-        }
-        return known[0]?.id ?? null;
-      };
+      const tree = categoryTree(cats);
 
       // Округляем до секунды: DATETIME в MySQL без миллисекунд, иначе «synced_at < started» верно для всех.
       const started = new Date(Math.floor(Date.now() / 1000) * 1000);
@@ -132,37 +176,8 @@ export function syncOasisCatalog(): Promise<{ items: number }> {
       for (let offset = 0; ; offset += PAGE) {
         const page = await api<OcProduct[]>("products", { fields: FULL_FIELDS, limit: String(PAGE), offset: String(offset) });
         if (!Array.isArray(page) || !page.length) break;
-        const items = page.filter((p) => p.id && p.article);
-        const rows = items.map((p) => {
-          const s = stockOf(p);
-          const ids = Array.isArray(p.categories) ? p.categories : [];
-          return [
-            String(p.id).slice(0, 32), String(p.article).slice(0, 64), p.group_id ?? null, p.color_group_id ?? null,
-            slugify(p.name), String(p.name).slice(0, 400), p.full_name ? String(p.full_name).slice(0, 500) : null, coverFrom(p.images),
-            Number(p.price) || 0, oldPriceOf(p), Number(p.rating) || 0, p.size ? String(p.size).slice(0, 64) : null,
-            JSON.stringify(p.colors ?? []), JSON.stringify(ids),
-            primaryOf(ids), p.brand_id ?? null, s.stock, s.remote, p.is_deleted ? 1 : 0,
-            p.updated_at ? new Date(p.updated_at.replace(" ", "T") + "+03:00") : null, started,
-          ];
-        });
-        if (rows.length) {
-          await exec(
-            `INSERT INTO oc_products (id, article, group_id, color_group_id, slug, name, full_name, cover, price, old_price, rating, size,
-               colors, categories, primary_cat, brand_id, stock, remote, deleted, updated_at, synced_at) VALUES ?
-             ON DUPLICATE KEY UPDATE article = VALUES(article), group_id = VALUES(group_id), color_group_id = VALUES(color_group_id), slug = VALUES(slug),
-               name = VALUES(name), full_name = VALUES(full_name), cover = VALUES(cover), price = VALUES(price), old_price = VALUES(old_price),
-               rating = VALUES(rating), size = VALUES(size), colors = VALUES(colors),
-               categories = VALUES(categories), primary_cat = VALUES(primary_cat), brand_id = VALUES(brand_id), stock = VALUES(stock), remote = VALUES(remote),
-               deleted = VALUES(deleted), updated_at = VALUES(updated_at), synced_at = VALUES(synced_at)`,
-            [rows],
-          );
-          await saveDetails(items.map((p) => [String(p.id).slice(0, 32), p.description ?? null, JSON.stringify(p.attributes ?? []), JSON.stringify(p.images ?? [])]));
-          const ids = rows.map((r) => r[0] as string);
-          await exec("DELETE FROM oc_product_categories WHERE product_id IN (?)", [ids]);
-          const links = page.flatMap((p) => [...new Set((p.categories ?? []).flatMap(ancestors))].map((c) => [String(p.id), c]));
-          if (links.length) await exec("INSERT IGNORE INTO oc_product_categories (product_id, category_id) VALUES ?", [links]);
-        }
-        total += rows.length;
+        const rows = await saveOasisPage(page, started, tree);
+        total += rows;
         if (page.length < PAGE) break;
       }
       if (total < 1000) throw new Error(`Oasis вернул подозрительно мало товаров: ${total}`);
@@ -252,9 +267,61 @@ export async function lastSync() {
     catalog: await one("oasis-catalog"),
     giftsStock: await one("gifts"),
     giftsCatalog: await one("gifts-catalog"),
+    sections: (
+      await query<Row & { source: string; started_at: Date; finished_at: Date | null; items: number; error: string | null; name: string | null }>(
+        `SELECT l.source, l.started_at, l.finished_at, l.items, l.error, c.name FROM sync_log l
+         LEFT JOIN oc_categories c ON c.id = CAST(SUBSTRING_INDEX(l.source, ':', -1) AS UNSIGNED)
+         WHERE l.source LIKE 'oasis-section:%' ORDER BY l.id DESC LIMIT 8`,
+      )
+    ).map((r) => ({
+      category: Number(r.source.split(":")[1]),
+      name: r.name ?? "",
+      startedAt: r.started_at.toISOString(),
+      finishedAt: r.finished_at?.toISOString() ?? null,
+      items: r.items,
+      error: r.error,
+    })),
     total: Number(cnt?.total ?? 0),
     active: Number(cnt?.active ?? 0),
     inStock: Number(cnt?.in_stock ?? 0),
     bySupplier,
   };
+}
+
+/**
+ * Ручная подгрузка одного раздела (с подразделами) из админки: товары раздела целиком — цены, остатки, описания, фото.
+ * Товары раздела, которых больше нет у Oasis, помечаются удалёнными.
+ */
+export function syncOasisSection(categoryId: number): Promise<{ items: number }> {
+  return single(`section-${categoryId}`, async () => {
+    const log = await logStart(`oasis-section:${categoryId}`);
+    try {
+      const cats = await query<Row & CatNode>("SELECT id, parent_id, root, level FROM oc_categories");
+      const tree = categoryTree(cats);
+      const started = new Date(Math.floor(Date.now() / 1000) * 1000);
+      const ids: string[] = [];
+      let total = 0;
+      for (let offset = 0; ; offset += PAGE) {
+        const page = await api<OcProduct[]>("products", { fields: FULL_FIELDS, category: String(categoryId), limit: String(PAGE), offset: String(offset) });
+        if (!Array.isArray(page) || !page.length) break;
+        total += await saveOasisPage(page, started, tree);
+        ids.push(...page.filter((p) => p.id).map((p) => String(p.id)));
+        if (page.length < PAGE) break;
+      }
+      if (total) {
+        await exec(
+          `UPDATE oc_products p JOIN oc_product_categories pc ON pc.product_id = p.id AND pc.category_id = ?
+           SET p.deleted = 1, p.stock = 0, p.remote = 0 WHERE p.supplier = 'oasis' AND p.synced_at < ?`,
+          [categoryId, started],
+        );
+      }
+      await recountCategories();
+      if (ids.length) await rebuildFacets(ids);
+      await logEnd(log, total);
+      return { items: total };
+    } catch (e) {
+      await logEnd(log, 0, (e as Error).message);
+      throw e;
+    }
+  });
 }

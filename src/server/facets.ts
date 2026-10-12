@@ -1,13 +1,14 @@
 import { exec, json, query, type Row } from "./db";
 import { facetsOf, type FacetKind } from "@/lib/catalog/facets";
 
-/** Пересчёт меток фильтров (цвет, материал, нанесение) для всех товаров — после синхронизации каталога. */
-export async function rebuildFacets(): Promise<number> {
+/** Пересчёт меток фильтров (цвет, материал, нанесение): для всех товаров или только для перечисленных. */
+export async function rebuildFacets(only?: string[]): Promise<number> {
   let after = "", total = 0;
+  const scope = only?.length ? " AND p.id IN (?)" : "";
   for (;;) {
     const rows = await query<Row & { id: string; colors: unknown; attributes: unknown }>(
-      "SELECT p.id, p.colors, d.attributes FROM oc_products p LEFT JOIN oc_product_details d ON d.id = p.id WHERE p.deleted = 0 AND p.id > ? ORDER BY p.id LIMIT 2000",
-      [after],
+      `SELECT p.id, p.colors, d.attributes FROM oc_products p LEFT JOIN oc_product_details d ON d.id = p.id WHERE p.deleted = 0 AND p.id > ?${scope} ORDER BY p.id LIMIT 2000`,
+      only?.length ? [after, only] : [after],
     );
     if (!rows.length) break;
     after = rows[rows.length - 1].id;
