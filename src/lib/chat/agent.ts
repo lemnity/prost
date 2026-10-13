@@ -51,7 +51,18 @@ function cartReview({ number, items, total }: OrderInfo): string {
   if (total < MIN_ORDER) {
     notes.push(`Сумма пока меньше минимального заказа ${formatPriceValue(MIN_ORDER)} — подскажу, чем дополнить заказ.`);
   }
-  notes.push("Цены в корзине указаны без нанесения. Пришлите логотип прямо в этот чат — лучше в векторе (AI, EPS, PDF или CDR) — и я рассчитаю нанесение и подготовлю макет.");
+  const branded = items.filter((i) => i.branding);
+  const withFiles = branded.some((i) => i.branding?.files?.length);
+  if (branded.length) {
+    notes.push(
+      `Вижу, вы выбрали нанесение: ${branded.map((i) => i.branding!.method).filter((m, k, a) => a.indexOf(m) === k).join(", ")}. ` +
+        (withFiles
+          ? "Логотип получила — передам дизайнеру, рассчитаю стоимость нанесения и подготовлю макет."
+          : "Пришлите логотип прямо в этот чат — лучше в векторе (AI, EPS, PDF или CDR) — и я рассчитаю нанесение и подготовлю макет."),
+    );
+  } else {
+    notes.push("Цены в корзине указаны без нанесения. Пришлите логотип прямо в этот чат — лучше в векторе (AI, EPS, PDF или CDR) — и я рассчитаю нанесение и подготовлю макет.");
+  }
   lines.push(notes.join("\n\n"));
   lines.push("Подскажите, к какой дате нужен заказ и какое нанесение планируете?");
   return lines.join("\n\n");

@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
 import { after } from "next/server";
@@ -7,7 +7,11 @@ import { aiEnabled } from "./ai";
 import { victoriaReply } from "./victoria";
 import { READ_MS, filesReply, openingMessages, ruleReply, typingMs } from "@/lib/chat/agent";
 import { MAX_FILE_SIZE, MAX_FILES, type ChatFileMeta, type ChatMessage } from "@/lib/chat/types";
+import { brandingLine } from "@/lib/cart/branding";
 import type { CartItem } from "@/lib/cart/store";
+
+/** Черновые файлы ещё не оформленной заявки (логотип для нанесения): привязываются к заявке при оформлении. */
+export const DRAFT = "draft";
 
 export const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(process.cwd(), ".uploads");
 
@@ -41,6 +45,14 @@ async function insert(number: string, role: ChatMessage["role"], text: string, v
 
 /** Приветствие и разбор корзины сразу после оформления заявки. */
 export async function openChat(order: { number: string; name: string; items: CartItem[]; total: number }) {
+  // Нанесение, выбранное на карточках товара: логотипы — к заявке, состав — первым сообщением клиента в чате.
+  const branded = order.items.filter((i) => i.branding);
+  if (branded.length) {
+    const files = branded.flatMap((i) => i.branding?.files ?? []);
+    if (files.length) await exec("UPDATE files SET order_number = ? WHERE id IN (?) AND order_number = ?", [order.number, files.map((f) => f.id), DRAFT]);
+    const text = ["Нанесение:", ...branded.map((i) => `• ${i.title} — ${brandingLine(i.branding!)}`)].join("\n");
+    await insert(order.number, "user", text, Date.now(), null, files);
+  }
   for (const m of openingMessages(order)) await insert(order.number, "agent", m.text, m.at, m.typeAt);
 }
 
@@ -56,6 +68,14 @@ async function managerActive(number: string): Promise<boolean> {
     [number],
   );
   return Number(rows[0]?.n ?? 0) > 0;
+}
+
+/** Логотипы с карточек товара, к которым так и не оформили заявку, — удаляем через 7 дней. */
+export async function cleanupDrafts(): Promise<void> {
+  const old = await query<Row & { id: string }>("SELECT id FROM files WHERE order_number = ? AND created_at < UTC_TIMESTAMP() - INTERVAL 7 DAY LIMIT 200", [DRAFT]);
+  if (!old.length) return;
+  await Promise.all(old.map((f) => unlink(path.join(UPLOAD_DIR, f.id)).catch(() => {})));
+  await exec("DELETE FROM files WHERE id IN (?)", [old.map((f) => f.id)]);
 }
 
 export async function saveUploads(number: string, files: File[]): Promise<ChatFileMeta[]> {

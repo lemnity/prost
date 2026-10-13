@@ -47,3 +47,6 @@ next-env.d.ts
 loading/
 
 /.next-prod/
+
+# вложения локального dev-сервера
+/.uploads/

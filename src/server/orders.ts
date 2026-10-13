@@ -1,5 +1,6 @@
 import { exec, json, query, type Row } from "./db";
 import type { CartItem } from "@/lib/cart/store";
+import { BRANDING_MAX_FILES, type Branding } from "@/lib/cart/branding";
 import type { SavedOrder, OrderStatus } from "@/lib/account/store";
 import { getProductByUrl } from "@/lib/catalog/products";
 import { liveByArticles, normArticle } from "./oasis";
@@ -46,6 +47,20 @@ export const toAdmin = (r: OrderRow): AdminOrder => ({
 });
 
 /** Цены — со склада Oasis (живые) или из каталога; клиентским ценам не доверяем. Распродажа недели — по цене акции. */
+/** Нанесение из корзины клиента: только известные поля и файлы, загруженные через /api/uploads. */
+function brandingOf(b: unknown): { branding?: Branding } {
+  if (!b || typeof b !== "object") return {};
+  const o = b as Record<string, unknown>;
+  const method = typeof o.method === "string" ? o.method.trim().slice(0, 120) : "";
+  if (!method) return {};
+  const comment = typeof o.comment === "string" ? o.comment.trim().slice(0, 500) : "";
+  const files = (Array.isArray(o.files) ? o.files : [])
+    .filter((f): f is Record<string, unknown> => !!f && typeof f === "object" && typeof (f as { id?: unknown }).id === "string" && /^[0-9a-f]{24}$/.test((f as { id: string }).id))
+    .slice(0, BRANDING_MAX_FILES)
+    .map((f) => ({ id: String(f.id), name: String(f.name ?? "файл").slice(0, 200), size: Number(f.size) || 0, type: String(f.type ?? "").slice(0, 120) }));
+  return { branding: { method, ...(comment ? { comment } : {}), ...(files.length ? { files } : {}) } };
+}
+
 export async function priceItems(items: CartItem[]): Promise<CartItem[]> {
   const live = await liveByArticles(items.map((i) => String(i.sku ?? ""))).catch(() => ({}) as Awaited<ReturnType<typeof liveByArticles>>);
   return items.slice(0, 200).map((i) => {
@@ -59,6 +74,7 @@ export async function priceItems(items: CartItem[]): Promise<CartItem[]> {
       url: String(i.url ?? "").slice(0, 500),
       qty,
       ...(i.preorder ? { preorder: true } : {}),
+      ...brandingOf(i.branding),
     };
     const l = live[normArticle(base.sku)];
     if (p?.oldPrice && p.oldPrice > p.price) return { ...base, price: p.price, oldPrice: p.oldPrice };

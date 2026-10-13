@@ -90,6 +90,12 @@ export function CartView({ embedded = false }: { embedded?: boolean } = {}) {
                     Арт. {i.sku}
                     {i.preorder ? <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">Под заказ</span> : null}
                   </p>
+                  {i.branding ? (
+                    <p className="mt-1 text-xs">
+                      <span className="text-muted">Нанесение:</span> <span className="font-medium">{i.branding.method}</span>
+                      {i.branding.files?.length ? <span className="text-muted"> · файлов: {i.branding.files.length}</span> : null}
+                    </p>
+                  ) : null}
                   <p className="mt-1 flex flex-wrap items-center gap-x-2 text-[13px] text-muted">
                     <span className={i.oldPrice ? "font-semibold text-brand" : undefined}>от {formatPriceValue(i.price)}</span>
                     {i.oldPrice ? (

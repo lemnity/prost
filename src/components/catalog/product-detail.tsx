@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Check, Copy, Info, Minus, Plus, Ruler } from "lucide-react";
+import { Check, Copy, Info, Minus, Paperclip, Plus, Ruler } from "lucide-react";
+import { BrandingDialog } from "./branding-dialog";
+import { brandingInfo, type Branding } from "@/lib/cart/branding";
 import { addToCart } from "@/lib/cart/store";
 import { asset } from "@/lib/asset";
 import { formatPriceValue, formatQty } from "@/lib/format";
@@ -57,9 +59,12 @@ export function ProductDetail({
   variants: staticVariants,
   initial,
   saleInitial,
+  printMethods,
   children,
 }: {
   saleInitial?: SaleRemaining;
+  /** Способы нанесения товара — кнопка «Рассчитать нанесение» открывает выбор (без них — ссылка на заявку). */
+  printMethods?: string[];
   title: string;
   brand: string;
   variants: VariantView[];
@@ -76,6 +81,9 @@ export function ProductDetail({
   };
   const thumb = (u: string) => u.replace("size=2", "size=1");
   const [pick, setPick] = useState<{ key: string; size: string } | null>(null);
+  const [branding, setBranding] = useState<Branding | null>(null);
+  const [brandingOpen, setBrandingOpen] = useState(false);
+  const brandInfo = branding ? brandingInfo(branding.method) : null;
   const [bad, setBad] = useState<ReadonlySet<string>>(new Set());
   // Живые данные склада Oasis поверх статики сборки (цена — кроме товаров распродажи).
   const live = useLiveStock(staticVariants.map((x) => x.sku));
@@ -249,16 +257,55 @@ export function ProductDetail({
             variant={v}
             size={size}
             avail={avail}
+            branding={branding}
             calc={
-              <Link
-                href="/contact-us#callback"
-                className={`${buttonClass({ variant: "outline", size: "lg", px: "px-4", full: true })} shrink-0 @md:w-auto!`}
-              >
-                <Ruler size={16} aria-hidden="true" />
-                Рассчитать нанесение
-              </Link>
+              printMethods ? (
+                <button
+                  type="button"
+                  onClick={() => setBrandingOpen(true)}
+                  className={`${buttonClass({ variant: "outline", size: "lg", px: "px-4", full: true })} shrink-0 @md:w-auto!`}
+                >
+                  <Ruler size={16} aria-hidden="true" />
+                  {branding ? "Изменить нанесение" : "Рассчитать нанесение"}
+                </button>
+              ) : (
+                <Link
+                  href="/contact-us#callback"
+                  className={`${buttonClass({ variant: "outline", size: "lg", px: "px-4", full: true })} shrink-0 @md:w-auto!`}
+                >
+                  <Ruler size={16} aria-hidden="true" />
+                  Рассчитать нанесение
+                </Link>
+              )
             }
           />
+          {branding ? (
+            // Как на старом сайте: выбранное нанесение и предупреждение «Цена без брендирования».
+            <div className="mt-3 rounded-[12px] border border-brand/30 bg-brand-soft px-4 py-3 text-[13px]">
+              <p>
+                <span className="text-muted">Нанесение:</span> <span className="font-semibold">{branding.method}</span>
+                {branding.comment ? <span className="text-muted"> · {branding.comment}</span> : null}
+                {branding.files?.length ? (
+                  <span className="ml-1 inline-flex items-center gap-1 text-muted">
+                    · <Paperclip size={12} aria-hidden="true" /> {branding.files.length}
+                  </span>
+                ) : null}
+              </p>
+              {brandInfo ? <p className="mt-1 text-muted">Срок изготовления: {brandInfo.term} · минимальный тираж: {brandInfo.minRun.toLocaleString("ru-RU")} шт.</p> : null}
+              <p className="mt-1.5"><span className="font-semibold">Цена без брендирования.</span> Итоговую стоимость с нанесением рассчитает менеджер после оформления заявки.</p>
+            </div>
+          ) : null}
+          {brandingOpen && printMethods ? (
+            <BrandingDialog
+              methods={printMethods}
+              value={branding}
+              onClose={() => setBrandingOpen(false)}
+              onSave={(b) => {
+                setBranding(b);
+                setBrandingOpen(false);
+              }}
+            />
+          ) : null}
           <p className="mt-3 flex items-center gap-1.5 text-[12px] text-muted">
             <Info size={14} aria-hidden="true" className="shrink-0" />
             Минимальная сумма заказа — 10&nbsp;000&nbsp;₽
@@ -462,11 +509,13 @@ function BuyBox({
   size,
   avail,
   calc,
+  branding = null,
 }: {
   variant: VariantView;
   size: string;
   avail: Avail;
   calc: React.ReactNode;
+  branding?: Branding | null;
 }) {
   const [qty, setQty] = useState(1);
   const [draft, setDraft] = useState<string | null>(null);
@@ -516,6 +565,7 @@ function BuyBox({
                 price: v.price,
                 ...(v.oldPrice && v.oldPrice > v.price ? { oldPrice: v.oldPrice } : {}),
                 ...(inStock ? {} : { preorder: true }),
+                ...(branding ? { branding } : {}),
               },
               n,
             );

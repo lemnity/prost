@@ -1,3 +1,5 @@
+import type { Branding } from "./branding";
+
 export type CartItem = {
   id: string;
   sku: string;
@@ -10,6 +12,8 @@ export type CartItem = {
   oldPrice?: number;
   /** Позиция под заказ (нет на складе). */
   preorder?: boolean;
+  /** Выбранное нанесение логотипа (стоимость рассчитает менеджер). */
+  branding?: Branding;
 };
 
 export const CART_KEY = "prostyle-cart-v1";
@@ -134,7 +138,7 @@ export function addToCart(item: Omit<CartItem, "qty">, qty = 1) {
   const found = items.find((i) => i.id === item.id);
   commit(
     found
-      ? items.map((i) => (i.id === item.id ? { ...i, qty: clamp(i.qty + qty), oldPrice: item.oldPrice } : i))
+      ? items.map((i) => (i.id === item.id ? { ...i, qty: clamp(i.qty + qty), oldPrice: item.oldPrice, ...(item.branding ? { branding: item.branding } : {}) } : i))
       : [...items, { ...item, qty: clamp(qty) }],
   );
 }

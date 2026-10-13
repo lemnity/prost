@@ -77,6 +77,7 @@ export async function OcProductPage({ row }: { row: OcRow }) {
       .map((a) => ({ label: a.name, value: `${a.value}${a.dim ? ` ${a.dim}` : ""}` })),
   ];
   const crumbs = [{ label: "Главная", href: "/" }, { label: "Каталог", href: "/catalog" }, ...(row.primary_cat ? catTrail(row.primary_cat) : []), { label: row.name }];
+  const prints = printMethodsOf(row);
 
   return (
     <main id="main">
@@ -84,15 +85,21 @@ export async function OcProductPage({ row }: { row: OcRow }) {
         <Breadcrumbs items={crumbs} />
       </Container>
       <Container className="py-6 md:py-8">
-        <ProductDetail key={row.id} title={row.name} brand="" variants={variants} initial={initial}>
+        <ProductDetail key={row.id} title={row.name} brand="" variants={variants} initial={initial} printMethods={prints}>
           <section aria-labelledby="apps-title" className="mt-8 border-t border-line pt-6">
             <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
               <h2 id="apps-title" className="text-[17px] font-semibold">Виды нанесения</h2>
               <Link href={applications.link.href} className="text-[13px] font-medium text-brand hover:text-brand-hover">{applications.link.label}</Link>
             </div>
-            <p className="text-[13px] text-muted">
-              Подберём способ нанесения под материал и тираж — уточните у менеджера.{" "}
-              <Link href="/contact-us#callback" className="font-medium text-brand hover:text-brand-hover">Рассчитать нанесение</Link>
+            {prints.length ? (
+              <ul aria-label="Доступные способы нанесения" className="mt-1 flex flex-wrap gap-1.5">
+                {prints.map((m) => (
+                  <li key={m} className="rounded-full bg-surface px-3 py-1 text-[13px]">{m}</li>
+                ))}
+              </ul>
+            ) : null}
+            <p className="mt-2 text-[13px] text-muted">
+              Выберите способ и прикрепите логотип кнопкой «Рассчитать нанесение» — менеджер рассчитает стоимость и подготовит макет.
             </p>
           </section>
         </ProductDetail>
@@ -144,4 +151,17 @@ export async function OcProductPage({ row }: { row: OcRow }) {
       ) : null}
     </main>
   );
+}
+
+/** Способы нанесения товара: у Oasis — характеристика «Метод нанесения» (по одной на способ), у gifts.ru — «Виды нанесения» (через запятую). */
+function printMethodsOf(row: OcRow): string[] {
+  const seen = new Map<string, string>();
+  for (const a of attrsOf(row)) {
+    if (!/нанесени/i.test(a.name)) continue;
+    for (const v of String(a.value ?? "").split(a.name === "Виды нанесения" ? /,\s*(?![^()]*\))/ : /\n/)) {
+      const m = v.trim();
+      if (m && !/упаковк|кастомизац/i.test(m) && !seen.has(m.toLowerCase())) seen.set(m.toLowerCase(), m);
+    }
+  }
+  return [...seen.values()].slice(0, 24);
 }

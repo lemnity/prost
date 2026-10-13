@@ -1,6 +1,7 @@
 import { site } from "@/content/site";
 import { formatPriceValue } from "@/lib/format";
 import { cartDiscount, cartTotal, type CartItem } from "./store";
+import { brandingLine } from "./branding";
 
 export const MAILTO_LIMIT = 1800;
 
@@ -75,7 +76,9 @@ export function buildOrder(items: readonly CartItem[], d: OrderData, promo = "")
     `mailto:${site.email}?subject=${encodeURIComponent("Заказ с сайта ProStyle")}&body=${encodeURIComponent(body)}`;
 
   const fullLines = items.map(
-    (i) => `${i.title}${i.preorder ? " (под заказ)" : ""} — ${i.sku} — ${i.qty} шт × ${formatPriceValue(i.price)} = ${formatPriceValue(i.qty * i.price)}`,
+    (i) =>
+      `${i.title}${i.preorder ? " (под заказ)" : ""} — ${i.sku} — ${i.qty} шт × ${formatPriceValue(i.price)} = ${formatPriceValue(i.qty * i.price)}` +
+      (i.branding ? `\n   Нанесение: ${brandingLine(i.branding)}` : ""),
   );
   const text = build(fullLines, d.comment, "\n");
   let href: string | null = url(build(fullLines, d.comment, "\r\n"));

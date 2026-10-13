@@ -1,3 +1,4 @@
+import { brandingLine } from "@/lib/cart/branding";
 import { site } from "@/content/site";
 import { formatPriceValue } from "@/lib/format";
 import { cartDiscount, type CartItem } from "@/lib/cart/store";
@@ -79,7 +80,7 @@ export function orderEmail(o: OrderMail) {
   const rows = o.items
     .map(
       (i) => `<tr>
-<td style="padding:10px 0;border-bottom:1px solid #ececea;font-size:14px;line-height:20px">${esc(i.title)}${i.preorder ? ` <span style="color:#b45309">(под заказ)</span>` : ""}<br><span style="color:${MUTED};font-size:12px">Арт. ${esc(i.sku)} · ${i.qty} шт × ${formatPriceValue(i.price)}</span></td>
+<td style="padding:10px 0;border-bottom:1px solid #ececea;font-size:14px;line-height:20px">${esc(i.title)}${i.preorder ? ` <span style="color:#b45309">(под заказ)</span>` : ""}<br><span style="color:${MUTED};font-size:12px">Арт. ${esc(i.sku)} · ${i.qty} шт × ${formatPriceValue(i.price)}</span>${i.branding ? `<br><span style="font-size:12px">Нанесение: ${esc(brandingLine(i.branding))}</span>` : ""}</td>
 <td align="right" style="padding:10px 0 10px 12px;border-bottom:1px solid #ececea;font-size:14px;font-weight:bold;white-space:nowrap">${formatPriceValue(i.qty * i.price)}</td></tr>`,
     )
     .join("");
@@ -99,7 +100,7 @@ ${p("Цены указаны без нанесения логотипа — ме
   <span style="display:block;margin-top:8px;font-size:12px;color:${MUTED}">Передумали? Нажмите «Отменить заказ» — менеджер сразу получит уведомление.</span>
 </td></tr></table>`,
   );
-  const lines = o.items.map((i) => `• ${i.title} — ${i.qty} шт × ${formatPriceValue(i.price)} = ${formatPriceValue(i.qty * i.price)}`).join("\n");
+  const lines = o.items.map((i) => `• ${i.title} — ${i.qty} шт × ${formatPriceValue(i.price)} = ${formatPriceValue(i.qty * i.price)}${i.branding ? `\n   Нанесение: ${brandingLine(i.branding)}` : ""}`).join("\n");
   const text = `Здравствуйте${o.name ? `, ${o.name}` : ""}!\n\nМы получили ваш заказ № ${o.number}. Персональный менеджер уже изучает корзину и свяжется с вами в рабочее время (${site.hours.toLowerCase()}).\n\nТакже у вас есть свой виртуальный менеджер Виктория, которая доступна в вашем личном кабинете и может ответить на все интересующие вопросы.\n\n${lines}\n${discount > 0 ? `Скидка: −${formatPriceValue(discount)}\n` : ""}Итого: от ${formatPriceValue(o.total)}\n\nПолучение: ${o.delivery}${o.address ? ` — ${o.address}` : ""}\nОплата: ${o.payment}\n\nЧат с менеджером: ${o.chatLink}\nОтменить заказ: ${o.cancelLink}\n\nProStyle, ${site.phone.label}`;
   return { subject, html, text };
 }
