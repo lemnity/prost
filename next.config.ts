@@ -23,6 +23,8 @@ const nextConfig: NextConfig = {
   // Кэш страниц (ISR) — только в памяти (cacheMaxMemorySize, по умолчанию 50 МБ, вытеснение старых записей).
   // На диск не пишем: роботы обходят десятки тысяч товаров, и кэш на диске за сутки занял весь диск сервера.
   experimental: { isrFlushToDisk: false },
+  // Фото gifts.ru на проде отдаёт nginx (/gifts-img/ с кэшем); для dev — та же подмена средствами Next.
+  ...(pages ? {} : { rewrites: async () => [{ source: "/gifts-img/:path*", destination: "https://files.gifts.ru/reviewer/:path*" }] }),
   // Пути вложений вычисляются во время работы — трассировщик иначе тащит в сборку весь проект.
   outputFileTracingExcludes: { "*": ["./.next/**", "./out/**", "./docs/**", "./src/**", "./loading/**", "./scripts/**", "./*.md", "./.github/**"] },
 };

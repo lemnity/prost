@@ -14,8 +14,8 @@ import { slugify } from "@/lib/translit";
  * Id товара — «g<product_id>»; цвет — group_id, модель (все цвета) — color_group_id «gg<group>».
  */
 const API = "https://api2.gifts.ru/export/v2/catalogue";
-/** Фото отдаются публично с файлового сервера gifts.ru — хранить у себя не нужно. */
-const FILES = "https://files.gifts.ru/reviewer/";
+/** Фото gifts.ru — через наш nginx (/gifts-img/ → files.gifts.ru/reviewer/ с кэшем): их сервер обрывает загрузку картинок с чужих сайтов. */
+const FILES = "/gifts-img/";
 const COLOR_FILTER = "21";
 const BATCH = 300;
 

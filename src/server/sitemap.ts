@@ -22,7 +22,7 @@ export function urlset(entries: Entry[]): string {
       if (lm) parts.push(`<lastmod>${lm}</lastmod>`);
       if (e.changefreq) parts.push(`<changefreq>${e.changefreq}</changefreq>`);
       if (e.priority != null) parts.push(`<priority>${e.priority.toFixed(1)}</priority>`);
-      if (e.image) parts.push(`<image:image><image:loc>${esc(e.image)}</image:loc></image:image>`);
+      if (e.image) parts.push(`<image:image><image:loc>${esc(e.image.startsWith("/") ? SITE + e.image : e.image)}</image:loc></image:image>`);
       return `<url>${parts.join("")}</url>`;
     })
     .join("\n");
