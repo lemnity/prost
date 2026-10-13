@@ -1,11 +1,14 @@
 import { asset } from "@/lib/asset";
 import Image from "next/image";
+import Link from "next/link";
 import { Container } from "@/components/ui/container";
-import { banners } from "@/content/home";
+import { getBanners } from "@/server/site";
 import { BannerSliderControls } from "./banner-slider-controls";
 
-export function BannerSlider() {
+export async function BannerSlider() {
+  const banners = await getBanners();
   const total = banners.length;
+  if (!total) return null;
   return (
     <section
       aria-roledescription="carousel"
@@ -21,14 +24,8 @@ export function BannerSlider() {
             data-banner-track
             className="no-scrollbar flex h-full snap-x snap-mandatory overflow-x-auto motion-safe:scroll-smooth"
           >
-            {banners.map((b, i) => (
-              <div
-                key={b.id}
-                role="group"
-                aria-roledescription="slide"
-                aria-label={`${i + 1} из ${total}`}
-                className="relative h-full w-full min-w-full shrink-0 basis-full snap-start snap-always"
-              >
+            {banners.map((b, i) => {
+              const img = (
                 <Image
                   src={asset(b.image)}
                   alt={b.alt}
@@ -37,8 +34,25 @@ export function BannerSlider() {
                   preload={i === 0}
                   className="object-cover"
                 />
-              </div>
-            ))}
+              );
+              return (
+                <div
+                  key={b.id}
+                  role="group"
+                  aria-roledescription="slide"
+                  aria-label={`${i + 1} из ${total}`}
+                  className="relative h-full w-full min-w-full shrink-0 basis-full snap-start snap-always"
+                >
+                  {b.href ? (
+                    <Link href={b.href} className="absolute inset-0 focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-brand">
+                      {img}
+                    </Link>
+                  ) : (
+                    img
+                  )}
+                </div>
+              );
+            })}
           </div>
           <BannerSliderControls count={total} />
         </div>

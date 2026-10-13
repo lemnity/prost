@@ -8,7 +8,7 @@ export async function GET(_req: Request, ctx: RouteContext<"/sitemaps/[name]">) 
   const m = /^(pages|catalog|products-(\d{1,3}))\.xml$/.exec(name);
   if (!m) return new Response("Not found", { status: 404 });
   const xml = await cached(name, async () => {
-    if (m[1] === "pages") return urlset(pageEntries());
+    if (m[1] === "pages") return urlset(await pageEntries());
     if (m[1] === "catalog") return urlset(categoryEntries());
     const entries = await productEntries(Number(m[2]) - 1);
     if (!entries.length) throw new Error("empty");

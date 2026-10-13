@@ -6,7 +6,8 @@ export type Work = { id: string; client: string; text: string; image: string; hr
 export type Review = { id: string; name: string; date: string; text: string };
 export type Client = { id: string; name: string; logo: string };
 
-export type Banner = { id: string; image: string; alt: string };
+/** Баннеры правятся в админке (раздел «Сайт»); этот список — начальное наполнение и запасной вариант. */
+export type Banner = { id: string; image: string; alt: string; href?: string };
 
 export const banners: Banner[] = [
   { id: "vacation", image: "/images/banners/01.webp", alt: "В отпуск с комфортом — полезные мелочи для комфортной дороги" },

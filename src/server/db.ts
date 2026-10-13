@@ -168,6 +168,28 @@ const SCHEMA = [
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX (kind, status)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+  // Баннеры главной и новости — правятся в админке (раздел «Сайт»). Удаление мягкое: deleted_at.
+  `CREATE TABLE IF NOT EXISTS site_banners (
+    id VARCHAR(64) PRIMARY KEY,
+    image VARCHAR(500) NOT NULL,
+    alt VARCHAR(300) NOT NULL,
+    href VARCHAR(500) NULL,
+    sort INT NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at DATETIME NULL
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+  `CREATE TABLE IF NOT EXISTS site_news (
+    slug VARCHAR(160) PRIMARY KEY,
+    title VARCHAR(300) NOT NULL,
+    date DATE NOT NULL,
+    excerpt TEXT NOT NULL,
+    cover VARCHAR(500) NOT NULL,
+    topics JSON NOT NULL,
+    blocks JSON NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at DATETIME NULL,
+    INDEX (date)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
 ];
 
 /** Изменения уже созданных таблиц (MySQL 8 не умеет ADD COLUMN IF NOT EXISTS — дубликаты пропускаем). */

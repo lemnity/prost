@@ -3,10 +3,8 @@ import type { NewsCard, NewsItem, Topic } from "./news-meta";
 
 export * from "./news-meta";
 
-/** Новости — свежие сверху. */
-export const news: NewsItem[] = (raw as NewsItem[]).slice().sort((a, b) => b.date.localeCompare(a.date));
-
-export const getNews = (slug: string) => news.find((n) => n.slug === slug) ?? null;
+/** Статьи из репозитория — начальное наполнение базы и запасной вариант, если база недоступна. Свежие сверху. */
+export const staticNews: NewsItem[] = (raw as NewsItem[]).slice().sort((a, b) => b.date.localeCompare(a.date));
 
 /** Примерное время чтения в минутах (≈180 слов/мин). */
 export function readingMinutes(n: NewsItem): number {
@@ -24,8 +22,8 @@ const TOPICS_BY_SLUG: Record<string, Topic[]> = {
 
 export const topicsOf = (slug: string): Topic[] => TOPICS_BY_SLUG[slug] ?? [];
 
-export const newsCards: NewsCard[] = news.map(({ blocks: _blocks, ...n }) => ({
+export const toCard = ({ blocks, ...n }: NewsItem, topics: Topic[] = topicsOf(n.slug)): NewsCard => ({
   ...n,
-  minutes: readingMinutes({ ...n, blocks: _blocks }),
-  topics: topicsOf(n.slug),
-}));
+  minutes: readingMinutes({ ...n, blocks }),
+  topics,
+});

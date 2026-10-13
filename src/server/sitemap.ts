@@ -3,7 +3,7 @@ import { urlOf, type OcRow } from "./catalog";
 import { categoryPages } from "@/lib/catalog/oasis-tree";
 import { COLLECTIONS } from "./catalog-routes";
 import { applications } from "@/content/home";
-import news from "@/content/news.json";
+import { getAllNews } from "./site";
 
 /** Карта сайта для поисковиков: индекс /sitemap.xml и части /sitemaps/<имя>.xml (товары — по 10 000 моделей). */
 export const SITE = (process.env.SITE_URL || "https://prostyle.agency").replace(/\/$/, "");
@@ -37,7 +37,8 @@ export function sitemapIndex(names: string[]): string {
 }
 
 /** Основные страницы, новости, виды нанесения и документы. */
-export function pageEntries(): Entry[] {
+export async function pageEntries(): Promise<Entry[]> {
+  const news = await getAllNews();
   const fixed: Entry[] = [
     { loc: "/", changefreq: "daily", priority: 1 },
     { loc: "/catalog", changefreq: "daily", priority: 0.9 },
@@ -55,7 +56,7 @@ export function pageEntries(): Entry[] {
     ...fixed,
     ...Object.keys(COLLECTIONS).map((k) => ({ loc: `/catalog/${k}`, changefreq: "daily", priority: 0.7 })),
     ...applications.items.map((a) => ({ loc: a.href, changefreq: "monthly", priority: 0.6 })),
-    ...(news as { slug: string; date?: string }[]).map((n) => ({ loc: `/news/${n.slug}`, lastmod: n.date, changefreq: "yearly", priority: 0.5 })),
+    ...news.map((n) => ({ loc: `/news/${n.slug}`, lastmod: n.date, changefreq: "yearly", priority: 0.5 })),
   ];
 }
 

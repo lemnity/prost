@@ -5,7 +5,7 @@ import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { getCatalogTree } from "@/lib/catalog";
 import { applications } from "@/content/home";
 import { legalLinks } from "@/lib/legal";
-import news from "@/content/news.json";
+import { getAllNews } from "@/server/site";
 
 export const metadata: Metadata = {
   title: "Карта сайта — ProStyle",
@@ -41,9 +41,12 @@ function Column({ title, links }: { title: string; links: { label: string; href:
   );
 }
 
+// Новости правятся в админке — страница собирается при запросе (кэш в памяти, src/server/site.ts).
+export const dynamic = "force-dynamic";
+
 /** Карта сайта для посетителей; для поисковиков — /sitemap.xml. */
 export default async function SitemapPage() {
-  const tree = await getCatalogTree();
+  const [tree, news] = await Promise.all([getCatalogTree(), getAllNews()]);
   return (
     <main id="main">
       <Container className="pt-4 md:pt-6">
@@ -54,7 +57,7 @@ export default async function SitemapPage() {
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <Column title="Основные страницы" links={PAGES} />
           <Column title="Виды нанесения" links={applications.items.map((a) => ({ label: a.title, href: a.href }))} />
-          <Column title="Новости" links={[{ label: "Все новости", href: "/news" }, ...(news as { slug: string; title: string }[]).map((n) => ({ label: n.title, href: `/news/${n.slug}` }))]} />
+          <Column title="Новости" links={[{ label: "Все новости", href: "/news" }, ...news.map((n) => ({ label: n.title, href: `/news/${n.slug}` }))]} />
           <Column title="Документы" links={legalLinks.filter((l) => l.href !== "/sitemap")} />
         </div>
         <section aria-labelledby="sitemap-catalog">

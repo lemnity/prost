@@ -6,18 +6,16 @@ import { Container } from "@/components/ui/container";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { ConsultationCta } from "@/components/home/consultation-cta";
 import { asset } from "@/lib/asset";
-import { formatNewsDate, getNews, news, readingMinutes, type NewsBlock } from "@/lib/news";
+import { formatNewsDate, readingMinutes, type NewsBlock } from "@/lib/news";
+import { getAllNews, getNewsItem } from "@/server/site";
 
 type Params = { slug: string };
 
-export const dynamicParams = false;
-
-export function generateStaticParams(): Params[] {
-  return news.map((n) => ({ slug: n.slug }));
-}
+// Статьи добавляются в админке — страница собирается при запросе (кэш в памяти, src/server/site.ts).
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
-  const n = getNews((await params).slug);
+  const n = await getNewsItem((await params).slug);
   return n ? { title: `${n.title} — ProStyle`, description: n.excerpt } : {};
 }
 
@@ -55,9 +53,9 @@ function Block({ b, title }: { b: NewsBlock; title: string }) {
 }
 
 export default async function NewsArticlePage({ params }: { params: Promise<Params> }) {
-  const n = getNews((await params).slug);
+  const n = await getNewsItem((await params).slug);
   if (!n) notFound();
-  const others = news.filter((x) => x.slug !== n.slug).slice(0, 3);
+  const others = (await getAllNews()).filter((x) => x.slug !== n.slug).slice(0, 3);
   return (
     <main id="main">
       <Container className="pt-4 md:pt-6">

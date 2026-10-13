@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Container } from "@/components/ui/container";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { ConsultationCta } from "@/components/home/consultation-cta";
-import { newsCards } from "@/lib/news";
+import { getNewsCards } from "@/server/site";
 import { NewsList } from "@/components/news/news-list";
 
 export const metadata: Metadata = {
@@ -10,7 +10,11 @@ export const metadata: Metadata = {
   description: "Новости ProStyle и статьи о корпоративных подарках, сувенирной продукции и нанесении логотипа.",
 };
 
-export default function NewsPage() {
+// Статьи правятся в админке — список собирается при запросе (кэш в памяти, src/server/site.ts).
+export const dynamic = "force-dynamic";
+
+export default async function NewsPage() {
+  const newsCards = await getNewsCards();
   return (
     <main id="main">
       <Container className="pt-4 md:pt-6">

@@ -2,19 +2,20 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Inbox, LogOut, Package, Users, Warehouse } from "lucide-react";
+import { Globe, Inbox, LogOut, Package, Users, Warehouse } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { LoginForm } from "@/components/account/auth-forms";
 import { fullName, signOut } from "@/lib/account/store";
 import { useSession, useSessionLoaded } from "@/lib/account/use-account";
 
-export type AdminSection = "orders" | "leads" | "users" | "stock";
+export type AdminSection = "orders" | "leads" | "users" | "stock" | "site";
 
 const NAV: { key: AdminSection; label: string; href: string; Icon: typeof Package }[] = [
   { key: "orders", label: "Заявки", href: "/admin", Icon: Package },
   { key: "leads", label: "Обращения", href: "/admin/leads", Icon: Inbox },
   { key: "users", label: "Пользователи", href: "/admin/users", Icon: Users },
   { key: "stock", label: "Склад", href: "/admin/stock", Icon: Warehouse },
+  { key: "site", label: "Сайт", href: "/admin/site", Icon: Globe },
 ];
 
 /** Каркас админки: вход только для роли admin. */
