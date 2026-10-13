@@ -419,3 +419,31 @@ export function calcPrice(v: PriceVariant, input: CalcInput): CalcResult {
 
 /** Площадь по умолчанию для полей калькулятора. */
 export const defaultArea = (v: PriceVariant) => v.area?.base ?? (v.cliche ? 10 : 0);
+
+const lower = (t: string) => t[0].toLowerCase() + t.slice(1);
+const upper = (t: string) => t[0].toUpperCase() + t.slice(1);
+
+/** Прайс одной строкой на вариант — для знаний Виктории. */
+export function priceDigest(titleOf: (slug: string) => string): string {
+  const lines: string[] = [];
+  for (const [slug, list] of Object.entries(PRINT_PRICES))
+    for (const v of list) {
+      const name = `${titleOf(slug)}${v.title === "Стоимость" ? "" : `, ${lower(v.title)}`}`;
+      const cols = v.cols.length > 1 ? ` (${v.cols.join(" / ")})` : "";
+      const rows = v.rows
+        .map((r) => {
+          const extra = [r.minTotal ? `минимум ${fmtNum(r.minTotal)} ₽` : ""].filter(Boolean);
+          return `${r.label}: ${r.prices.map(fmtNum).join(" / ")}${extra.length ? ` (${extra.join(", ")})` : ""}`;
+        })
+        .join("; ");
+      const notes = [
+        v.minTotal ? `минимальная стоимость за тираж ${fmtNum(v.minTotal)} ₽` : "",
+        v.setup ? `изготовление ${v.setup.what} ${fmtNum(v.setup.price)} ₽ за каждый цвет` : "",
+        v.cliche ? `клише ${fmtNum(v.cliche.perCm2)} ₽ за см², минимум ${fmtNum(v.cliche.min)} ₽` : "",
+        v.area ? `цена для площади до ${v.area.base} см², сверх за каждый см²: ${v.area.extra.map((e) => `${e.label} ${fmtNum(e.price)} ₽`).join(", ")}` : "",
+        ...(v.addons ?? []).filter((a) => a.pct || a.fixed).map((a) => `${lower(a.label)} ${a.pct ? pct(a.pct) : `${fmtNum(a.fixed!)} ₽`}`),
+      ].filter(Boolean);
+      lines.push(`- ${name}, руб. за шт.${cols}: ${rows}.${notes.length ? ` ${upper(notes.join("; "))}.` : ""}`);
+    }
+  return lines.join("\n");
+}
