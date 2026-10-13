@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useId, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { ImagePlus, Plus, Trash2 } from "lucide-react";
+import { GalleryHorizontal, ImagePlus, Newspaper, Plus, Trash2 } from "lucide-react";
 import { api } from "@/lib/account/store";
 import { Field, field } from "@/components/account/form-kit";
 import { TOPICS, formatNewsDate, type NewsCard, type Topic } from "@/lib/news-meta";
@@ -10,12 +10,40 @@ import type { Banner } from "@/content/home";
 
 const btn = "inline-flex h-11 items-center gap-2 rounded-[10px] bg-brand px-5 text-[14px] font-semibold text-white hover:bg-brand-hover disabled:opacity-60";
 
-/** Раздел «Сайт»: баннеры главной и новости. */
+const PARTS = [
+  { key: "banners", label: "Баннеры", Icon: GalleryHorizontal },
+  { key: "news", label: "Новости", Icon: Newspaper },
+] as const;
+type Part = (typeof PARTS)[number]["key"];
+
+/** Раздел «Сайт»: меню слева, справа — выбранный блок. Выбор хранится в адресе (#news), чтобы переживать перезагрузку. */
 export function AdminSite() {
+  const [part, setPart] = useState<Part>("banners");
+  useEffect(() => {
+    const read = () => setPart(window.location.hash === "#news" ? "news" : "banners");
+    read(); // выбор из адреса доступен только в браузере
+    window.addEventListener("hashchange", read);
+    return () => window.removeEventListener("hashchange", read);
+  }, []);
+
   return (
-    <div className="grid gap-10">
-      <BannersBlock />
-      <NewsBlock />
+    <div className="grid gap-6 md:grid-cols-[220px_minmax(0,1fr)] md:items-start">
+      <nav aria-label="Разделы сайта" className="md:sticky md:top-4">
+        <ul className="flex gap-2 overflow-x-auto md:flex-col md:gap-1 md:rounded-[14px] md:border md:border-line md:bg-white md:p-2">
+          {PARTS.map(({ key, label, Icon }) => (
+            <li key={key} className="shrink-0">
+              <a
+                href={`#${key}`}
+                aria-current={part === key ? "page" : undefined}
+                className={`flex h-10 items-center gap-2 rounded-[10px] px-3 text-[14px] font-semibold focus-visible:outline-2 focus-visible:outline-brand ${part === key ? "bg-brand-soft text-brand" : "text-ink hover:bg-surface hover:text-brand"}`}
+              >
+                <Icon size={16} aria-hidden="true" /> {label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      <div className="min-w-0">{part === "banners" ? <BannersBlock /> : <NewsBlock />}</div>
     </div>
   );
 }
