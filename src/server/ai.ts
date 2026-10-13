@@ -159,7 +159,8 @@ export async function answer(history: ChatTurn[]): Promise<AiAnswer> {
   const today = new Date().toLocaleDateString("ru-RU", { timeZone: "Europe/Moscow", day: "numeric", month: "long", year: "numeric" });
   // В истории — только тексты прошлых ответов (без JSON), модель отвечает новым JSON.
   const messages: Msg[] = [{ role: "system", content: SYSTEM.replace("{TODAY}", today) }, ...history.map((m) => ({ role: m.role, content: m.content }))];
-  const { text, products } = await runWithCatalog(messages);
+  // С прайсом нанесения ответы длиннее: при 600 токенах JSON обрывался.
+  const { text, products } = await runWithCatalog(messages, { maxTokens: 1200 });
   const parts = toParts(text, products);
   return { ai: true, parts, reply: parts.map((p) => p.text).join("\n\n"), products: parts.flatMap((p) => p.products) };
 }
@@ -167,7 +168,7 @@ export async function answer(history: ChatTurn[]): Promise<AiAnswer> {
 type Structured = { text?: string; picks?: string[]; more_text?: string; more?: string[]; question?: string };
 
 /** JSON модели → сообщения: основное с карточками, «ещё рекомендую» с карточками, завершающий вопрос. */
-function toParts(raw: string, found: Product[]): AiPart[] {
+export function toParts(raw: string, found: Product[]): AiPart[] {
   const bySku = new Map(found.map((p) => [p.sku.trim().toLowerCase(), p]));
   const pick = (list?: string[], used = new Set<string>()) =>
     (Array.isArray(list) ? list : [])
@@ -177,9 +178,9 @@ function toParts(raw: string, found: Product[]): AiPart[] {
   let data: Structured | null = null;
   const json = raw.slice(raw.indexOf("{"), raw.lastIndexOf("}") + 1);
   try {
-    data = json ? (JSON.parse(json) as Structured) : null;
+    data = json ? (JSON.parse(json) as Structured) : salvage(raw);
   } catch {
-    data = null;
+    data = salvage(raw);
   }
   if (!data) {
     // Модель ответила обычным текстом — одно сообщение и найденные товары.
@@ -197,4 +198,24 @@ function toParts(raw: string, found: Product[]): AiPart[] {
   const question = noDash(String(data.question ?? "").trim());
   if (question) parts.push({ text: question, products: [] });
   return parts.length ? parts : [{ text: "Расскажите чуть подробнее о задаче, и я подберу варианты.", products: [] }];
+}
+
+/** Оборванный JSON (кончились токены): забираем дописанные до конца поля, недописанные отбрасываем. */
+function salvage(raw: string): Structured | null {
+  if (!/^\s*\{\s*"/.test(raw)) return null;
+  const str = (key: string) => {
+    const m = raw.match(new RegExp(`"${key}"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)"`));
+    if (!m) return undefined;
+    try {
+      return JSON.parse(`"${m[1]}"`) as string;
+    } catch {
+      return undefined;
+    }
+  };
+  const list = (key: string) => {
+    const m = raw.match(new RegExp(`"${key}"\\s*:\\s*\\[([^\\]]*)\\]`));
+    return m ? [...m[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]) : undefined;
+  };
+  const data: Structured = { text: str("text"), picks: list("picks"), more_text: str("more_text"), more: list("more"), question: str("question") };
+  return data.text || data.picks?.length ? data : null;
 }

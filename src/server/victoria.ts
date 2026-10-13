@@ -68,6 +68,6 @@ export async function victoriaReply(number: string): Promise<string | null> {
     },
     ...history,
   ];
-  const { text } = await runWithCatalog(messages, { withLinks: true, maxTokens: 700 });
+  const { text } = await runWithCatalog(messages, { withLinks: true, maxTokens: 1000 });
   return text ? noDash(plain(text)) : null;
 }
