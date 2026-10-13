@@ -151,9 +151,10 @@ export async function addBanner(b: BannerInput): Promise<string | null> {
   const error = bannerError(b);
   if (error) return error;
   await seed();
-  const [max] = await query<Row & { m: number | null }>("SELECT MAX(sort) m FROM site_banners");
+  // Новый баннер — первым в слайдере.
+  const [min] = await query<Row & { m: number | null }>("SELECT MIN(sort) m FROM site_banners");
   await exec("INSERT INTO site_banners (id, image, alt, href, sort) VALUES (?, ?, ?, ?, ?)", [
-    randomBytes(8).toString("hex"), b.image, b.alt, b.href || null, Number(max?.m ?? 0) + 1,
+    randomBytes(8).toString("hex"), b.image, b.alt, b.href || null, Number(min?.m ?? 0) - 1,
   ]);
   resetCache();
   return null;
@@ -166,6 +167,14 @@ export async function updateBanner(id: string, b: BannerInput): Promise<string |
   if (!res.affectedRows) return "Баннер не найден: возможно, его уже удалили";
   resetCache();
   return null;
+}
+
+/** Порядок баннеров из админки: ids в нужном порядке. */
+export async function reorderBanners(ids: string[]): Promise<void> {
+  for (const [i, id] of ids.entries()) {
+    await exec("UPDATE site_banners SET sort = ? WHERE id = ? AND deleted_at IS NULL", [i, id]);
+  }
+  resetCache();
 }
 
 export async function deleteBanner(id: string): Promise<void> {

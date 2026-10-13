@@ -1,6 +1,6 @@
 import { requireAdmin } from "@/server/admin";
 import { fail, ok, readJson, str } from "@/server/http";
-import { addBanner, adminBanners, deleteBanner, updateBanner } from "@/server/site";
+import { addBanner, adminBanners, deleteBanner, reorderBanners, updateBanner } from "@/server/site";
 
 export async function GET() {
   const a = await requireAdmin();
@@ -25,6 +25,17 @@ export async function PATCH(req: Request) {
   if (!body || !id) return fail(400, "Некорректный запрос");
   const error = await updateBanner(id, { image: str(body.image), alt: str(body.alt, 300), href: str(body.href) });
   return error ? fail(400, error) : ok({ ok: true });
+}
+
+/** Новый порядок: { ids: [...] } — все баннеры сверху вниз. */
+export async function PUT(req: Request) {
+  const a = await requireAdmin(true);
+  if (a instanceof Response) return a;
+  const body = await readJson<{ ids?: unknown }>(req);
+  const ids = Array.isArray(body?.ids) ? body.ids.map((x) => str(x, 64)).filter(Boolean).slice(0, 100) : [];
+  if (!ids.length) return fail(400, "Некорректный запрос");
+  await reorderBanners(ids);
+  return ok({ ok: true });
 }
 
 export async function DELETE(req: Request) {

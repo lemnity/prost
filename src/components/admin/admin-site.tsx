@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useId, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { GalleryHorizontal, ImagePlus, Newspaper, Pencil, Plus, Tags, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, GalleryHorizontal, ImagePlus, Newspaper, Pencil, Plus, Tags, Trash2 } from "lucide-react";
 import { api } from "@/lib/account/store";
 import { Field, field } from "@/components/account/form-kit";
 import { formatNewsDate, type NewsCard, type Topic, type TopicInfo } from "@/lib/news-meta";
@@ -131,6 +131,7 @@ function BannersBlock() {
   const [error, setError] = useState("");
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
+  const [moved, setMoved] = useState("");
   const load = useCallback(async () => {
     const r = await api<{ banners: Banner[] }>("/api/admin/site/banners", { cache: "no-store" });
     if (r.ok) setItems(r.data.banners);
@@ -147,6 +148,22 @@ function BannersBlock() {
     await load();
   }
 
+  /** Сдвиг на одну позицию: сразу в списке, затем сохраняем порядок целиком. */
+  async function move(i: number, dir: -1 | 1) {
+    if (!items) return;
+    const j = i + dir;
+    if (j < 0 || j >= items.length) return;
+    const next = items.slice();
+    [next[i], next[j]] = [next[j], next[i]];
+    setItems(next);
+    setMoved(`«${next[j].alt}» — теперь ${j + 1} из ${next.length}`);
+    const r = await api("/api/admin/site/banners", { method: "PUT", body: JSON.stringify({ ids: next.map((b) => b.id) }) });
+    if (!r.ok) {
+      setError(r.error);
+      await load();
+    }
+  }
+
   return (
     <section aria-labelledby="site-banners">
       <div className="flex flex-wrap items-center gap-3">
@@ -157,8 +174,9 @@ function BannersBlock() {
           </button>
         ) : null}
       </div>
-      <p className="mt-1 text-[14px] text-muted">Показываются в слайдере в этом порядке. Новый баннер встаёт в конец.</p>
+      <p className="mt-1 text-[14px] text-muted">Показываются в слайдере в этом порядке. Новый баннер встаёт первым, порядок меняется стрелками.</p>
       {error ? <p role="alert" className="mt-3 text-brand">{error}</p> : null}
+      <p role="status" className="sr-only">{moved}</p>
       {adding ? (
         <BannerForm
           onDone={async (saved) => {
@@ -190,7 +208,27 @@ function BannersBlock() {
                 {/* eslint-disable-next-line @next/next/no-img-element -- превью в админке */}
                 <img src={b.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
               </div>
-              <div className="flex items-start gap-3 p-3">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 p-3">
+                <div className="flex shrink-0 gap-1">
+                  <button
+                    type="button"
+                    onClick={() => void move(i, -1)}
+                    disabled={i === 0}
+                    aria-label={`Выше: ${b.alt}`}
+                    className="grid size-9 place-items-center rounded-lg border border-line text-ink hover:border-brand hover:text-brand disabled:opacity-30 disabled:hover:border-line disabled:hover:text-ink"
+                  >
+                    <ArrowUp size={16} aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void move(i, 1)}
+                    disabled={i === items.length - 1}
+                    aria-label={`Ниже: ${b.alt}`}
+                    className="grid size-9 place-items-center rounded-lg border border-line text-ink hover:border-brand hover:text-brand disabled:opacity-30 disabled:hover:border-line disabled:hover:text-ink"
+                  >
+                    <ArrowDown size={16} aria-hidden="true" />
+                  </button>
+                </div>
                 <div className="min-w-0 flex-1 text-[13px]">
                   <p className="font-medium text-ink">{i + 1}. {b.alt}</p>
                   {b.href ? <p className="mt-0.5 truncate text-muted">Ссылка: {b.href}</p> : null}
