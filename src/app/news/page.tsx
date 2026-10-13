@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Container } from "@/components/ui/container";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { ConsultationCta } from "@/components/home/consultation-cta";
-import { getNewsCards } from "@/server/site";
+import { getNewsCards, getTopics } from "@/server/site";
 import { NewsList } from "@/components/news/news-list";
 
 export const metadata: Metadata = {
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function NewsPage() {
-  const newsCards = await getNewsCards();
+  const [newsCards, topics] = await Promise.all([getNewsCards(), getTopics()]);
   return (
     <main id="main">
       <Container className="pt-4 md:pt-6">
@@ -26,7 +26,7 @@ export default async function NewsPage() {
       </Container>
 
       <Container className="py-8 md:py-10">
-        <NewsList items={newsCards} />
+        <NewsList items={newsCards} topics={topics} />
       </Container>
       <ConsultationCta />
     </main>

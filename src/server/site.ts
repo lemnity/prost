@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { exec, json, query, type Row } from "./db";
 import { saveUploads } from "./chat";
 import { banners as staticBanners, type Banner } from "@/content/home";
-import { staticNews, toCard, topicsOf, TOPICS, type NewsCard, type NewsItem, type Topic } from "@/lib/news";
+import { DEFAULT_TOPICS, staticNews, toCard, topicsOf, type NewsCard, type NewsItem, type Topic, type TopicInfo } from "@/lib/news";
 import { slugify } from "@/lib/translit";
 
 /** Баннеры главной и новости: правятся в админке (раздел «Сайт»), читаются из базы с кэшем в памяти. */
@@ -14,7 +14,7 @@ export const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
 
 export type SiteNews = NewsItem & { topics: Topic[] };
 
-const g = globalThis as unknown as { __psSiteSeeded?: Promise<void>; __psBanners?: Banner[]; __psNews?: SiteNews[] };
+const g = globalThis as unknown as { __psSiteSeeded?: Promise<void>; __psBanners?: Banner[]; __psNews?: SiteNews[]; __psTopics?: TopicInfo[] };
 
 /**
  * Разовое наполнение из файлов репозитория. INSERT IGNORE по ключу: удалённые в админке
@@ -25,6 +25,9 @@ function seed(): Promise<void> {
     g.__psSiteSeeded = (async () => {
       for (const [i, b] of staticBanners.entries()) {
         await exec("INSERT IGNORE INTO site_banners (id, image, alt, href, sort) VALUES (?, ?, ?, ?, ?)", [b.id, b.image, b.alt, b.href ?? null, i]);
+      }
+      for (const [i, t] of DEFAULT_TOPICS.entries()) {
+        await exec("INSERT IGNORE INTO site_topics (slug, label, sort) VALUES (?, ?, ?)", [t.key, t.label, i]);
       }
       for (const n of staticNews) {
         await exec("INSERT IGNORE INTO site_news (slug, title, date, excerpt, cover, topics, blocks) VALUES (?, ?, ?, ?, ?, ?, ?)", [
@@ -42,6 +45,7 @@ function seed(): Promise<void> {
 function resetCache() {
   g.__psBanners = undefined;
   g.__psNews = undefined;
+  g.__psTopics = undefined;
 }
 
 // ── Чтение для сайта ──
@@ -97,6 +101,23 @@ export async function getNewsItem(slug: string): Promise<SiteNews | null> {
   return (await getAllNews()).find((n) => n.slug === slug) ?? null;
 }
 
+async function loadTopics(): Promise<TopicInfo[]> {
+  await seed();
+  const rows = await query<Row & { slug: string; label: string }>("SELECT slug, label FROM site_topics WHERE deleted_at IS NULL ORDER BY sort, created_at");
+  return rows.map((r) => ({ key: r.slug, label: r.label }));
+}
+
+/** Темы (разделы) новостей; без базы — из кода. */
+export async function getTopics(): Promise<TopicInfo[]> {
+  if (g.__psTopics) return g.__psTopics;
+  try {
+    g.__psTopics = await loadTopics();
+    return g.__psTopics;
+  } catch {
+    return DEFAULT_TOPICS;
+  }
+}
+
 // ── Админка ──
 
 /** Картинка из админки → адрес /media/<id>, либо текст ошибки. */
@@ -147,7 +168,8 @@ export async function addNews(n: NewsInput): Promise<{ slug: string } | { error:
   if (!/^\d{4}-\d{2}-\d{2}$/.test(n.date) || Number.isNaN(Date.parse(n.date))) return { error: "Укажите дату публикации" };
   if (!okImage(n.cover)) return { error: "Загрузите обложку" };
   if (!n.blocks.length) return { error: "Добавьте текст статьи" };
-  const topics = n.topics.filter((t): t is Topic => t in TOPICS);
+  const known = new Set((await loadTopics()).map((t) => t.key));
+  const topics = n.topics.filter((t) => known.has(t));
   const excerpt = n.excerpt || (n.blocks.find((b) => b.type === "p") as { text: string } | undefined)?.text.slice(0, 300) || "";
   await seed();
   // Адрес из заголовка; если такой уже есть (в том числе удалённый) — с числом в конце.
@@ -164,5 +186,31 @@ export async function addNews(n: NewsInput): Promise<{ slug: string } | { error:
 
 export async function deleteNews(slug: string): Promise<void> {
   await exec("UPDATE site_news SET deleted_at = UTC_TIMESTAMP() WHERE slug = ? AND deleted_at IS NULL", [slug]);
+  resetCache();
+}
+
+export async function adminTopics(): Promise<TopicInfo[]> {
+  return loadTopics();
+}
+
+/** Новая тема → её ключ или текст ошибки. */
+export async function addTopic(label: string): Promise<{ key: string } | { error: string }> {
+  if (!label) return { error: "Укажите название темы" };
+  const topics = await loadTopics();
+  if (topics.some((t) => t.label.toLowerCase() === label.toLowerCase())) return { error: "Такая тема уже есть" };
+  // Ключ из названия; занятый (в том числе удалённой темой) — с числом в конце.
+  const base = slugify(label, 50) || "topic";
+  const taken = new Set((await query<Row & { slug: string }>("SELECT slug FROM site_topics WHERE slug LIKE ?", [`${base}%`])).map((r) => r.slug));
+  let key = base;
+  for (let i = 2; taken.has(key); i++) key = `${base}-${i}`;
+  const [max] = await query<Row & { m: number | null }>("SELECT MAX(sort) m FROM site_topics");
+  await exec("INSERT INTO site_topics (slug, label, sort) VALUES (?, ?, ?)", [key, label, Number(max?.m ?? 0) + 1]);
+  resetCache();
+  return { key };
+}
+
+/** Удалённая тема пропадает из фильтра; статьи остаются, просто без неё. */
+export async function deleteTopic(key: string): Promise<void> {
+  await exec("UPDATE site_topics SET deleted_at = UTC_TIMESTAMP() WHERE slug = ? AND deleted_at IS NULL", [key]);
   resetCache();
 }

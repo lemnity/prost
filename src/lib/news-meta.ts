@@ -18,13 +18,17 @@ export type NewsItem = {
 export const formatNewsDate = (iso: string) =>
   new Date(`${iso}T12:00:00`).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
 
-export const TOPICS = {
-  gifts: "Корпоративные подарки",
-  ideas: "Идеи подарков",
-  branding: "Нанесение и упаковка",
-  eco: "Эко-подарки",
-} as const;
-export type Topic = keyof typeof TOPICS;
+/** Тема (раздел новостей) — ключ из таблицы site_topics. */
+export type Topic = string;
+export type TopicInfo = { key: Topic; label: string };
+
+/** Темы правятся в админке (раздел «Сайт» → «Новости» → «Темы»); этот список — начальное наполнение и запасной вариант. */
+export const DEFAULT_TOPICS: TopicInfo[] = [
+  { key: "gifts", label: "Корпоративные подарки" },
+  { key: "ideas", label: "Идеи подарков" },
+  { key: "branding", label: "Нанесение и упаковка" },
+  { key: "eco", label: "Эко-подарки" },
+];
 
 /** Карточка для списка — без текста статьи (меньше данных на клиенте). */
 export type NewsCard = Omit<NewsItem, "blocks"> & { minutes: number; topics: Topic[] };

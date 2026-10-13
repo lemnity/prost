@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useId, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { GalleryHorizontal, ImagePlus, Newspaper, Plus, Trash2 } from "lucide-react";
+import { GalleryHorizontal, ImagePlus, Newspaper, Plus, Tags, Trash2 } from "lucide-react";
 import { api } from "@/lib/account/store";
 import { Field, field } from "@/components/account/form-kit";
-import { TOPICS, formatNewsDate, type NewsCard, type Topic } from "@/lib/news-meta";
+import { formatNewsDate, type NewsCard, type Topic, type TopicInfo } from "@/lib/news-meta";
 import type { Banner } from "@/content/home";
 
 const btn = "inline-flex h-11 items-center gap-2 rounded-[10px] bg-brand px-5 text-[14px] font-semibold text-white hover:bg-brand-hover disabled:opacity-60";
@@ -230,13 +230,20 @@ function BannerForm({ onDone }: { onDone: (saved: boolean) => void | Promise<voi
 
 function NewsBlock() {
   const [items, setItems] = useState<NewsCard[] | null>(null);
+  const [topics, setTopics] = useState<TopicInfo[]>([]);
   const [error, setError] = useState("");
   const [adding, setAdding] = useState(false);
+  const [editTopics, setEditTopics] = useState(false);
   const load = useCallback(async () => {
-    const r = await api<{ news: NewsCard[] }>("/api/admin/site/news", { cache: "no-store" });
+    const [r, t] = await Promise.all([
+      api<{ news: NewsCard[] }>("/api/admin/site/news", { cache: "no-store" }),
+      api<{ topics: TopicInfo[] }>("/api/admin/site/topics", { cache: "no-store" }),
+    ]);
     if (r.ok) setItems(r.data.news);
     else setError(r.error);
+    if (t.ok) setTopics(t.data.topics);
   }, []);
+  const label = new Map(topics.map((t) => [t.key, t.label]));
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- загрузка с сервера: setState после await
     void load();
@@ -252,6 +259,15 @@ function NewsBlock() {
     <section aria-labelledby="site-news">
       <div className="flex flex-wrap items-center gap-3">
         <h2 id="site-news" className="mr-auto text-[22px] font-bold">Новости и статьи</h2>
+        <button
+          type="button"
+          onClick={() => setEditTopics((v) => !v)}
+          aria-expanded={editTopics}
+          aria-controls="site-topics"
+          className={`inline-flex h-11 items-center gap-2 rounded-[10px] border px-5 text-[14px] font-semibold ${editTopics ? "border-ink bg-ink text-white" : "border-line bg-white text-ink hover:border-brand hover:text-brand"}`}
+        >
+          <Tags size={16} aria-hidden="true" /> Темы
+        </button>
         {!adding ? (
           <button type="button" onClick={() => setAdding(true)} className={btn}>
             <Plus size={16} aria-hidden="true" /> Добавить новость
@@ -259,8 +275,10 @@ function NewsBlock() {
         ) : null}
       </div>
       {error ? <p role="alert" className="mt-3 text-brand">{error}</p> : null}
+      {editTopics ? <TopicsPanel topics={topics} onChange={load} /> : null}
       {adding ? (
         <NewsForm
+          topics={topics}
           onDone={async (saved) => {
             setAdding(false);
             if (saved) await load();
@@ -281,7 +299,7 @@ function NewsBlock() {
                 <Link href={`/news/${n.slug}`} target="_blank" className="block truncate text-[15px] font-semibold hover:text-brand">{n.title}</Link>
                 <p className="mt-0.5 text-[13px] text-muted">
                   {formatNewsDate(n.date)}
-                  {n.topics.length ? ` · ${n.topics.map((t) => TOPICS[t]).join(", ")}` : ""}
+                  {n.topics.some((t) => label.has(t)) ? ` · ${n.topics.flatMap((t) => label.get(t) ?? []).join(", ")}` : ""}
                 </p>
               </div>
               <DeleteButton label={n.title} onDelete={() => remove(n.slug)} />
@@ -298,7 +316,57 @@ const today = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
 
-function NewsForm({ onDone }: { onDone: (saved: boolean) => void | Promise<void> }) {
+/** Темы — они же разделы-фильтры на странице /news. */
+function TopicsPanel({ topics, onChange }: { topics: TopicInfo[]; onChange: () => Promise<void> }) {
+  const [name, setName] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  async function add(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError("");
+    const r = await api("/api/admin/site/topics", { method: "POST", body: JSON.stringify({ label: name }) });
+    setBusy(false);
+    if (!r.ok) return setError(r.error);
+    setName("");
+    await onChange();
+  }
+  async function remove(key: string) {
+    const r = await api(`/api/admin/site/topics?key=${encodeURIComponent(key)}`, { method: "DELETE" });
+    if (!r.ok) setError(r.error);
+    await onChange();
+  }
+  return (
+    <div id="site-topics" className="mt-4 rounded-[14px] border border-line bg-white p-4 md:p-5">
+      <h3 className="text-[17px] font-semibold">Темы</h3>
+      <p className="mt-1 text-[13px] text-muted">Это разделы на странице «Новости»: посетитель выбирает тему и видит только её статьи. Тема появляется там, когда в ней есть хотя бы одна статья.</p>
+      {topics.length ? (
+        <ul className="mt-3 divide-y divide-line">
+          {topics.map((t) => (
+            <li key={t.key} className="flex items-center gap-3 py-2 text-[14px]">
+              <span className="mr-auto font-medium">{t.label}</span>
+              <DeleteButton label={t.label} onDelete={() => remove(t.key)} />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-3 text-[14px] text-muted">Тем пока нет</p>
+      )}
+      <form onSubmit={add} className="mt-3 flex flex-wrap items-end gap-3">
+        <div className="min-w-[220px] flex-1">
+          <Field name="topic-name" label="Новая тема" error={error}>
+            {(p) => <input {...p} value={name} onChange={(e) => setName(e.target.value)} maxLength={100} placeholder="Например, Новый год" className={field} />}
+          </Field>
+        </div>
+        <button type="submit" disabled={busy || !name.trim()} className={`${btn} ${error ? "mb-[26px]" : ""}`}>
+          <Plus size={16} aria-hidden="true" /> {busy ? "Добавляем…" : "Добавить тему"}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function NewsForm({ topics: all, onDone }: { topics: TopicInfo[]; onDone: (saved: boolean) => void | Promise<void> }) {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(today);
   const [cover, setCover] = useState("");
@@ -343,7 +411,8 @@ function NewsForm({ onDone }: { onDone: (saved: boolean) => void | Promise<void>
       <fieldset>
         <legend className="text-sm font-medium text-ink">Темы</legend>
         <div className="mt-2 flex flex-wrap gap-x-5 gap-y-2">
-          {(Object.keys(TOPICS) as Topic[]).map((t) => (
+          {!all.length ? <span className="text-[14px] text-muted">Тем нет: добавьте их кнопкой «Темы»</span> : null}
+          {all.map(({ key: t, label }) => (
             <label key={t} className="inline-flex items-center gap-2 text-[14px]">
               <input
                 type="checkbox"
@@ -351,7 +420,7 @@ function NewsForm({ onDone }: { onDone: (saved: boolean) => void | Promise<void>
                 onChange={(e) => setTopics((s) => (e.target.checked ? [...s, t] : s.filter((x) => x !== t)))}
                 className="size-4 accent-brand"
               />
-              {TOPICS[t]}
+              {label}
             </label>
           ))}
         </div>
