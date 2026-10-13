@@ -5,6 +5,11 @@
   transform-origin: 0 83px;
 }
 
+/* Нижняя строка переворачивается вокруг своей середины. */
+.low {
+  transform-origin: 0 160px;
+}
+
 .b {
   display: none;
 }
