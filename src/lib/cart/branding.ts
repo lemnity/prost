@@ -4,7 +4,8 @@ import { applications } from "@/content/home";
 import { PRINT_TAGS } from "@/lib/catalog/facets";
 
 export type BrandingFile = { id: string; name: string; size: number; type: string };
-export type Branding = { method: string; comment?: string; files?: BrandingFile[] };
+/** estimate — предварительный расчёт из калькулятора (ориентир для менеджера). */
+export type Branding = { method: string; comment?: string; files?: BrandingFile[]; estimate?: string };
 
 export const BRANDING_MAX_FILES = 5;
 
@@ -13,6 +14,7 @@ export function brandingLine(b: Branding): string {
   const parts = [b.method];
   if (b.comment) parts.push(`(${b.comment})`);
   if (b.files?.length) parts.push(`файлов: ${b.files.length}`);
+  if (b.estimate) parts.push(`[расчёт: ${b.estimate}]`);
   return parts.join(" ");
 }
 
@@ -34,11 +36,11 @@ const TAG_TO_APP: Record<string, string> = {
 const nb = (s: string) => s.replace(/[ ⁠]/g, " ");
 
 /** Срок, тираж и ссылка на описание для выбранного способа (если он нам известен). */
-export function brandingInfo(method: string): { term: string; run: string; minRun: number; href: string } | null {
+export function brandingInfo(method: string): { slug: string; title: string; term: string; run: string; minRun: number; href: string } | null {
   const text = method.toLowerCase().replace(/ё/g, "е");
   const tag = PRINT_TAGS.find((t) => t.re.test(text));
   const app = tag ? applications.items.find((a) => a.id === TAG_TO_APP[tag.id]) : undefined;
   if (!app) return null;
   const run = nb(app.run.replace("Тираж: ", ""));
-  return { term: nb(app.term.replace("Срок: ", "")), run, minRun: Number(run.replace(/\s/g, "").match(/^\d+/)?.[0] ?? 1), href: app.href };
+  return { slug: app.id, title: app.title, term: nb(app.term.replace("Срок: ", "")), run, minRun: Number(run.replace(/\s/g, "").match(/^\d+/)?.[0] ?? 1), href: app.href };
 }

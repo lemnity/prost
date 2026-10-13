@@ -291,8 +291,12 @@ export function ProductDetail({
                   </span>
                 ) : null}
               </p>
+              {branding.estimate ? <p className="mt-1">{branding.estimate}</p> : null}
               {brandInfo ? <p className="mt-1 text-muted">Срок изготовления: {brandInfo.term} · минимальный тираж: {brandInfo.minRun.toLocaleString("ru-RU")} шт.</p> : null}
-              <p className="mt-1.5"><span className="font-semibold">Цена без брендирования.</span> Итоговую стоимость с нанесением рассчитает менеджер после оформления заявки.</p>
+              <p className="mt-1.5">
+                <span className="font-semibold">{branding.estimate ? "Расчёт нанесения ориентировочный." : "Цена без брендирования."}</span>{" "}
+                {branding.estimate ? "Точную стоимость менеджер подтвердит после оформления заявки." : "Итоговую стоимость с нанесением рассчитает менеджер после оформления заявки."}
+              </p>
             </div>
           ) : null}
           {brandingOpen && printMethods ? (

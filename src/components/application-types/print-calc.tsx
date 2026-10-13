@@ -57,15 +57,102 @@ function Chips({ label, items, value, onChange }: { label: string; items: { i: n
   );
 }
 
-function CalcDialog({ variants, title, onClose }: { variants: PriceVariant[]; title: string; onClose: () => void }) {
-  const [vi, setVi] = useState(0);
+export type EstState = { vi: number; row: number; col: number; qty: string; area: string; addons: number[] };
+
+export function initEst(variants: PriceVariant[], qty = 100, vi = 0): EstState {
   const v = variants[vi];
+  return { vi, row: 0, col: v ? (v.choose ?? [0])[0] : 0, qty: String(qty), area: v ? String(defaultArea(v)) : "0", addons: [] };
+}
+
+/** Расчёт и текст для заявки по состоянию полей (null — прайса нет). */
+export function estimateOf(variants: PriceVariant[], s: EstState, title: string) {
+  const v = variants[Math.min(s.vi, variants.length - 1)];
+  if (!v) return null;
+  const n = Math.min(100000, Math.max(1, Math.floor(Number(s.qty)) || 1));
+  const input = { row: s.row, col: s.col, qty: n, area: Number(s.area) || 0, addons: s.addons };
+  const result = calcPrice(v, input);
+  const hasArea = !!(v.area || v.cliche);
+  const summary = [
+    `Способ: ${title}${variants.length > 1 ? ` — ${v.title}` : ""}`,
+    ...(v.byQty ? [] : [`${v.rowLabel ?? v.rowHead}: ${v.rows[s.row].label}`]),
+    ...(v.cols.length > 1 ? [`${v.colLabel ?? "Вариант"}: ${v.cols[s.col]}`] : []),
+    `Тираж: ${fmtNum(n)} шт.`,
+    ...(hasArea ? [`Площадь: ${s.area} см²`] : []),
+    ...s.addons.map((i) => `Дополнительно: ${v.addons![i].label}`),
+    `Предварительно: ${formatPriceValue(result.total)} (${formatPriceValue(result.perUnit)} за шт.)`,
+  ];
+  return { v, input, result, tier: rowFor(v, input), hasArea, summary };
+}
+
+/** Поля калькулятора и итог — общие для страницы вида нанесения и карточки товара. */
+export function EstimateFields({ variants, state, onChange, title }: { variants: PriceVariant[]; state: EstState; onChange: (s: EstState) => void; title: string }) {
+  const est = estimateOf(variants, state, title);
+  if (!est) return null;
+  const { v, result, tier, hasArea } = est;
   const choose = v.choose ?? v.cols.map((_, i) => i);
-  const [row, setRow] = useState(0);
-  const [col, setCol] = useState(choose[0]);
-  const [qty, setQty] = useState("100");
-  const [area, setArea] = useState(String(defaultArea(v)));
-  const [addons, setAddons] = useState<number[]>([]);
+  const set = (patch: Partial<EstState>) => onChange({ ...state, ...patch });
+  const addonPrice = (i: number) => {
+    const a = v.addons![i];
+    if (a.pct) return `${a.pct > 0 ? "+" : ""}${a.pct}%`;
+    if (a.fixed) return `+${formatPriceValue(a.fixed)}`;
+    return a.col != null ? `+${formatPriceValue(tier.prices[a.col])} за шт.` : "";
+  };
+  return (
+    <>
+      {variants.length > 1 ? (
+        <Chips label="Изделие" items={variants.map((x, i) => ({ i, text: x.title }))} value={state.vi} onChange={(i) => onChange(initEst(variants, Number(state.qty) || 100, i))} />
+      ) : null}
+      {!v.byQty ? <Chips label={v.rowLabel ?? v.rowHead} items={v.rows.map((r, i) => ({ i, text: r.label }))} value={state.row} onChange={(row) => set({ row })} /> : null}
+      {choose.length > 1 ? <Chips label={v.colLabel ?? "Вариант"} items={choose.map((i) => ({ i, text: v.cols[i] }))} value={state.col} onChange={(col) => set({ col })} /> : null}
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <label className="block text-[13px] font-semibold">
+          Тираж, шт.
+          <input type="number" inputMode="numeric" min={1} max={100000} value={state.qty} onChange={(e) => set({ qty: e.target.value })} className={field} />
+        </label>
+        {hasArea ? (
+          <label className="block text-[13px] font-semibold">
+            Площадь нанесения, см²
+            <input type="number" inputMode="decimal" min={1} max={1000} value={state.area} onChange={(e) => set({ area: e.target.value })} className={field} />
+          </label>
+        ) : null}
+      </div>
+
+      {v.addons?.length ? (
+        <fieldset className="mt-4">
+          <legend className="text-[13px] font-semibold">Дополнительно</legend>
+          <div className="mt-2 grid gap-2">
+            {v.addons.map((a, i) => (
+              <label key={a.label} className="flex items-start gap-2.5 text-[14px]">
+                <input
+                  type="checkbox"
+                  checked={state.addons.includes(i)}
+                  onChange={(e) => set({ addons: e.target.checked ? [...state.addons, i] : state.addons.filter((x) => x !== i) })}
+                  className="mt-0.5 size-4 shrink-0 accent-[#D02E31]"
+                />
+                <span>
+                  {a.label} <span className="text-muted">{addonPrice(i)}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      ) : null}
+
+      <div className="mt-5 rounded-[14px] bg-surface p-4" aria-live="polite">
+        <p className="text-[13px] text-muted">Предварительная стоимость нанесения</p>
+        <p className="mt-0.5 text-[26px] font-bold leading-tight">{formatPriceValue(result.total)}</p>
+        <p className="text-[14px] text-muted">≈ {formatPriceValue(result.perUnit)} за шт.</p>
+        <ul className="mt-3 grid gap-1 text-[13px] text-ink">
+          {result.lines.map((l) => <li key={l}>{l}</li>)}
+        </ul>
+      </div>
+    </>
+  );
+}
+
+function CalcDialog({ variants, title, onClose }: { variants: PriceVariant[]; title: string; onClose: () => void }) {
+  const [state, setState] = useState(() => initEst(variants));
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
@@ -83,30 +170,7 @@ function CalcDialog({ variants, title, onClose }: { variants: PriceVariant[]; ti
     };
   }, [onClose]);
 
-  function pickVariant(i: number) {
-    const next = variants[i];
-    setVi(i);
-    setRow(0);
-    setCol((next.choose ?? [0])[0]);
-    setArea(String(defaultArea(next)));
-    setAddons([]);
-  }
-
-  const n = Math.min(100000, Math.max(1, Math.floor(Number(qty)) || 1));
-  const input = { row, col, qty: n, area: Number(area) || 0, addons };
-  const result = calcPrice(v, input);
-  const tier = rowFor(v, input);
-  const hasArea = !!(v.area || v.cliche);
-
-  const summary = [
-    `Способ: ${title}${variants.length > 1 ? ` — ${v.title}` : ""}`,
-    ...(v.byQty ? [] : [`${v.rowLabel ?? v.rowHead}: ${v.rows[row].label}`]),
-    ...(v.cols.length > 1 ? [`${v.colLabel ?? "Вариант"}: ${v.cols[col]}`] : []),
-    `Тираж: ${fmtNum(n)} шт.`,
-    ...(hasArea ? [`Площадь: ${area} см²`] : []),
-    ...addons.map((i) => `Дополнительно: ${v.addons![i].label}`),
-    `Предварительно: ${formatPriceValue(result.total)} (${formatPriceValue(result.perUnit)} за шт.)`,
-  ];
+  const summary = estimateOf(variants, state, title)?.summary ?? [];
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -120,13 +184,6 @@ function CalcDialog({ variants, title, onClose }: { variants: PriceVariant[]; ti
     if (r.ok) setSent(true);
     else setError(r.error);
   }
-
-  const addonPrice = (i: number) => {
-    const a = v.addons![i];
-    if (a.pct) return `${a.pct > 0 ? "+" : ""}${a.pct}%`;
-    if (a.fixed) return `+${formatPriceValue(a.fixed)}`;
-    return a.col != null ? `+${formatPriceValue(tier.prices[a.col])} за шт.` : "";
-  };
 
   return createPortal(
     <div className="fixed inset-0 z-[80] flex items-stretch justify-center bg-black/40 md:items-start md:p-6 md:pt-[calc(6dvh/var(--zoom))]" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
@@ -157,58 +214,7 @@ function CalcDialog({ variants, title, onClose }: { variants: PriceVariant[]; ti
             </div>
           ) : (
             <>
-              {variants.length > 1 ? (
-                <Chips label="Изделие" items={variants.map((x, i) => ({ i, text: x.title }))} value={vi} onChange={pickVariant} />
-              ) : null}
-              {!v.byQty ? (
-                <Chips label={v.rowLabel ?? v.rowHead} items={v.rows.map((r, i) => ({ i, text: r.label }))} value={row} onChange={setRow} />
-              ) : null}
-              {choose.length > 1 ? (
-                <Chips label={v.colLabel ?? "Вариант"} items={choose.map((i) => ({ i, text: v.cols[i] }))} value={col} onChange={setCol} />
-              ) : null}
-
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <label className="block text-[13px] font-semibold">
-                  Тираж, шт.
-                  <input type="number" inputMode="numeric" min={1} max={100000} value={qty} onChange={(e) => setQty(e.target.value)} className={field} />
-                </label>
-                {hasArea ? (
-                  <label className="block text-[13px] font-semibold">
-                    Площадь нанесения, см²
-                    <input type="number" inputMode="decimal" min={1} max={1000} value={area} onChange={(e) => setArea(e.target.value)} className={field} />
-                  </label>
-                ) : null}
-              </div>
-
-              {v.addons?.length ? (
-                <fieldset className="mt-4">
-                  <legend className="text-[13px] font-semibold">Дополнительно</legend>
-                  <div className="mt-2 grid gap-2">
-                    {v.addons.map((a, i) => (
-                      <label key={a.label} className="flex items-start gap-2.5 text-[14px]">
-                        <input
-                          type="checkbox"
-                          checked={addons.includes(i)}
-                          onChange={(e) => setAddons((all) => (e.target.checked ? [...all, i] : all.filter((x) => x !== i)))}
-                          className="mt-0.5 size-4 shrink-0 accent-[#D02E31]"
-                        />
-                        <span>
-                          {a.label} <span className="text-muted">{addonPrice(i)}</span>
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
-              ) : null}
-
-              <div className="mt-5 rounded-[14px] bg-surface p-4" aria-live="polite">
-                <p className="text-[13px] text-muted">Предварительная стоимость</p>
-                <p className="mt-0.5 text-[26px] font-bold leading-tight">{formatPriceValue(result.total)}</p>
-                <p className="text-[14px] text-muted">≈ {formatPriceValue(result.perUnit)} за шт.</p>
-                <ul className="mt-3 grid gap-1 text-[13px] text-ink">
-                  {result.lines.map((l) => <li key={l}>{l}</li>)}
-                </ul>
-              </div>
+              <EstimateFields variants={variants} state={state} onChange={setState} title={title} />
               <p className="mt-3 rounded-[12px] bg-brand-soft px-4 py-3 text-[13px]">
                 <span className="font-semibold">Расчёт ориентировочный.</span> Точную стоимость менеджер подтвердит после проверки изделия и макета.
               </p>

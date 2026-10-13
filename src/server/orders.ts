@@ -58,7 +58,8 @@ function brandingOf(b: unknown): { branding?: Branding } {
     .filter((f): f is Record<string, unknown> => !!f && typeof f === "object" && typeof (f as { id?: unknown }).id === "string" && /^[0-9a-f]{24}$/.test((f as { id: string }).id))
     .slice(0, BRANDING_MAX_FILES)
     .map((f) => ({ id: String(f.id), name: String(f.name ?? "файл").slice(0, 200), size: Number(f.size) || 0, type: String(f.type ?? "").slice(0, 120) }));
-  return { branding: { method, ...(comment ? { comment } : {}), ...(files.length ? { files } : {}) } };
+  const estimate = typeof o.estimate === "string" ? o.estimate.trim().slice(0, 500) : "";
+  return { branding: { method, ...(comment ? { comment } : {}), ...(files.length ? { files } : {}), ...(estimate ? { estimate } : {}) } };
 }
 
 export async function priceItems(items: CartItem[]): Promise<CartItem[]> {

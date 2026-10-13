@@ -6,6 +6,8 @@ import { createPortal } from "react-dom";
 import { Paperclip, X } from "lucide-react";
 import { buttonClass } from "@/components/ui/button";
 import { BRANDING_MAX_FILES, brandingInfo, type Branding, type BrandingFile } from "@/lib/cart/branding";
+import { EstimateFields, estimateOf, initEst } from "@/components/application-types/print-calc";
+import { PRINT_PRICES } from "@/lib/print-prices";
 
 const NONE = "Без нанесения";
 const kb = (n: number) => (n >= 1048576 ? `${(n / 1048576).toFixed(1)} МБ` : `${Math.max(1, Math.round(n / 1024))} КБ`);
@@ -29,6 +31,9 @@ export function BrandingDialog({
   const [error, setError] = useState("");
   const input = useRef<HTMLInputElement>(null);
   const info = method !== NONE ? brandingInfo(method) : null;
+  const variants = (info && PRINT_PRICES[info.slug]) || [];
+  const [est, setEst] = useState(() => initEst(variants));
+  const estimate = info ? estimateOf(variants, est, info.title) : null;
 
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -67,7 +72,11 @@ export function BrandingDialog({
         type="button"
         role="radio"
         aria-checked={m === method}
-        onClick={() => setMethod(m)}
+        onClick={() => {
+          setMethod(m);
+          const i = m !== NONE ? brandingInfo(m) : null;
+          setEst(initEst((i && PRINT_PRICES[i.slug]) || []));
+        }}
         className={`rounded-full border px-4 py-2 text-[14px] ${m === method ? "border-brand bg-brand text-white" : "border-line bg-white hover:border-brand hover:text-brand"}`}
       >
         {m}
@@ -95,6 +104,10 @@ export function BrandingDialog({
               Срок изготовления: {info.term} · тираж: {info.run}{" "}
               <Link href={info.href} target="_blank" className="font-medium text-brand hover:text-brand-hover">Подробнее о способе</Link>
             </p>
+          ) : null}
+
+          {method !== NONE && info && estimate ? (
+            <EstimateFields variants={variants} state={est} onChange={setEst} title={info.title} />
           ) : null}
 
           {method !== NONE ? (
@@ -141,14 +154,22 @@ export function BrandingDialog({
           ) : null}
 
           <p className="mt-5 rounded-[12px] bg-brand-soft px-4 py-3 text-[13px]">
-            <span className="font-semibold">Цена без брендирования.</span> Итоговую стоимость с нанесением рассчитает менеджер после оформления заявки.
+            {estimate ? (
+              <>
+                <span className="font-semibold">Расчёт ориентировочный.</span> Он сохранится в заявке, а точную стоимость менеджер подтвердит после проверки изделия и макета.
+              </>
+            ) : (
+              <>
+                <span className="font-semibold">Цена без брендирования.</span> Итоговую стоимость с нанесением рассчитает менеджер после оформления заявки.
+              </>
+            )}
           </p>
         </div>
         <div className="flex gap-2 border-t border-line px-5 py-3">
           <button
             type="button"
             disabled={busy}
-            onClick={() => onSave(method === NONE ? null : { method, ...(comment.trim() ? { comment: comment.trim() } : {}), ...(files.length ? { files } : {}) })}
+            onClick={() => onSave(method === NONE ? null : { method, ...(comment.trim() ? { comment: comment.trim() } : {}), ...(files.length ? { files } : {}), ...(estimate ? { estimate: estimate.summary.slice(1).join("; ") } : {}) })}
             className={`${buttonClass({ size: "md" })} flex-1`}
           >
             Сохранить
