@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/account/store";
 
 type Lead = { id: number; kind: string; status: string; date: string; data: Record<string, string> };
-const KIND: Record<string, string> = { brief: "Бриф", callback: "Обратный звонок", contact: "Сообщение" };
+const KIND: Record<string, string> = { brief: "Бриф", callback: "Обратный звонок", contact: "Сообщение", calc: "Расчёт нанесения" };
 
 export function AdminLeads() {
   const [leads, setLeads] = useState<Lead[] | null>(null);

@@ -6,6 +6,7 @@ import { Container } from "@/components/ui/container";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { ConsultationCta } from "@/components/home/consultation-cta";
 import { ApplicationTabs } from "@/components/application-types/application-tabs";
+import { CalcButton } from "@/components/application-types/print-calc";
 import { asset } from "@/lib/asset";
 import {
   applicationTypes,
@@ -62,12 +63,9 @@ export default async function ApplicationTypePage({ params }: Props) {
         </ul>
       ) : null}
       <div className="mt-4 flex flex-wrap gap-3">
-        <Link
-          href="/contact-us#callback"
-          className={buttonClass({ size: "lg", px: "px-7" })}
-        >
+        <CalcButton slug={slug} title={t.title} className={buttonClass({ size: "lg", px: "px-7" })}>
           Рассчитать нанесение
-        </Link>
+        </CalcButton>
         <Link
           href={catalogHrefFor(slug)}
           className={buttonClass({ variant: "outline", size: "lg", px: "px-7" })}
@@ -144,12 +142,9 @@ export default async function ApplicationTypePage({ params }: Props) {
                 </dl>
               ) : null}
               <div className="mt-5 grid gap-3">
-                <Link
-                  href="/contact-us#callback"
-                  className={buttonClass({ size: "lg", full: true })}
-                >
+                <CalcButton slug={slug} title={t.title} className={buttonClass({ size: "lg", full: true })}>
                   Рассчитать нанесение
-                </Link>
+                </CalcButton>
                 <Link
                   href={catalogHrefFor(slug)}
                   className={buttonClass({ variant: "outline", size: "lg", full: true })}

@@ -3,7 +3,7 @@ import { tooManyAttempts } from "@/server/auth";
 import { clientIp, fail, ok, readJson, sameOrigin, str } from "@/server/http";
 import { notifyManager } from "@/server/notify";
 
-const KINDS = { brief: "Бриф на разработку", callback: "Обратный звонок", contact: "Сообщение с сайта" } as const;
+const KINDS = { brief: "Бриф на разработку", callback: "Обратный звонок", contact: "Сообщение с сайта", calc: "Расчёт нанесения" } as const;
 
 /** Обращения с форм (бриф, обратный звонок): сохраняем и уведомляем менеджера. */
 export async function POST(req: Request) {
