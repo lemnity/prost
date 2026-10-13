@@ -5,7 +5,7 @@ import { cartCount, cartDiscount, MIN_ORDER } from "@/lib/cart/store";
 import type { CartItem } from "@/lib/cart/store";
 import type { ChatFileMeta } from "./types";
 
-export const AGENT = { name: "Виктория Широкова", firstName: "Виктория", role: "Персональный менеджер", photo: "/images/manager/viktoriya.webp" };
+export const AGENT = { name: "Виктория Широкова", firstName: "Виктория", role: "Виртуальный менеджер", photo: "/images/manager/viktoriya.webp" };
 
 /** Пауза «прочитать сообщение» и скорость набора — чтобы ответы приходили как у живого менеджера. */
 export const READ_MS = 2200;
@@ -22,7 +22,7 @@ export function openingMessages(chat: OrderInfo, now = Date.now()): AgentDraft[]
     {
       typeAt: now + 300,
       at: greetAt,
-      text: `${hello} Меня зовут ${AGENT.firstName}, я ваш персональный менеджер. Спасибо за ваше оформление, сейчас изучаю вашу корзину.`,
+      text: `${hello} Меня зовут ${AGENT.firstName}, я ваш виртуальный менеджер. Спасибо за ваше оформление, сейчас изучаю вашу корзину.`,
     },
     // Разбор корзины — через 25 секунд: менеджер «изучает» заказ, потом пишет длинное сообщение.
     { typeAt: greetAt + 9000, at: greetAt + 25_000, text: cartReview(chat) },

@@ -25,7 +25,7 @@ const HINTS = [
 ];
 const FIELD_HINTS = HINTS.slice(0, 7);
 
-const HELLO = `Здравствуйте! Меня зовут ${AGENT.firstName}, я менеджер ProStyle, рада помочь.`;
+const HELLO = `Здравствуйте! Меня зовут ${AGENT.firstName}, я виртуальный менеджер ProStyle, рада помочь.`;
 const BUBBLE = "max-w-[90%] whitespace-pre-wrap rounded-[16px] rounded-bl-[4px] bg-surface px-4 py-2.5 text-[14px]";
 
 type Turn = { role: "user" | "assistant"; content: string; products?: Product[]; query?: string; typed?: boolean };
@@ -257,7 +257,7 @@ export function AiSearch() {
         />
         <button
           type="submit"
-          aria-label="Спросить Викторию, менеджера ProStyle"
+          aria-label="Спросить Викторию, виртуального менеджера ProStyle"
           className="flex h-12 shrink-0 items-center gap-1.5 rounded-r-[10px] bg-gradient-to-r from-[#D02E31] to-[#F0643C] px-4 text-[14px] font-bold tracking-wide text-white hover:brightness-110 focus-visible:outline-ink focus-visible:-outline-offset-2"
         >
           <Sparkles size={17} aria-hidden /> AI
@@ -279,7 +279,7 @@ export function AiSearch() {
                   </span>
                   <div className="min-w-0 flex-1">
                     <h2 id="ai-title" className="text-[16px] font-semibold leading-tight">{AGENT.name}</h2>
-                    <p className="text-[12px] text-muted">{typing || hello === "typing" ? "печатает…" : "Менеджер ProStyle · онлайн"}</p>
+                    <p className="text-[12px] text-muted">{typing || hello === "typing" ? "печатает…" : "Виртуальный менеджер ProStyle · онлайн"}</p>
                   </div>
                   <button type="button" onClick={close} aria-label="Закрыть" className="grid size-10 place-items-center rounded-full text-muted hover:bg-surface hover:text-ink">
                     <X size={20} aria-hidden />

@@ -150,7 +150,7 @@ function ChatLink({ active }: { active: boolean }) {
           <MessageCircle size={15} aria-hidden="true" />
           Чат с менеджером
         </span>
-        <span className="block truncate text-[12px] text-white/80">{AGENT.firstName} · в сети</span>
+        <span className="block truncate text-[12px] text-white/80">{AGENT.firstName}, виртуальный менеджер · в сети</span>
       </span>
     </Link>
   );

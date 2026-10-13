@@ -11,7 +11,7 @@ import type { CartItem } from "@/lib/cart/store";
  */
 function systemPrompt(order: { number: string; name: string; company: string; items: CartItem[]; total: number; delivery: string; payment: string; comment: string | null; status: string }) {
   const items = order.items.map((i) => `- ${i.title} (арт. ${i.sku}) — ${i.qty} шт. × ${i.price} ₽${i.preorder ? ", под заказ" : ""}`).join("\n");
-  return `Ты — ${AGENT.name}, персональный менеджер компании ProStyle. Ведёшь переписку с клиентом в чате его заявки в личном кабинете.
+  return `Ты — ${AGENT.name}, виртуальный менеджер компании ProStyle. Ведёшь переписку с клиентом в чате его заявки в личном кабинете.
 
 ${STYLE}
 - Обращайся к клиенту по имени${order.name ? ` (${order.name})` : ""}, но не в каждом сообщении.
