@@ -25,6 +25,7 @@
 5. Скопировать файлы из этой папки по путям выше, `chmod +x` для `bin/*` и `cron/*`,
    `systemctl daemon-reload && systemctl enable --now prostyle prostyle-*.timer`.
 6. Сертификат: certbot webroot `/var/www/letsencrypt`, затем `nginx -t && systemctl reload nginx`.
-7. Выложить сайт с рабочей машины: `scripts/deploy.sh`. Таблицы базы создадутся при первом запросе.
-8. Почта: SPF/DKIM/DMARC в DNS (reg.ru), PTR `82.146.52.154 → prostyle.agency` у хостинга.
-9. Склады: IP сервера — в белом списке кабинета gifts.ru; первая загрузка каталогов — кнопками в админке «Склад».
+7. Linux-сборка sharp для конвертера фото в WebP: `cd /opt/prostyle && npm install --no-save --no-package-lock @img/sharp-linux-x64@0.35.5 @img/sharp-libvips-linux-x64@1.3.4`.
+8. Выложить сайт с рабочей машины: `scripts/deploy.sh`. Таблицы базы создадутся при первом запросе.
+9. Почта: SPF/DKIM/DMARC в DNS (reg.ru), PTR `82.146.52.154 → prostyle.agency` у хостинга.
+10. Склады: IP сервера — в белом списке кабинета gifts.ru; первая загрузка каталогов — кнопками в админке «Склад».

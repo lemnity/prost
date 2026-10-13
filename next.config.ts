@@ -11,14 +11,16 @@ const nextConfig: NextConfig = {
   ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
   ...(pages ? { output: "export", basePath, trailingSlash: true } : { output: "standalone" }),
   env: { NEXT_PUBLIC_BASE_PATH: basePath },
-  images: {
-    formats: ["image/avif", "image/webp"],
-    // Фото товаров каталога (временный источник — prostyle.gifts).
-    // Без поля search: допускаются любые query (?size=…).
-    remotePatterns: [{ protocol: "https", hostname: "prostyle.gifts", pathname: "/content/**" }],
-    // Без серверной оптимизации: слабый сервер, картинки уже в webp/с CDN-источника.
-    unoptimized: true,
-  },
+  images: pages
+    ? { unoptimized: true }
+    : {
+        // Фото складов ужимаются и перекодируются в WebP своим конвертером /api/img (кэш nginx), свои — как есть.
+        loader: "custom",
+        loaderFile: "./src/lib/image-loader.ts",
+        deviceSizes: [640, 828, 1080, 1200],
+        imageSizes: [96, 200, 320, 480],
+      },
+
   turbopack: { root: path.resolve(__dirname) },
   // Кэш страниц (ISR) — только в памяти (cacheMaxMemorySize, по умолчанию 50 МБ, вытеснение старых записей).
   // На диск не пишем: роботы обходят десятки тысяч товаров, и кэш на диске за сутки занял весь диск сервера.
