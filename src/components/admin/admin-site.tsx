@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useId, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { GalleryHorizontal, ImagePlus, Newspaper, Plus, Tags, Trash2 } from "lucide-react";
+import { GalleryHorizontal, ImagePlus, Newspaper, Pencil, Plus, Tags, Trash2 } from "lucide-react";
 import { api } from "@/lib/account/store";
 import { Field, field } from "@/components/account/form-kit";
 import { formatNewsDate, type NewsCard, type Topic, type TopicInfo } from "@/lib/news-meta";
@@ -130,6 +130,7 @@ function BannersBlock() {
   const [items, setItems] = useState<Banner[] | null>(null);
   const [error, setError] = useState("");
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
   const load = useCallback(async () => {
     const r = await api<{ banners: Banner[] }>("/api/admin/site/banners", { cache: "no-store" });
     if (r.ok) setItems(r.data.banners);
@@ -172,7 +173,18 @@ function BannersBlock() {
         <p className="mt-4 rounded-[14px] bg-surface p-8 text-center text-muted">Баннеров нет, слайдер на главной скрыт</p>
       ) : (
         <ul className="mt-4 grid gap-3 md:grid-cols-2">
-          {items.map((b, i) => (
+          {items.map((b, i) =>
+            editing === b.id ? (
+              <li key={b.id} className="md:col-span-2">
+                <BannerForm
+                  banner={b}
+                  onDone={async (saved) => {
+                    setEditing(null);
+                    if (saved) await load();
+                  }}
+                />
+              </li>
+            ) : (
             <li key={b.id} className="overflow-hidden rounded-[14px] border border-line bg-white">
               <div className="relative aspect-[2400/644] bg-surface">
                 {/* eslint-disable-next-line @next/next/no-img-element -- превью в админке */}
@@ -183,27 +195,40 @@ function BannersBlock() {
                   <p className="font-medium text-ink">{i + 1}. {b.alt}</p>
                   {b.href ? <p className="mt-0.5 truncate text-muted">Ссылка: {b.href}</p> : null}
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setEditing(b.id)}
+                  aria-label={`Редактировать: ${b.alt}`}
+                  className="inline-flex h-9 items-center gap-1.5 text-[13px] font-medium text-muted hover:text-brand"
+                >
+                  <Pencil size={15} aria-hidden="true" /> Редактировать
+                </button>
                 <DeleteButton label={b.alt} onDelete={() => remove(b.id)} />
               </div>
             </li>
-          ))}
+            ),
+          )}
         </ul>
       )}
     </section>
   );
 }
 
-function BannerForm({ onDone }: { onDone: (saved: boolean) => void | Promise<void> }) {
-  const [image, setImage] = useState("");
-  const [alt, setAlt] = useState("");
-  const [href, setHref] = useState("");
+/** Новый баннер или правка существующего (banner). */
+function BannerForm({ banner, onDone }: { banner?: Banner; onDone: (saved: boolean) => void | Promise<void> }) {
+  const [image, setImage] = useState(banner?.image ?? "");
+  const [alt, setAlt] = useState(banner?.alt ?? "");
+  const [href, setHref] = useState(banner?.href ?? "");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   async function submit(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError("");
-    const r = await api("/api/admin/site/banners", { method: "POST", body: JSON.stringify({ image, alt, href }) });
+    const r = await api("/api/admin/site/banners", {
+      method: banner ? "PATCH" : "POST",
+      body: JSON.stringify({ id: banner?.id, image, alt, href }),
+    });
     setBusy(false);
     if (r.ok) await onDone(true);
     else setError(r.error);
@@ -212,16 +237,16 @@ function BannerForm({ onDone }: { onDone: (saved: boolean) => void | Promise<voi
     <form onSubmit={submit} className="mt-4 grid gap-4 rounded-[14px] border border-line bg-white p-4 md:p-5">
       <ImageUpload value={image} onChange={setImage} label="Картинка" hint="Размер 2400×644 px (пропорция как у слайдера), до 10 МБ." aspect="aspect-[2400/644]" />
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field name="banner-alt" label="Описание" required hint="Что написано на баннере: для поисковиков и экранных дикторов.">
+        <Field name={`banner-alt-${banner?.id ?? "new"}`} label="Описание" required hint="Что написано на баннере: для поисковиков и экранных дикторов.">
           {(p) => <input {...p} value={alt} onChange={(e) => setAlt(e.target.value)} maxLength={300} className={field} />}
         </Field>
-        <Field name="banner-href" label="Ссылка" hint="Необязательно. Например, /catalog/novyy-god">
+        <Field name={`banner-href-${banner?.id ?? "new"}`} label="Ссылка" hint="Необязательно. Например, /catalog/novyy-god">
           {(p) => <input {...p} value={href} onChange={(e) => setHref(e.target.value)} maxLength={500} placeholder="/catalog/…" className={field} />}
         </Field>
       </div>
       {error ? <p role="alert" className="text-[14px] text-brand">{error}</p> : null}
       <div className="flex flex-wrap gap-3">
-        <button type="submit" disabled={busy} className={btn}>{busy ? "Сохраняем…" : "Добавить"}</button>
+        <button type="submit" disabled={busy} className={btn}>{busy ? "Сохраняем…" : banner ? "Сохранить" : "Добавить"}</button>
         <button type="button" onClick={() => void onDone(false)} className="h-11 px-3 text-[14px] font-medium text-muted hover:text-ink">Отмена</button>
       </div>
     </form>

@@ -138,15 +138,32 @@ export async function adminBanners(): Promise<Banner[]> {
   return loadBanners();
 }
 
-export async function addBanner(b: { image: string; alt: string; href: string }): Promise<string | null> {
+type BannerInput = { image: string; alt: string; href: string };
+
+function bannerError(b: BannerInput): string | null {
   if (!okImage(b.image)) return "Загрузите картинку баннера";
   if (!b.alt) return "Добавьте описание баннера: его читают поисковики и экранные дикторы";
   if (b.href && !okHref(b.href)) return "Ссылка должна начинаться с / или https://";
+  return null;
+}
+
+export async function addBanner(b: BannerInput): Promise<string | null> {
+  const error = bannerError(b);
+  if (error) return error;
   await seed();
   const [max] = await query<Row & { m: number | null }>("SELECT MAX(sort) m FROM site_banners");
   await exec("INSERT INTO site_banners (id, image, alt, href, sort) VALUES (?, ?, ?, ?, ?)", [
     randomBytes(8).toString("hex"), b.image, b.alt, b.href || null, Number(max?.m ?? 0) + 1,
   ]);
+  resetCache();
+  return null;
+}
+
+export async function updateBanner(id: string, b: BannerInput): Promise<string | null> {
+  const error = bannerError(b);
+  if (error) return error;
+  const res = await exec("UPDATE site_banners SET image = ?, alt = ?, href = ? WHERE id = ? AND deleted_at IS NULL", [b.image, b.alt, b.href || null, id]);
+  if (!res.affectedRows) return "Баннер не найден: возможно, его уже удалили";
   resetCache();
   return null;
 }
