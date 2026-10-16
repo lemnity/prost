@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { AccountShell } from "@/components/account/account-shell";
-import { CartView } from "@/components/cart/cart-view";
+import { CabinetCart } from "@/components/account/admin-cabinet";
 
 export const metadata: Metadata = {
   title: "Корзина — личный кабинет ProStyle",
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function AccountCartPage() {
   return (
     <AccountShell section="cart" guest>
-      <CartView embedded />
+      <CabinetCart />
     </AccountShell>
   );
 }

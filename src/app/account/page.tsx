@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { AccountShell } from "@/components/account/account-shell";
-import { OrdersSection } from "@/components/account/orders";
+import { CabinetOrders } from "@/components/account/admin-cabinet";
 
 export const metadata: Metadata = {
   title: "Заявки — личный кабинет ProStyle",
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function AccountPage() {
   return (
     <AccountShell section="orders">
-      <OrdersSection />
+      <CabinetOrders />
     </AccountShell>
   );
 }

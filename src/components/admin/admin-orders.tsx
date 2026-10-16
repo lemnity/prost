@@ -12,8 +12,9 @@ import { api } from "@/lib/account/store";
 import { AGENT } from "@/lib/chat/agent";
 import { formatSize, isImage, type ChatMessage } from "@/lib/chat/types";
 import type { CartItem } from "@/lib/cart/store";
+import { BrandingInfo } from "./branding-info";
 
-type AdminOrder = {
+export type AdminOrder = {
   number: string;
   status: string;
   date: string;
@@ -30,18 +31,19 @@ type AdminOrder = {
   unanswered?: number;
 };
 
-const STATUS: Record<string, { label: string; cls: string }> = {
+export const STATUS: Record<string, { label: string; cls: string }> = {
   new: { label: "Новая", cls: "bg-brand-soft text-brand" },
   work: { label: "В работе", cls: "bg-amber-100 text-amber-800" },
   done: { label: "Выполнена", cls: "bg-new-bg text-new-text" },
   cancelled: { label: "Отменена", cls: "bg-surface text-muted" },
 };
-const FILTERS = [{ value: "", label: "Все" }, ...Object.entries(STATUS).map(([value, s]) => ({ value, label: s.label }))];
+export const FILTERS = [{ value: "", label: "Все" }, ...Object.entries(STATUS).map(([value, s]) => ({ value, label: s.label }))];
 
 const dt = (iso: string | number) => new Date(iso).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 const fileUrl = (id: string) => `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/files/${id}`;
 
-export function AdminOrders() {
+/** Все заявки. base — где открывается заявка: в админке (/admin) или в кабинете администратора (/account). */
+export function AdminOrders({ base = "/admin" }: { base?: string }) {
   const params = useSearchParams();
   const selected = params.get("order");
   const [filter, setFilter] = useState("");
@@ -63,7 +65,7 @@ export function AdminOrders() {
     return () => clearInterval(id);
   }, [load]);
 
-  if (selected) return <OrderDetail number={selected} onChanged={load} />;
+  if (selected) return <OrderDetail number={selected} base={base} onChanged={load} />;
 
   return (
     <div>
@@ -101,7 +103,7 @@ export function AdminOrders() {
               {orders.map((o) => (
                 <tr key={o.number} className="hover:bg-surface/60">
                   <td className="px-4 py-3">
-                    <Link href={`/admin?order=${encodeURIComponent(o.number)}`} className="font-semibold text-ink hover:text-brand">
+                    <Link href={`${base}?order=${encodeURIComponent(o.number)}`} className="font-semibold text-ink hover:text-brand">
                       {o.number}
                     </Link>
                     <span className="block text-[12px] text-muted">{dt(o.date)}</span>
@@ -130,7 +132,7 @@ export function AdminOrders() {
   );
 }
 
-function OrderDetail({ number, onChanged }: { number: string; onChanged: () => void }) {
+function OrderDetail({ number, base, onChanged }: { number: string; base: string; onChanged: () => void }) {
   const [order, setOrder] = useState<AdminOrder | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [error, setError] = useState("");
@@ -187,7 +189,7 @@ function OrderDetail({ number, onChanged }: { number: string; onChanged: () => v
   return (
     <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
       <div className="grid gap-4">
-        <Link href="/admin" className="inline-flex items-center gap-1 text-[14px] font-medium text-muted hover:text-brand">
+        <Link href={base} className="inline-flex items-center gap-1 text-[14px] font-medium text-muted hover:text-brand">
           <ChevronLeft size={16} aria-hidden="true" /> Все заявки
         </Link>
         <div className="rounded-[14px] border border-line bg-white p-5">
@@ -225,6 +227,7 @@ function OrderDetail({ number, onChanged }: { number: string; onChanged: () => v
                 <span className="min-w-0 text-[13px]">
                   <a href={i.url} target="_blank" rel="noopener" className="line-clamp-2 hover:text-brand">{i.title}</a>
                   <span className="text-muted">Арт. {i.sku} · {i.qty} шт × {formatPriceValue(i.price)}{i.preorder ? " · под заказ" : ""}</span>
+                  {i.branding ? <BrandingInfo b={i.branding} /> : null}
                 </span>
                 <span className="text-[14px] font-semibold tabular-nums">{formatPriceValue(i.qty * i.price)}</span>
               </li>
