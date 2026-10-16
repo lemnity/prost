@@ -2,6 +2,7 @@ import { brandingLine } from "@/lib/cart/branding";
 import { site } from "@/content/site";
 import { formatPriceValue } from "@/lib/format";
 import { cartDiscount, type CartItem } from "@/lib/cart/store";
+import { carrierLabel, trackUrl, type Shipping } from "@/lib/shipping";
 
 const SITE = () => process.env.SITE_URL || "https://prostyle.agency";
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -102,6 +103,24 @@ ${p("Цены указаны без нанесения логотипа — ме
   );
   const lines = o.items.map((i) => `• ${i.title} — ${i.qty} шт × ${formatPriceValue(i.price)} = ${formatPriceValue(i.qty * i.price)}${i.branding ? `\n   Нанесение: ${brandingLine(i.branding)}` : ""}`).join("\n");
   const text = `Здравствуйте${o.name ? `, ${o.name}` : ""}!\n\nМы получили ваш заказ № ${o.number}. Персональный менеджер уже изучает корзину и свяжется с вами в рабочее время (${site.hours.toLowerCase()}).\n\nТакже у вас есть свой виртуальный менеджер Виктория, которая доступна в вашем личном кабинете и может ответить на все интересующие вопросы.\n\n${lines}\n${discount > 0 ? `Скидка: −${formatPriceValue(discount)}\n` : ""}Итого: ${formatPriceValue(o.total)}\n\nПолучение: ${o.delivery}${o.address ? ` — ${o.address}` : ""}\nОплата: ${o.payment}\n\nЧат с менеджером: ${o.chatLink}\nОтменить заказ: ${o.cancelLink}\n\nProStyle, ${site.phone.label}`;
+  return { subject, html, text };
+}
+
+/** Клиенту — «Заказ отправлен»: перевозчик, трек-номер и ссылка на отслеживание. */
+export function shippedEmail(o: { number: string; name: string; shipping: Shipping; orderLink: string }) {
+  const subject = `Заказ № ${o.number} отправлен — ProStyle`;
+  const carrier = carrierLabel(o.shipping.carrier);
+  const url = trackUrl(o.shipping);
+  const details = [carrier ? `Перевозчик: ${carrier}` : "", o.shipping.track ? `Трек-номер: ${o.shipping.track}` : ""].filter(Boolean);
+  const html = layout(
+    `Заказ № ${o.number} передан в доставку`,
+    `<h1 style="margin:0 0 16px;font-size:24px;line-height:30px">Заказ отправлен</h1>
+${p(`Здравствуйте${o.name ? `, ${esc(o.name)}` : ""}! Ваш заказ <b>№ ${esc(o.number)}</b> передан в доставку.`)}
+${details.length ? p(details.map(esc).join("<br>"), "font-size:14px") : ""}
+${url ? button(url, "Отследить посылку") : button(o.orderLink, "Открыть заказ")}
+${p("Этап доставки всегда виден в личном кабинете, в карточке заказа.", `font-size:13px;color:${MUTED}`)}`,
+  );
+  const text = `Здравствуйте${o.name ? `, ${o.name}` : ""}!\n\nВаш заказ № ${o.number} передан в доставку.\n${details.join("\n")}${url ? `\nОтследить: ${url}` : ""}\n\nЗаказ в личном кабинете: ${o.orderLink}\n\nProStyle, ${site.phone.label}`;
   return { subject, html, text };
 }
 

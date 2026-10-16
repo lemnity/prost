@@ -1,7 +1,8 @@
 import { exec, json, query, type Row } from "./db";
 import type { CartItem } from "@/lib/cart/store";
 import { BRANDING_MAX_FILES, type Branding } from "@/lib/cart/branding";
-import type { SavedOrder, OrderStatus } from "@/lib/account/store";
+import { greetName, type Profile, type SavedOrder, type OrderStatus } from "@/lib/account/store";
+import type { Shipping } from "@/lib/shipping";
 import { getProductByUrl } from "@/lib/catalog/products";
 import { liveByArticles, normArticle } from "./oasis";
 
@@ -19,6 +20,7 @@ type OrderRow = Row & {
   promo: string | null;
   order_text: string;
   status: OrderStatus;
+  shipping: unknown;
   created_at: Date;
 };
 
@@ -33,6 +35,7 @@ export const toSaved = (r: OrderRow): SavedOrder => ({
   delivery: r.delivery,
   payment: r.payment,
   ...(r.address ? { address: r.address } : {}),
+  ...(r.shipping ? { shipping: json<Shipping>(r.shipping) } : {}),
 });
 
 export type AdminOrder = SavedOrder & { contact: OrderContact; comment: string; promo: string; orderText: string; userId: number | null };
@@ -137,3 +140,16 @@ export function canAccess(r: OrderRow, user: { id: number; role: string } | null
 }
 
 export type { OrderRow };
+
+/**
+ * Как обращаться к клиенту — так же, как в приветствии чата: у зарегистрированного — имя (и отчество) из профиля.
+ * В заявке поле «Имя» заполняется полным «Фамилия Имя Отчество», и первое слово там — фамилия.
+ */
+export async function clientName(userId: number | null, contactName: string | undefined): Promise<string> {
+  if (userId) {
+    const [u] = await query<Row & { profile: unknown }>("SELECT profile FROM users WHERE id = ?", [userId]);
+    const name = u ? greetName(json<Profile>(u.profile)) : "";
+    if (name) return name;
+  }
+  return contactName?.trim().split(/\s+/)[0] ?? "";
+}

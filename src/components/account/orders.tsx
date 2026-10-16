@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Building2, Check, ChevronDown, MessageCircle, Package, RotateCcw } from "lucide-react";
+import { Building2, Check, ChevronDown, ExternalLink, MessageCircle, Package, RotateCcw, Truck } from "lucide-react";
 import { buttonClass } from "@/components/ui/button";
 import { ProductImage } from "@/components/ui/product-image";
 import { asset } from "@/lib/asset";
@@ -12,6 +12,7 @@ import { site } from "@/content/site";
 import { addToCart, cartCount } from "@/lib/cart/store";
 import { greetName, isCurrentOrder, setOrderStatus, type OrderStatus, type SavedOrder } from "@/lib/account/store";
 import { useSession } from "@/lib/account/use-account";
+import { SHIP_STAGES, carrierLabel, stageIndex, stageLabel, trackUrl, type Shipping } from "@/lib/shipping";
 
 export const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
@@ -43,6 +44,11 @@ export function OrderCard({ order: o, current, open: initial = false }: { order:
           <p className="mt-0.5 text-[13px] text-muted">
             {formatDate(o.date)} · {n} шт. · {o.delivery}
           </p>
+          {o.shipping ? (
+            <p className="mt-1 inline-flex items-center gap-1.5 text-[13px] font-medium text-brand">
+              <Truck size={14} aria-hidden="true" /> Доставка: {stageLabel(o.shipping.stage)}
+            </p>
+          ) : null}
         </div>
         <span className={`rounded-full px-2.5 py-1 text-[12px] font-medium ${status.cls}`}>{status.label}</span>
         <p className="text-[18px] font-bold tabular-nums">{formatPriceValue(o.total)}</p>
@@ -72,6 +78,7 @@ export function OrderCard({ order: o, current, open: initial = false }: { order:
             </li>
           ))}
         </ul>
+        {o.shipping ? <ShippingTrack s={o.shipping} /> : null}
         <dl className="mt-4 grid gap-1 text-[13px] sm:grid-cols-2">
           <div><dt className="inline text-muted">Получение: </dt><dd className="inline">{o.delivery}</dd></div>
           <div><dt className="inline text-muted">Оплата: </dt><dd className="inline">{o.payment}</dd></div>
@@ -181,5 +188,34 @@ export function OrdersSection() {
         )}
       </div>
     </div>
+  );
+}
+
+/** Где заказ: этапы доставки, перевозчик и трек-номер (заполняет менеджер). */
+function ShippingTrack({ s }: { s: Shipping }) {
+  const at = stageIndex(s.stage);
+  const url = trackUrl(s);
+  return (
+    <section aria-label="Доставка" className="mt-4 rounded-[12px] bg-surface p-4">
+      <ol className="grid grid-cols-4 gap-1">
+        {SHIP_STAGES.map((st, i) => (
+          <li key={st.key} aria-current={i === at ? "step" : undefined} className="min-w-0">
+            <span className={`block h-1.5 rounded-full ${i <= at ? "bg-brand" : "bg-line"}`} />
+            <span className={`mt-1.5 block truncate text-[12px] ${i === at ? "font-semibold text-ink" : i < at ? "text-ink" : "text-muted"}`}>{st.label}</span>
+          </li>
+        ))}
+      </ol>
+      {s.carrier || s.track ? (
+        <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px]">
+          {s.carrier ? <span><span className="text-muted">Перевозчик:</span> {carrierLabel(s.carrier)}</span> : null}
+          {s.track ? <span><span className="text-muted">Трек-номер:</span> <span className="font-medium tabular-nums">{s.track}</span></span> : null}
+          {url ? (
+            <a href={url} target="_blank" rel="noopener" className="inline-flex items-center gap-1 font-semibold text-brand hover:text-brand-hover">
+              Отследить <ExternalLink size={13} aria-hidden="true" />
+            </a>
+          ) : null}
+        </p>
+      ) : null}
+    </section>
   );
 }

@@ -1,9 +1,8 @@
 import { json, query, type Row } from "./db";
 import { aiEnabled, noDash, runWithCatalog, type Msg } from "./ai";
-import { getOrderRow, type OrderContact } from "./orders";
+import { clientName, getOrderRow, type OrderContact } from "./orders";
 import { KNOWLEDGE, STYLE } from "./persona";
 import { AGENT } from "@/lib/chat/agent";
-import { greetName, type Profile } from "@/lib/account/store";
 import type { CartItem } from "@/lib/cart/store";
 
 /**
@@ -40,18 +39,6 @@ const plain = (s: string) =>
 
 type MsgRow = Row & { id: number; role: string; text: string; files: unknown };
 
-/**
- * Как обращаться к клиенту — так же, как в приветствии чата: у зарегистрированного — имя (и отчество) из профиля.
- * В заявке поле «Имя» заполняется полным «Фамилия Имя Отчество», и первое слово там — фамилия.
- */
-async function clientName(userId: number | null, contactName: string | undefined): Promise<string> {
-  if (userId) {
-    const [u] = await query<Row & { profile: unknown }>("SELECT profile FROM users WHERE id = ?", [userId]);
-    const name = u ? greetName(json<Profile>(u.profile)) : "";
-    if (name) return name;
-  }
-  return contactName?.trim().split(/\s+/)[0] ?? "";
-}
 
 /** Ответ Виктории на последние сообщения чата (null — ИИ выключен или не ответил). */
 export async function victoriaReply(number: string): Promise<string | null> {

@@ -208,6 +208,8 @@ const ALTERS = [
   // «Новинка» у поставщика (gifts.ru — статус «новинка»): такие товары первыми в подборке «Новинки».
   "ALTER TABLE oc_products ADD COLUMN is_new TINYINT(1) NOT NULL DEFAULT 0",
   "ALTER TABLE oc_products ADD COLUMN cover VARCHAR(500) NULL AFTER full_name",
+  // Отслеживание доставки заявки: { stage, carrier, track, updatedAt } (src/lib/shipping.ts).
+  "ALTER TABLE orders ADD COLUMN shipping JSON NULL",
 ];
 
 /** Разовый перенос описаний, характеристик и фото из oc_products в oc_product_details (если ещё не перенесены). */

@@ -180,7 +180,8 @@ function SectionList({
   const admin = useSession()?.role === "admin";
   return (
     <ul className="grid gap-1">
-      {NAV.map(({ key, label, href, Icon }) => {
+      {/* Администратору «Избранное» не нужно: его кабинет — рабочие данные клиентов. */}
+      {NAV.filter((n) => !(admin && n.key === "favorites")).map(({ key, label, href, Icon }) => {
         const on = key === section;
         return (
           <li key={key}>

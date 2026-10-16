@@ -13,6 +13,8 @@ import { AGENT } from "@/lib/chat/agent";
 import { formatSize, isImage, type ChatMessage } from "@/lib/chat/types";
 import type { CartItem } from "@/lib/cart/store";
 import { BrandingInfo } from "./branding-info";
+import { ShippingEditor } from "./shipping-editor";
+import type { Shipping } from "@/lib/shipping";
 
 export type AdminOrder = {
   number: string;
@@ -29,6 +31,7 @@ export type AdminOrder = {
   orderText: string;
   userId: number | null;
   unanswered?: number;
+  shipping?: Shipping;
 };
 
 export const STATUS: Record<string, { label: string; cls: string }> = {
@@ -233,6 +236,10 @@ function OrderDetail({ number, base, onChanged }: { number: string; base: string
               </li>
             ))}
           </ul>
+        </div>
+        <div className="rounded-[14px] border border-line bg-white p-5">
+          <h3 className="mb-3 text-[16px] font-semibold">Доставка</h3>
+          <ShippingEditor key={order.number} number={order.number} value={order.shipping} onSaved={(shipping) => setOrder((o) => (o ? { ...o, shipping } : o))} />
         </div>
       </div>
 

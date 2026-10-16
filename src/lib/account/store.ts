@@ -1,4 +1,5 @@
 import type { CartItem } from "@/lib/cart/store";
+import type { Shipping } from "@/lib/shipping";
 
 /**
  * Личный кабинет: данные на сервере (/api/me, /api/auth/*), сессия — httpOnly cookie.
@@ -65,6 +66,8 @@ export type SavedOrder = {
   payment: string;
   /** Адрес доставки текстом (если не самовывоз). */
   address?: string;
+  /** Этап доставки и трек-номер — заполняет менеджер. */
+  shipping?: Shipping;
 };
 
 /** Через сколько дней заявка без отметки уходит в историю. */
