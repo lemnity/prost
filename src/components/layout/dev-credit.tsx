@@ -8,7 +8,7 @@ const COOLDOWN = 700;
 const HEART_SVG =
   '<svg viewBox="0 0 24 24" width="100%" height="100%" fill="currentColor"><path d="M12 21s-7.5-4.6-10-9.3C.4 8.5 2.2 4.5 6 4.5c2.2 0 3.6 1.2 4.5 2.6.3.5.7.9 1.5.9s1.2-.4 1.5-.9c.9-1.4 2.3-2.6 4.5-2.6 3.8 0 5.6 4 4 7.2C19.5 16.4 12 21 12 21z"/></svg>';
 
-/** «Разработка Lemnity.Digital» — при наведении салют из сердечек. */
+/** «Разработка Lemnity.» — при наведении салют из сердечек. */
 export function DevCredit() {
   const wrap = useRef<HTMLSpanElement>(null);
   const last = useRef(0);
@@ -60,7 +60,7 @@ export function DevCredit() {
         onFocus={burst}
         className="cursor-default rounded text-muted transition-colors hover:text-brand focus-visible:text-brand"
       >
-        Разработка <span className="font-semibold">Lemnity.Digital</span>
+        Разработка <span className="font-semibold">Lemnity.</span>
       </span>
     </span>
   );
