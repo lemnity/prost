@@ -4,7 +4,8 @@ export type Step = { number: string; icon: StepIcon; title: string; text: string
 export type Application = { id: string; title: string; text: string; term: string; run: string; href: string; image: string };
 export type Work = { id: string; client: string; text: string; image: string; href: string };
 export type Review = { id: string; name: string; date: string; text: string };
-export type Client = { id: string; name: string; logo: string };
+/** Логотип бренда: width/height — размеры файла (обрезан по краям, высота 120). */
+export type Brand = { id: string; name: string; logo: string; width: number; height: number };
 
 /** Баннеры правятся в админке (раздел «Сайт»); этот список — начальное наполнение и запасной вариант. */
 export type Banner = { id: string; image: string; alt: string; href?: string };
@@ -87,17 +88,27 @@ export const reviews = {
   ] satisfies Review[],
 } as const;
 
-export const clients = {
-  title: "Нам доверяют",
-  note: "И еще более 500 компаний по всей России",
+export const brands = {
+  title: "Наши бренды",
+  note: "Продукция ведущих производителей",
   items: [
-    { id: "sibur", name: "СИБУР", logo: "/images/clients/sibur.png" },
-    { id: "lukoil", name: "ЛУКОЙЛ", logo: "/images/clients/lukoil.png" },
-    { id: "rosneft", name: "Роснефть", logo: "/images/clients/rosneft.png" },
-    { id: "gazprom", name: "Газпром", logo: "/images/clients/gazprom.png" },
-    { id: "rzd", name: "РЖД", logo: "/images/clients/rzd.png" },
-    { id: "sber", name: "Сбер", logo: "/images/clients/sber.png" },
-    { id: "yandex", name: "Яндекс", logo: "/images/clients/yandex.png" },
-    { id: "tyumen", name: "Тюменская область", logo: "/images/clients/tyumen.png" },
-  ] satisfies Client[],
+    { id: "xiaomi", name: "Xiaomi", logo: "/images/brands/xiaomi.webp", width: 424, height: 120 },
+    { id: "thermos", name: "Thermos", logo: "/images/brands/thermos.webp", width: 423, height: 120 },
+    { id: "pierre-cardin", name: "Pierre Cardin", logo: "/images/brands/pierre-cardin.webp", width: 258, height: 120 },
+    { id: "rivacase", name: "Rivacase", logo: "/images/brands/rivacase.webp", width: 247, height: 120 },
+    { id: "canyon", name: "Canyon", logo: "/images/brands/canyon.webp", width: 441, height: 120 },
+    { id: "rombica", name: "Rombica", logo: "/images/brands/rombica.webp", width: 538, height: 120 },
+    { id: "uniscend", name: "Uniscend", logo: "/images/brands/uniscend.webp", width: 636, height: 120 },
+    { id: "xd-design", name: "XD Design", logo: "/images/brands/xd-design.webp", width: 768, height: 120 },
+    { id: "happy-gifts", name: "Happy Gifts", logo: "/images/brands/happy-gifts.webp", width: 646, height: 120 },
+    { id: "bruno-visconti", name: "Bruno Visconti", logo: "/images/brands/bruno-visconti.webp", width: 511, height: 120 },
+    { id: "portobello", name: "Portobello", logo: "/images/brands/portobello.webp", width: 395, height: 120 },
+    { id: "matteo-tantini", name: "Matteo Tantini", logo: "/images/brands/matteo-tantini.webp", width: 582, height: 120 },
+    { id: "asobu", name: "Asobu", logo: "/images/brands/asobu.webp", width: 505, height: 120 },
+    { id: "maxema", name: "Maxema", logo: "/images/brands/maxema.webp", width: 572, height: 120 },
+    { id: "waterline", name: "Waterline", logo: "/images/brands/waterline.webp", width: 908, height: 120 },
+    { id: "chili", name: "Chili", logo: "/images/brands/chili.webp", width: 343, height: 120 },
+    { id: "ukiyo", name: "Ukiyo", logo: "/images/brands/ukiyo.webp", width: 459, height: 120 },
+    { id: "sdelano-v-rossii", name: "Сделано в России", logo: "/images/brands/sdelano-v-rossii.webp", width: 393, height: 120 },
+  ] satisfies Brand[],
 } as const;

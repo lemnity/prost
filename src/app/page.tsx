@@ -6,7 +6,7 @@ import { HowWeWork } from "@/components/home/how-we-work";
 import { ApplicationTypes } from "@/components/home/application-types";
 import { OurWorks } from "@/components/home/our-works";
 import { Reviews } from "@/components/home/reviews";
-import { Clients } from "@/components/home/clients";
+import { Brands } from "@/components/home/brands";
 import { ConsultationCta } from "@/components/home/consultation-cta";
 
 // Распродажа недели и новинки — из базы (кэш в памяти), поэтому страница собирается при запросе:
@@ -27,7 +27,7 @@ export default function Home() {
       <ApplicationTypes />
       <OurWorks />
       <Reviews />
-      <Clients />
+      <Brands />
       <ConsultationCta />
     </main>
   );
