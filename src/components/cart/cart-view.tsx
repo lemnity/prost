@@ -97,7 +97,7 @@ export function CartView({ embedded = false }: { embedded?: boolean } = {}) {
                     </p>
                   ) : null}
                   <p className="mt-1 flex flex-wrap items-center gap-x-2 text-[13px] text-muted">
-                    <span className={i.oldPrice ? "font-semibold text-brand" : undefined}>от {formatPriceValue(i.price)}</span>
+                    <span className={i.oldPrice ? "font-semibold text-brand" : undefined}>{formatPriceValue(i.price)}</span>
                     {i.oldPrice ? (
                       <>
                         <span className="line-through">{formatPriceValue(i.oldPrice)}</span>
@@ -158,7 +158,7 @@ function Summary({ items }: { items: readonly CartItem[] }) {
         {discount > 0 ? (
           <p className="mt-1 text-sm font-medium text-brand">Скидка: {`\u2212${formatPriceValue(discount)}`}</p>
         ) : null}
-        <p className="mt-1 text-[22px] font-bold md:text-[26px]">Итого: от {formatPriceValue(total)}</p>
+        <p className="mt-1 text-[22px] font-bold md:text-[26px]">Итого: {formatPriceValue(total)}</p>
         <MinOrderProgress total={total} height={6} trackClassName="bg-white" className="mt-3" />
         <p className={`mt-2 text-[13px] ${reached ? "font-medium text-new-text" : "text-muted"}`}>
           {reached

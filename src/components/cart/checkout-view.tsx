@@ -464,7 +464,7 @@ export function CheckoutView() {
               {discount > 0 ? (
                 <p className="mt-1 text-sm font-medium text-brand">Скидка: {`\u2212${formatPriceValue(discount)}`}</p>
               ) : null}
-              <p className="mt-1 text-[22px] font-bold md:text-[26px]">Итого: от {formatPriceValue(total)}</p>
+              <p className="mt-1 text-[22px] font-bold md:text-[26px]">Итого: {formatPriceValue(total)}</p>
             </div>
             <div className="mt-5 shrink-0">
               <label className="flex items-start gap-2.5 text-[13px] text-muted">

@@ -45,7 +45,7 @@ export function OrderCard({ order: o, current, open: initial = false }: { order:
           </p>
         </div>
         <span className={`rounded-full px-2.5 py-1 text-[12px] font-medium ${status.cls}`}>{status.label}</span>
-        <p className="text-[18px] font-bold tabular-nums">от {formatPriceValue(o.total)}</p>
+        <p className="text-[18px] font-bold tabular-nums">{formatPriceValue(o.total)}</p>
         <button
           type="button"
           aria-expanded={open}

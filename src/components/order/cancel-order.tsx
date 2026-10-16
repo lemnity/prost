@@ -64,7 +64,7 @@ export function CancelOrder() {
   return (
     <div className={box}>
       <h1 className="text-[24px] font-bold">Отменить заказ № {info.number}?</h1>
-      <p className="mt-2 text-[15px] text-muted">Сумма заказа: от {formatPriceValue(info.total)}. После отмены менеджер прекратит работу над заказом.</p>
+      <p className="mt-2 text-[15px] text-muted">Сумма заказа: {formatPriceValue(info.total)}. После отмены менеджер прекратит работу над заказом.</p>
       {info.status === "done" ? (
         <p className="mt-4 text-[14px] text-brand">Заказ уже выполнен — отменить его нельзя. Свяжитесь с менеджером.</p>
       ) : (

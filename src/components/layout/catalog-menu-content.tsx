@@ -88,7 +88,7 @@ export function CatalogPanes({
                     </div>
                     <p className="line-clamp-2 shrink-0 text-sm text-ink">{p.title}</p>
                     <p className="shrink-0 text-base font-bold leading-none text-ink">
-                      от {p.priceFrom.toLocaleString("ru-RU")} ₽
+                      {p.priceFrom.toLocaleString("ru-RU")} ₽
                     </p>
                     <Link
                       href={p.url}

@@ -92,7 +92,7 @@ ${p("Также у вас есть свой виртуальный менедж�
 ${button(o.chatLink, "Написать Виктории")}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 16px">${rows}
 ${discount > 0 ? `<tr><td style="padding:10px 0 0;font-size:14px;color:${BRAND}">Скидка</td><td align="right" style="padding:10px 0 0;font-size:14px;color:${BRAND}">−${formatPriceValue(discount)}</td></tr>` : ""}
-<tr><td style="padding:10px 0 0;font-size:16px;font-weight:bold">Итого</td><td align="right" style="padding:10px 0 0;font-size:18px;font-weight:bold;white-space:nowrap">от ${formatPriceValue(o.total)}</td></tr></table>
+<tr><td style="padding:10px 0 0;font-size:16px;font-weight:bold">Итого</td><td align="right" style="padding:10px 0 0;font-size:18px;font-weight:bold;white-space:nowrap">${formatPriceValue(o.total)}</td></tr></table>
 ${p(`<b>Получение:</b> ${esc(o.delivery)}${o.address ? ` — ${esc(o.address)}` : ""}<br><b>Оплата:</b> ${esc(o.payment)}${o.comment ? `<br><b>Комментарий:</b> ${esc(o.comment)}` : ""}`, "font-size:14px")}
 ${p("Цены указаны без нанесения логотипа — менеджер рассчитает нанесение и пришлёт макет. Логотип можно отправить прямо в чат.", `font-size:13px;color:${MUTED}`)}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:12px;border-top:1px solid #ececea"><tr><td style="padding-top:18px">
@@ -101,7 +101,7 @@ ${p("Цены указаны без нанесения логотипа — ме
 </td></tr></table>`,
   );
   const lines = o.items.map((i) => `• ${i.title} — ${i.qty} шт × ${formatPriceValue(i.price)} = ${formatPriceValue(i.qty * i.price)}${i.branding ? `\n   Нанесение: ${brandingLine(i.branding)}` : ""}`).join("\n");
-  const text = `Здравствуйте${o.name ? `, ${o.name}` : ""}!\n\nМы получили ваш заказ № ${o.number}. Персональный менеджер уже изучает корзину и свяжется с вами в рабочее время (${site.hours.toLowerCase()}).\n\nТакже у вас есть свой виртуальный менеджер Виктория, которая доступна в вашем личном кабинете и может ответить на все интересующие вопросы.\n\n${lines}\n${discount > 0 ? `Скидка: −${formatPriceValue(discount)}\n` : ""}Итого: от ${formatPriceValue(o.total)}\n\nПолучение: ${o.delivery}${o.address ? ` — ${o.address}` : ""}\nОплата: ${o.payment}\n\nЧат с менеджером: ${o.chatLink}\nОтменить заказ: ${o.cancelLink}\n\nProStyle, ${site.phone.label}`;
+  const text = `Здравствуйте${o.name ? `, ${o.name}` : ""}!\n\nМы получили ваш заказ № ${o.number}. Персональный менеджер уже изучает корзину и свяжется с вами в рабочее время (${site.hours.toLowerCase()}).\n\nТакже у вас есть свой виртуальный менеджер Виктория, которая доступна в вашем личном кабинете и может ответить на все интересующие вопросы.\n\n${lines}\n${discount > 0 ? `Скидка: −${formatPriceValue(discount)}\n` : ""}Итого: ${formatPriceValue(o.total)}\n\nПолучение: ${o.delivery}${o.address ? ` — ${o.address}` : ""}\nОплата: ${o.payment}\n\nЧат с менеджером: ${o.chatLink}\nОтменить заказ: ${o.cancelLink}\n\nProStyle, ${site.phone.label}`;
   return { subject, html, text };
 }
 

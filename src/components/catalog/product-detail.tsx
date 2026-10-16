@@ -186,7 +186,6 @@ export function ProductDetail({
 
         <div className="mt-4 flex flex-wrap items-baseline gap-x-2 gap-y-1">
           <p className={`text-[32px] font-bold leading-none ${onSale ? "text-brand" : ""}`}>
-            <span className={`text-[16px] font-normal ${onSale ? "text-ink" : ""}`}>от </span>
             {formatPriceValue(v.price)}
           </p>
           {onSale ? (

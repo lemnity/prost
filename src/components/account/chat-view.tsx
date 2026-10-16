@@ -332,7 +332,7 @@ function OrderSummary({ chat }: { chat: Chat }) {
       <p className="mt-1 text-[13px] text-muted">
         {chat.items.length} {plural("item", chat.items.length)} · {formatQty(n)} шт.
       </p>
-      <p className="mt-2 text-[20px] font-bold">от {formatPriceValue(chat.total)}</p>
+      <p className="mt-2 text-[20px] font-bold">{formatPriceValue(chat.total)}</p>
       <p className="mt-3 text-[13px] leading-snug text-muted">
         Заявка отправлена менеджеру. Ответы придут в этот чат, срочные вопросы — по телефону{" "}
         <a href={site.phone.href} className="font-medium text-ink hover:text-brand">{site.phone.label}</a>.
@@ -445,7 +445,7 @@ function MobileOrderBar({ chat }: { chat: Chat }) {
   return (
     <div className="flex shrink-0 items-center gap-2 border-b border-line bg-white px-4 py-2 text-[12px] lg:hidden">
       <span className="min-w-0 truncate text-muted">
-        Заявка <span className="font-semibold text-ink">№ {chat.number}</span> · от {formatPriceValue(chat.total)}
+        Заявка <span className="font-semibold text-ink">№ {chat.number}</span> · {formatPriceValue(chat.total)}
       </span>
       <button
         type="button"

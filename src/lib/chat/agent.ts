@@ -33,7 +33,7 @@ export function openingMessages(chat: OrderInfo, now = Date.now()): AgentDraft[]
 function cartReview({ number, items, total }: OrderInfo): string {
   const qty = cartCount(items);
   const lines = [
-    `Я изучила вашу корзину по заявке № ${number}: ${items.length} ${plural("item", items.length)}, ${formatQty(qty)} шт. на сумму от ${formatPriceValue(total)}.`,
+    `Я изучила вашу корзину по заявке № ${number}: ${items.length} ${plural("item", items.length)}, ${formatQty(qty)} шт. на сумму ${formatPriceValue(total)}.`,
   ];
   const shown = items.slice(0, 4).map((i) => `• ${i.title} — ${formatQty(i.qty)} шт.`);
   if (items.length > 4) shown.push(`• и ещё ${items.length - 4} ${plural("item", items.length - 4)}`);

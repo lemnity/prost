@@ -43,7 +43,6 @@ export function ProductCard({ product }: { product: Product }) {
       </Link>
       <p className="mt-2 flex flex-wrap items-baseline gap-x-2 text-base font-bold">
         <span className={oldPrice ? "text-brand" : undefined}>
-          <span className={`text-[13px] font-normal ${oldPrice ? "text-ink" : ""}`}>от </span>
           {formatPriceValue(product.priceFrom)}
         </span>
         {oldPrice ? (

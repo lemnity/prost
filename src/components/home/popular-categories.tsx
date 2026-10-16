@@ -93,7 +93,7 @@ function WideTile({
                 {p.title}
               </span>
               <span className="block text-[13px] font-bold leading-tight text-brand">
-                от {formatPriceValue(p.priceFrom)}
+                {formatPriceValue(p.priceFrom)}
               </span>
             </li>
           ))}

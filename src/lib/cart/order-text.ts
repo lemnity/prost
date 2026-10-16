@@ -68,7 +68,7 @@ export function buildOrder(items: readonly CartItem[], d: OrderData, promo = "")
       ...lines,
       "",
       ...(discount > 0 ? [`Скидка: \u2212${formatPriceValue(discount)}`] : []),
-      `Итого: от ${formatPriceValue(total)}`,
+      `Итого: ${formatPriceValue(total)}`,
       ...opt("Промокод", promo),
       ...(comment ? ["", `Комментарий: ${comment}`] : []),
     ].join(sep);

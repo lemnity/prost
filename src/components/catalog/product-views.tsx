@@ -22,7 +22,6 @@ function Price({ p, size }: { p: ListingProduct; size: "sm" | "md" }) {
   return (
     <p className={`font-bold leading-tight ${size === "sm" ? "text-[14px]" : "text-[16px]"}`}>
       <span className={p.oldPrice ? "text-brand" : undefined}>
-        <span className="text-[12px] font-normal text-ink">от </span>
         {formatPriceValue(p.priceFrom)}
       </span>
       {p.oldPrice ? (
