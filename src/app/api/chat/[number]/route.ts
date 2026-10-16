@@ -41,8 +41,10 @@ export async function POST(req: Request, ctx: RouteContext<"/api/chat/[number]">
   const files = await saveUploads(number, form.getAll("files").filter((f): f is File => f instanceof File));
   if (!text && !files.length) return fail(400, "Пустое сообщение");
   await addUserMessage(number, text, files);
+  // Клиент оставил номер (Виктория предлагает это вместо ожидания) — тема письма, которую не пропустить.
+  const phone = /(?:^|\D)[78]\d{10}(?!\d)/.test(text.replace(/[\s()+-]/g, ""));
   void notifyManager(
-    `Сообщение в чате ${number}`,
+    phone ? `Перезвонить клиенту: заявка ${number}` : `Сообщение в чате ${number}`,
     `${text || "(без текста)"}${files.length ? `\nФайлы: ${files.map((f) => f.name).join(", ")}` : ""}\n\nОтветить: ${process.env.SITE_URL ?? ""}/admin?order=${number}`,
   );
   return ok({ ok: true });
