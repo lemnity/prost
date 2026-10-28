@@ -139,7 +139,9 @@ async function saveOasisPage(page: OcProduct[], started: Date, tree: ReturnType<
     const s = stockOf(p);
     const ids = Array.isArray(p.categories) ? p.categories : [];
     return [
-      String(p.id).slice(0, 32), String(p.article).slice(0, 64), p.group_id ?? null, p.color_group_id ?? null,
+      // У Oasis group_id — модель (все цвета), color_group_id — цвет (размеры внутри). У нас, как у gifts.ru,
+      // наоборот: group_id — цвет, color_group_id — модель. Иначе каждый цвет — отдельная карточка в выдаче.
+      String(p.id).slice(0, 32), String(p.article).slice(0, 64), p.color_group_id ?? null, p.group_id ?? null,
       slugify(p.name), String(p.name).slice(0, 400), p.full_name ? String(p.full_name).slice(0, 500) : null, coverFrom(p.images),
       Number(p.price) || 0, oldPriceOf(p), Number(p.rating) || 0, p.size ? String(p.size).slice(0, 64) : null,
       JSON.stringify(p.colors ?? []), JSON.stringify(ids),
