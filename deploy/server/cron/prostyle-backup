@@ -1,7 +1,10 @@
 #!/bin/sh
 # Ежедневный бэкап базы и вложений чата ProStyle, хранится 14 дней.
+# Шифруется открытым ключом age: закрытый есть только у владельца, с диска сервера бэкап не прочитать.
+# Расшифровка: age -d -i ~/.config/prostyle/backup.agekey db-….sql.gz.age | gunzip > dump.sql
 set -e
 D=/var/backups/prostyle; T=$(date +%F)
-mysqldump --single-transaction --routines prostyle | gzip > "$D/db-$T.sql.gz"
-tar -czf "$D/uploads-$T.tar.gz" -C /var/lib/prostyle uploads
+R=age15em9zkjxedhtr6ztvmz64awy9n2xgd3jm0kfp9n5qxl8q8s6tvksjp7v2r
+mysqldump --single-transaction --routines prostyle | gzip | age -r "$R" > "$D/db-$T.sql.gz.age"
+tar -czf - -C /var/lib/prostyle uploads | age -r "$R" > "$D/uploads-$T.tar.gz.age"
 find "$D" -type f -mtime +14 -delete

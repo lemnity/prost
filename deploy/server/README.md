@@ -12,7 +12,7 @@
 | `systemd/prostyle-oasis-catalog.{service,timer}` | `/etc/systemd/system/` | каталог Oasis целиком — 03:30 |
 | `systemd/prostyle-gifts-catalog.{service,timer}` | `/etc/systemd/system/` | каталог gifts.ru целиком — 04:30 |
 | `bin/prostyle-*` | `/usr/local/bin/` | вызовы `POST /api/internal/oasis-sync` с токеном |
-| `cron/prostyle-backup` | `/etc/cron.daily/` | дамп базы и вложений в `/var/backups/prostyle`, 14 дней |
+| `cron/prostyle-backup` | `/etc/cron.daily/` | дамп базы и вложений в `/var/backups/prostyle`, шифруется age (закрытый ключ только у владельца), 14 дней |
 | `cron/prostyle-disk-guard` | `/etc/cron.hourly/` | диск > 90% — чистит кэш страниц Next.js |
 | `nginx/prostyle.agency.conf` | `/etc/nginx/sites-enabled/` | https, www → без www, статика `/_next/static/`, прокси на 3010 |
 

@@ -141,6 +141,7 @@ docs/                     документация (этот каталог), м
   - http→https, www→без www;
   - `client_max_body_size 25m`.
 - **Сертификат** — certbot (webroot).
-- **Резервные копии:** `/etc/cron.daily/prostyle-backup` → `/var/backups/prostyle` (дамп базы и вложения, 14 дней).
+- **Резервные копии:** `/etc/cron.daily/prostyle-backup` → `/var/backups/prostyle` (дамп базы и вложения, 14 дней). Шифруются открытым ключом age, закрытый — только на Mac владельца (`~/.config/prostyle/backup.agekey`).
 - **Страховка диска:** `/etc/cron.hourly/prostyle-disk-guard` чистит кэш страниц при заполнении диска больше 90%.
+- **Закрыто снаружи:** панель ISPmanager (1500/1501 слушают только 127.0.0.1, вход через SSH-туннель), FTP выключен, SSH только по ключу, `qemu-guest-agent` замаскирован.
 - **Двоичные журналы MySQL отключены** (`disable_log_bin`): репликации нет.
