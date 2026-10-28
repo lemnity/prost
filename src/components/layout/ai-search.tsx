@@ -438,7 +438,8 @@ export function AiSearch({ sections }: { sections: { title: string; href: string
             e.preventDefault();
             searchAll(term);
           }}
-          className="flex h-12 items-center overflow-hidden rounded-[10px] bg-white focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-ink"
+          // Фокус — мягкий ореол снаружи: внутренняя рамка визуально сжимала поле.
+          className="flex h-12 items-center overflow-hidden rounded-[10px] bg-white motion-safe:transition-shadow focus-within:shadow-[0_0_0_3px_rgba(255,255,255,0.35)]"
         >
           <input
             ref={headerInput}
