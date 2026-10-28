@@ -1,4 +1,4 @@
-import { TREE_VERSION } from "@/lib/catalog/oasis-tree";
+import { TREE_VERSION, topCategories } from "@/lib/catalog/oasis-tree";
 import Link from "next/link";
 import {
   ClipboardList,
@@ -113,7 +113,7 @@ export function SiteHeader() {
             </svg>
           </Link>
           <CatalogMenu rows={<CatalogRows />} version={TREE_VERSION} />
-          <AiSearch />
+          <AiSearch sections={topCategories({ home: true }).slice(0, 6).map(({ title, href }) => ({ title, href }))} />
           <ul className="hidden items-center gap-3 md:flex">
             {actions.map(({ label, href, Icon, mobile, tip }) => (
               <li key={href} className={`${mobile ? "" : "hidden md:block"} ${tip ? "group relative" : ""}`}>

@@ -132,6 +132,19 @@ export function catByName(name: string): TreeCat | undefined {
   return cats.find((c) => c.count > 0 && c.name.trim().toLowerCase() === n);
 }
 
+/** Разделы, в названии которых есть все слова запроса (подсказки поиска): сначала крупные. */
+export function catsByText(q: string, limit = 3): { title: string; href: string; count: number }[] {
+  const words = q.trim().toLowerCase().split(/\s+/).filter((w) => w.length > 1).map((w) => (w.length > 4 ? w.slice(0, -1) : w));
+  if (!words.length) return [];
+  return cats
+    .filter((c) => c.count > 0 && c.level > 1 && c.root !== ROOT.vip && words.every((w) => c.name.toLowerCase().includes(w)))
+    .sort((a, b) => b.count - a.count)
+    // Одноимённые разделы в «Продукции» и «Праздниках» — показываем крупнейший.
+    .filter((c, i, all) => all.findIndex((x) => x.name === c.name) === i)
+    .slice(0, limit)
+    .map((c) => ({ title: c.name, href: catHref(c.id), count: c.count }));
+}
+
 export { ROOT as TREE_ROOT };
 
 /** Адреса всех непустых разделов (для карты сайта); подразделы третьего уровня с «?c=» не включаем. */
