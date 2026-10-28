@@ -8,7 +8,7 @@ import { favoriteItem } from "@/lib/favorites/item";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { formatPriceValue } from "@/lib/format";
 import type { Product } from "@/lib/catalog/types";
-import { ColorLine, ColorRail, StockPill, useSwatches } from "./product-colors";
+import { ColorLine, ColorRail, LotLink, StockPill, useSwatches } from "./product-colors";
 
 /** Карточка витрины. Если у модели несколько цветов — столбик слева на фото, клик выбирает цвет (см. product-colors). */
 export function ProductCard({ product: base }: { product: Product }) {
@@ -61,6 +61,7 @@ export function ProductCard({ product: base }: { product: Product }) {
       </p>
       {/* Строка наличия всегда занимает место — кнопки карточек в ряду на одной линии. */}
       <StockPill product={product} total={total} many={!!swatches} />
+      {base.lot ? <LotLink lot={base.lot} /> : null}
       <div className="mt-auto flex flex-col">
         <AddToCartButton
           product={{

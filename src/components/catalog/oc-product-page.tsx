@@ -10,7 +10,9 @@ import { TelegramBox } from "./telegram-box";
 import { applications } from "@/content/home";
 import { catTrail } from "@/lib/catalog/oasis-tree";
 import { sortRows } from "@/lib/catalog/stock";
-import { attrsOf, colorOf, coverOf, modelRows, similarProducts, urlOf, type OcRow } from "@/server/catalog";
+import { attrsOf, colorOf, coverOf, lotOfModel, modelRows, similarProducts, urlOf, type OcRow } from "@/server/catalog";
+import { colorsLabel, lotPrice } from "@/lib/catalog/lot";
+import { formatQty } from "@/lib/format";
 
 const snippet = (t: string, max = 160) => {
   const s = t.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
@@ -62,6 +64,7 @@ function buildVariants(current: OcRow, rows: OcRow[]): { variants: VariantView[]
 export async function OcProductPage({ row }: { row: OcRow }) {
   const [rows, similar] = await Promise.all([modelRows(row), similarProducts(row)]);
   const { variants, initial } = buildVariants(row, rows);
+  const lot = await lotOfModel(rows);
   const paragraphs = (row.description ?? "")
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/p>/gi, "\n\n")
@@ -86,6 +89,30 @@ export async function OcProductPage({ row }: { row: OcRow }) {
       </Container>
       <Container className="py-6 md:py-8">
         <ProductDetail key={row.id} title={row.name} brand="" variants={variants} initial={initial} printMethods={prints}>
+          {lot ? (
+            // Та же модель другой партией (Oasis, артикул на «p»): своя цена и остатки.
+            <Link
+              href={lot.url}
+              className={`mt-6 flex items-center justify-between gap-3 rounded-[12px] px-4 py-3 text-[14px] ${lot.kind === "cheaper" ? "bg-brand-soft text-ink hover:bg-brand-soft/70" : "bg-surface text-ink hover:bg-line"}`}
+            >
+              <span>
+                {lot.kind === "cheaper" ? (
+                  <>
+                    <b className="font-semibold text-brand">Этот товар есть дешевле: {lotPrice(lot)}</b>
+                    <span className="block text-[13px] text-muted">Остатки по сниженной цене · {colorsLabel(lot.colors)}{lot.stock ? ` · ${formatQty(lot.stock)} шт.` : ""}</span>
+                  </>
+                ) : (
+                  <>
+                    <b className="font-semibold">Это остатки по сниженной цене</b>
+                    <span className="block text-[13px] text-muted">
+                      {lot.colors > 1 ? `Все ${colorsLabel(lot.colors)}` : "Обычная партия"} по обычной цене: {lotPrice(lot)}
+                    </span>
+                  </>
+                )}
+              </span>
+              <span aria-hidden="true" className="shrink-0 text-[18px] text-brand">→</span>
+            </Link>
+          ) : null}
           <section aria-labelledby="apps-title" className="mt-8 border-t border-line pt-6">
             <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
               <h2 id="apps-title" className="text-[17px] font-semibold">Виды нанесения</h2>

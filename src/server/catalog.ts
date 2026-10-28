@@ -1,6 +1,6 @@
 import { json, query, type Row } from "./db";
 import { productHref } from "@/lib/catalog/oasis-tree";
-import type { Product } from "@/lib/catalog/types";
+import type { Product, ProductLot } from "@/lib/catalog/types";
 import type { FacetKind } from "@/lib/catalog/facets";
 import { getSaleEndsAt } from "@/lib/sale";
 import { colorTag, deriveColors } from "@/lib/catalog/colors";
@@ -69,6 +69,59 @@ function swatchOf(color: string): string {
   return a || "conic-gradient(#D7262B,#F5D02A,#2E9B4F,#2457C5,#7B4BC4,#D7262B)";
 }
 
+const LOT = /[pPр]$/;
+const LOT_COLS = "id, supplier, article, group_id, color_group_id, slug, price, stock, remote, primary_cat, deleted";
+
+/**
+ * Партии Oasis: та же модель с артикулом на «p» (латинская или кириллическая) — со своей ценой и остатками,
+ * Oasis ведёт её отдельной моделью. Связываем по артикулу без «p»: основной модели — ссылку на партию,
+ * если она дешевле; партии — ссылку на основную модель («все цвета по обычной цене»).
+ */
+async function lotsOf(models: Map<string, OcRow[]>): Promise<Map<string, ProductLot>> {
+  const out = new Map<string, ProductLot>();
+  // Артикулы пары для каждой строки: у партии — без «p», у основной — с любым вариантом «p».
+  const pairOf = (a: string) => (LOT.test(a) ? [a.slice(0, -1)] : [`${a}p`, `${a}р`, `${a}P`]);
+  const wanted = [...models.values()].flat().filter((r) => r.supplier === "oasis").flatMap((r) => pairOf(r.article));
+  if (!wanted.length) return out;
+  const rows = await query<OcRow>(
+    `SELECT ${LOT_COLS} FROM oc_products WHERE deleted = 0 AND supplier = 'oasis' AND color_group_id IN (SELECT color_group_id FROM oc_products WHERE deleted = 0 AND supplier = 'oasis' AND article IN (?))`,
+    [[...new Set(wanted)]],
+  );
+  const modelOf = new Map(rows.map((r) => [r.article, r.color_group_id!]));
+  const byModel = new Map<string, OcRow[]>();
+  for (const r of rows) byModel.set(r.color_group_id!, [...(byModel.get(r.color_group_id!) ?? []), r]);
+  for (const [model, list] of models) {
+    const own = list.filter((r) => r.supplier === "oasis");
+    if (!own.length) continue;
+    const other = own.flatMap((r) => pairOf(r.article)).map((a) => modelOf.get(a)).find((m) => m && m !== model);
+    const pair = other ? byModel.get(other) : undefined;
+    if (!pair) continue;
+    const prices = pair.map((r) => Number(r.price)).filter((x) => x > 0);
+    const min = Math.min(...prices), max = Math.max(...prices);
+    const isLot = own.filter((r) => LOT.test(r.article)).length > own.length / 2;
+    const ownMin = Math.min(...own.map((r) => Number(r.price)).filter((x) => x > 0));
+    // Основной модели показываем партию, только если она правда дешевле.
+    if (!isLot && !(min < ownMin)) continue;
+    const rep = pair.find((r) => r.stock + r.remote > 0) ?? pair[0];
+    out.set(model, {
+      kind: isLot ? "regular" : "cheaper",
+      url: urlOf(rep),
+      min,
+      max,
+      colors: new Set(pair.map((r) => r.group_id ?? r.id)).size,
+      stock: pair.reduce((n, r) => n + r.stock + r.remote, 0),
+    });
+  }
+  return out;
+}
+
+/** Партия для страницы товара: строки модели → ссылка на пару или null. */
+export async function lotOfModel(rows: OcRow[]): Promise<ProductLot | null> {
+  const model = rows[0]?.color_group_id;
+  if (!model) return null;
+  return (await lotsOf(new Map([[model, rows.filter((r) => r.color_group_id === model)]]))).get(model) ?? null;
+}
+
 /**
  * Цвета моделей для витрины одним запросом (по индексу color_group_id): один вариант на цвет (group_id),
  * остаток — сумма по размерам. Карточке достаётся список, только если цветов больше одного.
@@ -81,14 +134,20 @@ async function withSwatches(rows: OcRow[], items: Product[]): Promise<Product[]>
     [models],
   );
   const byModel = new Map<string, Map<string, OcRow[]>>();
+  const rowsOf = new Map<string, OcRow[]>();
+  for (const r of all) rowsOf.set(r.color_group_id!, [...(rowsOf.get(r.color_group_id!) ?? []), r]);
+  const lots = await lotsOf(rowsOf);
   for (const r of all) {
     const groups = byModel.get(r.color_group_id!) ?? new Map<string, OcRow[]>();
     const key = r.group_id ?? r.id;
     groups.set(key, [...(groups.get(key) ?? []), r]);
     byModel.set(r.color_group_id!, groups);
   }
-  return items.map((item, k) => {
-    const groups = rows[k].color_group_id ? byModel.get(rows[k].color_group_id!) : undefined;
+  return items.map((base, k) => {
+    const model = rows[k].color_group_id;
+    const lot = model ? lots.get(model) : undefined;
+    const item = lot ? { ...base, lot } : base;
+    const groups = model ? byModel.get(model) : undefined;
     if (!groups || groups.size < 2) return item;
     const swatches = [...groups.values()].slice(0, 40).flatMap((list) => {
       const rep = list.find((r) => r.id === item.id) ?? list.find((r) => r.stock + r.remote > 0) ?? list[0];

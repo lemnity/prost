@@ -1,13 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { useState, type KeyboardEvent } from "react";
-import { X } from "lucide-react";
+import { ArrowRight, X } from "lucide-react";
 import { ProductImage } from "@/components/ui/product-image";
 import { asset } from "@/lib/asset";
-import { formatQty, pluralRu } from "@/lib/format";
-import type { Product, ProductSwatch } from "@/lib/catalog/types";
+import { formatQty } from "@/lib/format";
+import { colorsLabel, lotPrice } from "@/lib/catalog/lot";
+import type { Product, ProductLot, ProductSwatch } from "@/lib/catalog/types";
 
-export const colorsLabel = (n: number) => `${n} ${pluralRu(n, ["цвет", "цвета", "цветов"])}`;
 const stockText = (s: ProductSwatch) => (s.stock > 0 ? `${formatQty(s.stock)} шт.` : "под заказ");
 
 /**
@@ -192,5 +193,21 @@ export function StockPill({ product, total, many }: { product: Product; total: n
       )}
       {many && total > 0 ? <span className="hidden text-faint sm:inline">всего {formatQty(total)}</span> : null}
     </p>
+  );
+}
+
+/** Ссылка на ту же модель другой партией: «Есть дешевле: 239–278 ₽» или «Все 8 цветов по обычной цене». */
+export function LotLink({ lot }: { lot: ProductLot }) {
+  const cheaper = lot.kind === "cheaper";
+  return (
+    <Link
+      href={lot.url}
+      className={`mt-1.5 inline-flex max-w-full items-center gap-1 self-start rounded-full px-2 py-0.5 text-[12px] font-medium tabular-nums ${
+        cheaper ? "bg-brand-soft text-brand hover:bg-brand hover:text-white" : "bg-surface text-ink hover:bg-line"
+      }`}
+    >
+      <span className="truncate">{cheaper ? `Есть дешевле: ${lotPrice(lot)}` : lot.colors > 1 ? `Все ${colorsLabel(lot.colors)} по обычной цене` : "Обычная цена"}</span>
+      <ArrowRight size={13} aria-hidden className="shrink-0" />
+    </Link>
   );
 }

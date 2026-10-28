@@ -8,7 +8,7 @@ import { favoriteItem } from "@/lib/favorites/item";
 import { asset } from "@/lib/asset";
 import { formatPriceValue, formatQty } from "@/lib/format";
 import type { ListingProduct } from "@/lib/catalog/types";
-import { ColorRail, ColorStrip, StockPill, useSwatches } from "./product-colors";
+import { ColorRail, ColorStrip, LotLink, StockPill, useSwatches } from "./product-colors";
 
 const cartProduct = (p: ListingProduct) => ({
   id: p.id,
@@ -111,6 +111,7 @@ export function ProductRow({ product }: { product: ListingProduct }) {
         <div className="grid gap-0.5 sm:justify-items-end">
           <Price p={p} size="md" />
           {swatches ? <StockPill product={p} total={total} many /> : null}
+          {product.lot ? <LotLink lot={product.lot} /> : null}
         </div>
         <div className="flex items-center gap-1">
           <FavoriteButton item={favoriteItem(p)} className="size-9!" />

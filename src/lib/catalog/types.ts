@@ -14,10 +14,15 @@ export type Product = {
   preorder?: boolean;
   /** Цвета модели для витрины (только если их больше одного); остаток — по всем размерам цвета. */
   swatches?: ProductSwatch[];
+  /** Та же модель другой партией (Oasis: артикул на «p», своя цена и остатки). */
+  lot?: ProductLot;
 };
 
+/** cheaper — у этой модели есть партия дешевле; regular — это партия, основная модель по обычной цене. */
+export type ProductLot = { kind: "cheaper" | "regular"; url: string; min: number; max: number; colors: number; stock: number };
+
 /** Цвет модели в карточке витрины: своя позиция каталога с фото, адресом, артикулом и остатком. */
-export type ProductSwatch = Omit<Product, "swatches" | "currency" | "isNew"> & {
+export type ProductSwatch = Omit<Product, "swatches" | "lot" | "currency" | "isNew"> & {
   /** Название цвета у поставщика («желтый», «синий классический»). */
   color: string;
   /** CSS-фон кружка, если у цвета нет фото. */
