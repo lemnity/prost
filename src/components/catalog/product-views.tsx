@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { ProductImage } from "@/components/ui/product-image";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
@@ -6,6 +8,7 @@ import { favoriteItem } from "@/lib/favorites/item";
 import { asset } from "@/lib/asset";
 import { formatPriceValue, formatQty } from "@/lib/format";
 import type { ListingProduct } from "@/lib/catalog/types";
+import { ColorRail, ColorStrip, StockPill, useSwatches } from "./product-colors";
 
 const cartProduct = (p: ListingProduct) => ({
   id: p.id,
@@ -32,21 +35,24 @@ function Price({ p, size }: { p: ListingProduct; size: "sm" | "md" }) {
 }
 
 /** «Мелкая сетка»: компактная карточка. */
-export function ProductCardCompact({ product: p }: { product: ListingProduct }) {
+export function ProductCardCompact({ product }: { product: ListingProduct }) {
+  const { swatches, sel, setSel, setHover, current, image } = useSwatches(product);
+  const p = { ...product, ...current };
   return (
     <article className="relative flex flex-col rounded-[10px] border border-line bg-white p-2">
       <div className="relative aspect-square">
-        <Link href={p.url} tabIndex={-1} aria-hidden="true" className="absolute inset-0">
+        <Link href={p.url} tabIndex={-1} aria-hidden="true" className={`absolute inset-y-0 right-0 ${swatches ? "left-8" : "left-0"}`}>
           <ProductImage
-            src={asset(p.image)}
+            src={asset(image)}
             alt={p.title}
             sizes="(min-width:1280px) 170px, (min-width:768px) 22vw, 45vw"
             className="object-contain"
           />
         </Link>
+        {swatches ? <ColorRail swatches={swatches} sel={sel} onPick={setSel} onHover={setHover} max={3} compact /> : null}
         <FavoriteButton item={favoriteItem(p)} className="absolute right-0 top-0" />
         {p.isNew && !p.oldPrice ? (
-          <span className="absolute bottom-0 left-0 rounded-full bg-new-bg px-1.5 py-0.5 text-[10px] text-new-text">
+          <span className={`absolute bottom-0 ${swatches ? "right-0" : "left-0"} rounded-full bg-new-bg px-1.5 py-0.5 text-[10px] text-new-text`}>
             Новинка
           </span>
         ) : null}
@@ -66,13 +72,15 @@ export function ProductCardCompact({ product: p }: { product: ListingProduct }) 
 }
 
 /** «Списком»: строка товара. */
-export function ProductRow({ product: p }: { product: ListingProduct }) {
+export function ProductRow({ product }: { product: ListingProduct }) {
+  const { swatches, sel, setSel, setHover, current, image, total } = useSwatches(product);
+  const p = { ...product, ...current };
   const prints = p.prints.slice(0, 3);
   return (
     <article className="grid grid-cols-[72px_minmax(0,1fr)] gap-x-3 gap-y-3 p-3 sm:grid-cols-[96px_minmax(0,1fr)_auto] sm:items-center sm:gap-x-4">
       <div className="relative aspect-square overflow-hidden rounded-lg bg-white">
         <Link href={p.url} tabIndex={-1} aria-hidden="true" className="absolute inset-0">
-          <ProductImage src={asset(p.image)} alt={p.title} sizes="96px" fallback="mini" className="object-contain" />
+          <ProductImage src={asset(image)} alt={p.title} sizes="96px" fallback="mini" className="object-contain" />
         </Link>
       </div>
       <div className="min-w-0">
@@ -81,9 +89,14 @@ export function ProductRow({ product: p }: { product: ListingProduct }) {
         </Link>
         <p className="mt-1 text-[12px] text-muted">
           Арт. {p.sku}
-          <span aria-hidden="true"> · </span>
-          {p.stock > 0 ? `На складе: ${formatQty(p.stock)} шт.` : "Под заказ"}
+          {swatches ? null : (
+            <>
+              <span aria-hidden="true"> · </span>
+              {p.stock > 0 ? `На складе: ${formatQty(p.stock)} шт.` : "Под заказ"}
+            </>
+          )}
         </p>
+        {swatches ? <ColorStrip swatches={swatches} sel={sel} onPick={setSel} onHover={setHover} /> : null}
         {prints.length ? (
           <ul aria-label="Виды нанесения" className="mt-1.5 flex flex-wrap gap-1">
             {prints.map((x) => (
@@ -95,7 +108,10 @@ export function ProductRow({ product: p }: { product: ListingProduct }) {
         ) : null}
       </div>
       <div className="col-span-2 flex items-center justify-between gap-3 sm:col-span-1 sm:flex-col sm:items-end sm:gap-2">
-        <Price p={p} size="md" />
+        <div className="grid gap-0.5 sm:justify-items-end">
+          <Price p={p} size="md" />
+          {swatches ? <StockPill product={p} total={total} many /> : null}
+        </div>
         <div className="flex items-center gap-1">
           <FavoriteButton item={favoriteItem(p)} className="size-9!" />
           <AddToCartButton product={cartProduct(p)} variant="row" />

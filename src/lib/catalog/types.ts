@@ -12,6 +12,16 @@ export type Product = {
   isNew?: boolean;
   /** Нет остатка, но есть поставка под заказ. */
   preorder?: boolean;
+  /** Цвета модели для витрины (только если их больше одного); остаток — по всем размерам цвета. */
+  swatches?: ProductSwatch[];
+};
+
+/** Цвет модели в карточке витрины: своя позиция каталога с фото, адресом, артикулом и остатком. */
+export type ProductSwatch = Omit<Product, "swatches" | "currency" | "isNew"> & {
+  /** Название цвета у поставщика («желтый», «синий классический»). */
+  color: string;
+  /** CSS-фон кружка, если у цвета нет фото. */
+  swatch: string;
 };
 
 export type Category = {

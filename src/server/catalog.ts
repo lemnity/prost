@@ -3,6 +3,7 @@ import { productHref } from "@/lib/catalog/oasis-tree";
 import type { Product } from "@/lib/catalog/types";
 import type { FacetKind } from "@/lib/catalog/facets";
 import { getSaleEndsAt } from "@/lib/sale";
+import { colorTag, deriveColors } from "@/lib/catalog/colors";
 
 type Img = { big?: string; superbig?: string; small?: string; thumbnail?: string };
 type Attr = { name: string; value: string; dim?: string };
@@ -59,6 +60,51 @@ export function toProduct(r: OcRow): Product {
     stock: r.deleted ? 0 : total,
     ...(total === 0 ? { preorder: true } : {}),
   };
+}
+
+/** Кружок для цвета без фото: из словаря фильтра «Цвет», два цвета — пополам, неизвестный — радуга. */
+function swatchOf(color: string): string {
+  const [a, b] = deriveColors([color]).map((id) => colorTag(id)?.swatch ?? "");
+  if (a && b && a.startsWith("#") && b.startsWith("#")) return `linear-gradient(135deg,${a} 50%,${b} 50%)`;
+  return a || "conic-gradient(#D7262B,#F5D02A,#2E9B4F,#2457C5,#7B4BC4,#D7262B)";
+}
+
+/**
+ * Цвета моделей для витрины одним запросом (по индексу color_group_id): один вариант на цвет (group_id),
+ * остаток — сумма по размерам. Карточке достаётся список, только если цветов больше одного.
+ */
+async function withSwatches(rows: OcRow[], items: Product[]): Promise<Product[]> {
+  const models = [...new Set(rows.map((r) => r.color_group_id).filter((v): v is string => !!v))];
+  if (!models.length) return items;
+  const all = await query<OcRow>(
+    "SELECT id, supplier, article, group_id, color_group_id, slug, name, cover, price, old_price, colors, size, stock, remote, primary_cat, deleted FROM oc_products WHERE deleted = 0 AND color_group_id IN (?) ORDER BY id",
+    [models],
+  );
+  const byModel = new Map<string, Map<string, OcRow[]>>();
+  for (const r of all) {
+    const groups = byModel.get(r.color_group_id!) ?? new Map<string, OcRow[]>();
+    const key = r.group_id ?? r.id;
+    groups.set(key, [...(groups.get(key) ?? []), r]);
+    byModel.set(r.color_group_id!, groups);
+  }
+  return items.map((item, k) => {
+    const groups = rows[k].color_group_id ? byModel.get(rows[k].color_group_id!) : undefined;
+    if (!groups || groups.size < 2) return item;
+    const swatches = [...groups.values()].slice(0, 40).flatMap((list) => {
+      const rep = list.find((r) => r.id === item.id) ?? list.find((r) => r.stock + r.remote > 0) ?? list[0];
+      // «синий, темно-синий» → «темно-синий»: общее название, входящее в более точное, не повторяем.
+      const names = (json<Color[]>(rep.colors) ?? []).map((c) => c.name).filter(Boolean);
+      const color = names.filter((n) => !names.some((m) => m !== n && m.includes(n))).join(", ");
+      if (!color) return [];
+      const p = toProduct(rep);
+      const stock = list.reduce((s, r) => s + r.stock + r.remote, 0);
+      return [{
+        id: p.id, title: p.title, sku: p.sku, priceFrom: p.priceFrom, ...(p.oldPrice ? { oldPrice: p.oldPrice } : {}),
+        image: p.image, url: p.url, stock, ...(stock ? {} : { preorder: true }), color, swatch: swatchOf(color),
+      }];
+    });
+    return swatches.length > 1 ? { ...item, swatches } : item;
+  });
 }
 
 export type Sort = "popular" | "cheap" | "expensive" | "stock" | "new";
@@ -148,7 +194,7 @@ async function queryListing(p: ListParams): Promise<Listing> {
      ) x WHERE rn = 1 ORDER BY ${ORDER[p.sort ?? "popular"]} LIMIT ? OFFSET ?`,
     [...args, perPage, (page - 1) * perPage],
   );
-  return { items: rows.map(toProduct), total: Number(cnt?.n ?? 0) };
+  return { items: await withSwatches(rows, rows.map(toProduct)), total: Number(cnt?.n ?? 0) };
 }
 
 export type FacetCounts = Record<FacetKind, { value: string; n: number }[]> & { isNew: number };
@@ -270,7 +316,7 @@ export function weeklySale(limit = 48): Promise<Product[]> {
          ) x WHERE rn = 1 ORDER BY CRC32(CONCAT(COALESCE(color_group_id, id), ?)) LIMIT 48`,
         [week],
       );
-      return rows.map(toProduct).sort((a, b) => discount(b) - discount(a));
+      return (await withSwatches(rows, rows.map(toProduct))).sort((a, b) => discount(b) - discount(a));
     })();
     saleCache = { week, value };
     value.catch(() => (saleCache = null));

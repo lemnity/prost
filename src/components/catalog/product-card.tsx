@@ -1,13 +1,18 @@
+"use client";
+
 import { asset } from "@/lib/asset";
 import Link from "next/link";
 import { ProductImage } from "@/components/ui/product-image";
 import { FavoriteButton } from "@/components/favorites/favorite-button";
 import { favoriteItem } from "@/lib/favorites/item";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
-import { formatPriceValue, formatQty } from "@/lib/format";
+import { formatPriceValue } from "@/lib/format";
 import type { Product } from "@/lib/catalog/types";
+import { ColorLine, ColorRail, StockPill, useSwatches } from "./product-colors";
 
-export function ProductCard({ product }: { product: Product }) {
+/** Карточка витрины. Если у модели несколько цветов — столбик слева на фото, клик выбирает цвет (см. product-colors). */
+export function ProductCard({ product: base }: { product: Product }) {
+  const { swatches, sel, setSel, setHover, current: product, image, total } = useSwatches(base);
   const { oldPrice } = product;
   const discount = oldPrice
     ? Math.round((1 - product.priceFrom / oldPrice) * 100)
@@ -15,29 +20,32 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <article className="relative flex h-full flex-col rounded-[10px] border border-line bg-white p-3">
       <div className="relative aspect-square">
-        <Link href={product.url} tabIndex={-1} aria-hidden="true" className="absolute inset-0">
+        <Link href={product.url} tabIndex={-1} aria-hidden="true" className={`absolute inset-y-0 right-0 ${swatches ? "left-8 sm:left-11" : "left-0"}`}>
           <ProductImage
-            src={asset(product.image)}
+            src={asset(image)}
             alt={product.title}
             sizes="(min-width:1280px) 15vw, (min-width:1024px) 190px, 220px"
             className="object-contain"
           />
         </Link>
+        {swatches ? <ColorRail swatches={swatches} sel={sel} onPick={setSel} onHover={setHover} /> : null}
         <FavoriteButton item={favoriteItem(product)} className="absolute right-0 top-0" />
+        {/* Слева столбик цветов — метки уходят вправо. */}
         {oldPrice ? (
-          <span className="absolute left-0 top-0 rounded-full bg-brand px-2 py-0.5 text-[11px] font-bold text-white">
+          <span className={`absolute ${swatches ? "right-10 top-1.5" : "left-0 top-0"} rounded-full bg-brand px-2 py-0.5 text-[11px] font-bold text-white`}>
             {`\u2212${discount}%`}
           </span>
         ) : null}
         {product.isNew && !oldPrice ? (
-          <span className="absolute bottom-0 left-0 rounded-full bg-new-bg px-2 py-0.5 text-[10px] text-new-text">
+          <span className={`absolute bottom-0 ${swatches ? "right-0" : "left-0"} rounded-full bg-new-bg px-2 py-0.5 text-[10px] text-new-text`}>
             Новинка
           </span>
         ) : null}
       </div>
+      <ColorLine swatches={swatches} sel={sel} />
       <Link
         href={product.url}
-        className="mt-2 line-clamp-2 min-h-[2lh] text-[13px] leading-snug text-ink hover:text-brand"
+        className="mt-1 line-clamp-2 min-h-[2lh] text-[13px] leading-snug text-ink hover:text-brand"
       >
         {product.title}
       </Link>
@@ -52,13 +60,7 @@ export function ProductCard({ product }: { product: Product }) {
         ) : null}
       </p>
       {/* Строка наличия всегда занимает место — кнопки карточек в ряду на одной линии. */}
-      <p className="mt-1 min-h-[1lh] text-[12px] leading-snug text-muted">
-        {product.stock > 0
-          ? `На складе: ${formatQty(product.stock)} шт.`
-          : product.preorder
-            ? "Под заказ"
-            : "Наличие уточняйте у менеджера"}
-      </p>
+      <StockPill product={product} total={total} many={!!swatches} />
       <div className="mt-auto flex flex-col">
         <AddToCartButton
           product={{
