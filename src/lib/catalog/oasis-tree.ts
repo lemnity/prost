@@ -65,8 +65,8 @@ export function productHref(primaryCat: number | null, slug: string, id: string)
 export function idFromItem(segment: string): string | null {
   if (!segment.startsWith("item-")) return null;
   const tail = segment.slice(segment.lastIndexOf("-") + 1);
-  // Oasis — цифры (дефис заменён на «x»), gifts.ru — «g» + цифры.
-  if (/^g[0-9]+$/.test(tail)) return tail;
+  // Oasis — цифры (дефис заменён на «x»), gifts.ru — «g» + цифры, Happy Gifts — «h» + цифры.
+  if (/^[gh][0-9]+$/.test(tail)) return tail;
   return /^[0-9x]+$/.test(tail) ? tail.replace(/x/g, "-") : null;
 }
 
