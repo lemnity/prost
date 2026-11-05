@@ -76,13 +76,16 @@ function Thumb({ s, i, sel, onPick, onHover, size, tip = true }: { s: ProductSwa
   );
 }
 
-/** Столбик цветов слева поверх фото; «+N» открывает все цвета с остатками. Выбранный цвет всегда в столбике. */
-export function ColorRail({ swatches, sel, onPick, onHover, max = 4, compact = false }: Pick & { max?: number; compact?: boolean }) {
+/**
+ * Столбик цветов слева поверх фото; «+N» открывает все цвета с остатками. Выбранный цвет всегда в столбике.
+ * cells — сколько клеток помещается по высоте фото вместе с «+N»: столбик не должен вылезать на название.
+ */
+export function ColorRail({ swatches, sel, onPick, onHover, cells = 4, compact = false }: Pick & { cells?: number; compact?: boolean }) {
   const [open, setOpen] = useState(false);
-  const shown = swatches.length > max + 1 ? [...Array(max).keys()] : [...swatches.keys()];
+  const shown = swatches.length > cells ? [...Array(cells - 1).keys()] : [...swatches.keys()];
   if (!shown.includes(sel)) shown[shown.length - 1] = sel;
   const rest = swatches.length - shown.length;
-  const size = compact ? "size-7" : "size-7 sm:size-[38px]";
+  const size = compact ? "size-7" : "size-7 sm:size-9";
   return (
     <>
       <div role="radiogroup" aria-label={`Цвета, ${colorsLabel(swatches.length)}`} onKeyDown={arrows} className={`absolute left-0 top-0 z-[2] flex flex-col ${compact ? "gap-1" : "gap-1 sm:gap-[5px]"}`}>
@@ -206,7 +209,7 @@ export function LotLink({ lot }: { lot: ProductLot }) {
         cheaper ? "bg-brand-soft text-brand hover:bg-brand hover:text-white" : "bg-surface text-ink hover:bg-line"
       }`}
     >
-      <span className="truncate">{cheaper ? `Есть дешевле: ${lotPrice(lot)}` : lot.colors > 1 ? `Все ${colorsLabel(lot.colors)} по обычной цене` : "Обычная цена"}</span>
+      <span className="truncate">{cheaper ? `Есть дешевле: ${lotPrice(lot)}` : lot.colors > 1 ? `Все ${colorsLabel(lot.colors)}: ${lotPrice(lot)}` : `Обычная цена: ${lotPrice(lot)}`}</span>
       <ArrowRight size={13} aria-hidden className="shrink-0" />
     </Link>
   );

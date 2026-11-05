@@ -49,7 +49,7 @@ export function ProductCardCompact({ product }: { product: ListingProduct }) {
             className="object-contain"
           />
         </Link>
-        {swatches ? <ColorRail swatches={swatches} sel={sel} onPick={setSel} onHover={setHover} max={3} compact /> : null}
+        {swatches ? <ColorRail swatches={swatches} sel={sel} onPick={setSel} onHover={setHover} compact /> : null}
         <FavoriteButton item={favoriteItem(p)} className="absolute right-0 top-0" />
         {p.isNew && !p.oldPrice ? (
           <span className={`absolute bottom-0 ${swatches ? "right-0" : "left-0"} rounded-full bg-new-bg px-1.5 py-0.5 text-[10px] text-new-text`}>
