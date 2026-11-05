@@ -269,7 +269,7 @@ export function BriefForm() {
           <div className="mt-2 flex flex-wrap gap-2">
             {BRANDBOOK.map((o) => (
               <label key={o} className={`inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-full border bg-white px-4 text-[14px] has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand ${d.brandbook === o ? "border-brand font-medium text-brand" : "border-line text-ink"}`}>
-                <input type="radio" name="brandbook" value={o} checked={d.brandbook === o} onChange={() => set("brandbook", o)} className="size-4 accent-[#D02E31]" />
+                <input type="radio" name="brandbook" value={o} checked={d.brandbook === o} onChange={() => set("brandbook", o)} className="size-4 accent-brand" />
                 {o}
               </label>
             ))}
@@ -290,7 +290,7 @@ export function BriefForm() {
               setConsent(e.target.checked);
               setErrors((p) => ({ ...p, consent: undefined }));
             }}
-            className="mt-0.5 size-4 shrink-0 accent-[#D02E31] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            className="mt-0.5 size-4 shrink-0 accent-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           />
           <span>
             Согласен на обработку{" "}

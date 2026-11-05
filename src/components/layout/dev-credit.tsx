@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 
-const COLORS = ["#d02e31", "#ec5b3c", "#ff7a8a", "#f43f5e", "#ffb199"];
+const COLORS = ["#d9365c", "#eb6309", "#ff7a8a", "#f43f5e", "#ffb199"];
 const HEARTS = 16;
 const COOLDOWN = 700;
 const HEART_SVG =

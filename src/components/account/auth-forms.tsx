@@ -177,7 +177,7 @@ export function RegisterForm() {
             aria-invalid={!!errors.consent}
             aria-describedby={errors.consent ? "f-consent-err" : undefined}
             onChange={(e) => { setConsent(e.target.checked); setErrors((p) => ({ ...p, consent: undefined })); }}
-            className="mt-0.5 size-4 shrink-0 accent-[#D02E31] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            className="mt-0.5 size-4 shrink-0 accent-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           />
           <span>
             Согласен на обработку{" "}

@@ -172,12 +172,15 @@ export type ListParams = { category?: number; q?: string; /** Подборка: 
   facets?: Partial<Record<FacetKind, string[]>>;
   sort?: Sort; page?: number; perPage?: number };
 
+// При любой сортировке сначала то, что есть на складе, «под заказ» — ниже.
+// Строка модели выбирается с остатком (rn = 1), поэтому её остаток = есть ли у модели хоть что-то.
+const IN_STOCK = "(stock + remote > 0) DESC";
 const ORDER: Record<Sort, string> = {
-  popular: "(stock + remote > 0) DESC, rating DESC, id",
-  cheap: "price ASC, id",
-  expensive: "price DESC, id",
+  popular: `${IN_STOCK}, rating DESC, id`,
+  cheap: `${IN_STOCK}, price ASC, id`,
+  expensive: `${IN_STOCK}, price DESC, id`,
   stock: "(stock + remote) DESC, id",
-  new: "is_new DESC, (supplier = 'oasis') DESC, id DESC",
+  new: `${IN_STOCK}, is_new DESC, (supplier = 'oasis') DESC, id DESC`,
 };
 
 type Listing = { items: Product[]; total: number };

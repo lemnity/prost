@@ -7,7 +7,7 @@ import { carrierLabel, trackUrl, type Shipping } from "@/lib/shipping";
 const SITE = () => process.env.SITE_URL || "https://prostyle.agency";
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
-const BRAND = "#d02e31";
+const BRAND = "#d9365c";
 const INK = "#1a1a1a";
 const MUTED = "#6b6b78";
 
@@ -18,7 +18,7 @@ function layout(preheader: string, body: string): string {
 <span style="display:none;max-height:0;overflow:hidden;opacity:0">${esc(preheader)}</span>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f2;padding:24px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:14px;overflow:hidden">
-<tr><td height="6" bgcolor="${BRAND}" style="height:6px;line-height:6px;font-size:0;background:${BRAND};background-image:linear-gradient(90deg,#b8232b 0%,${BRAND} 35%,#ec5b3c 70%,#f7c8b5 100%)">&nbsp;</td></tr>
+<tr><td height="6" bgcolor="${BRAND}" style="height:6px;line-height:6px;font-size:0;background:${BRAND};background-image:linear-gradient(90deg,#b52a4b 0%,${BRAND} 35%,#eb6309 70%,#f9c9b0 100%)">&nbsp;</td></tr>
 <tr><td style="padding:28px 28px 22px;border-bottom:1px solid #ececea">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
     <td valign="middle">

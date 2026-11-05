@@ -127,7 +127,7 @@ function Radio<T extends string>({
         value={value}
         checked={on}
         onChange={() => onChange(value)}
-        className="mt-0.5 size-4 shrink-0 accent-[#D02E31]"
+        className="mt-0.5 size-4 shrink-0 accent-brand"
       />
       <span>
         <span className="block text-[15px] font-medium text-ink">{title}</span>
@@ -478,7 +478,7 @@ export function CheckoutView() {
                     setConsent(e.target.checked);
                     setErrors((p) => ({ ...p, consent: undefined }));
                   }}
-                  className="mt-0.5 size-4 shrink-0 accent-[#D02E31] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                  className="mt-0.5 size-4 shrink-0 accent-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                 />
                 <span>
                   Согласен на обработку{" "}

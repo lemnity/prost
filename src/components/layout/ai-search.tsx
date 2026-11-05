@@ -474,7 +474,7 @@ export function AiSearch({ sections }: { sections: { title: string; href: string
             type="button"
             onClick={() => openWith(term)}
             aria-label="Спросить Викторию, виртуального менеджера ProStyle"
-            className="flex h-12 shrink-0 items-center gap-1.5 rounded-r-[10px] bg-gradient-to-r from-[#D02E31] to-[#F0643C] px-3 text-[14px] font-bold tracking-wide text-white hover:brightness-110 focus-visible:outline-ink focus-visible:-outline-offset-2 sm:px-4"
+            className="flex h-12 shrink-0 items-center gap-1.5 rounded-r-[10px] bg-gradient-to-r from-brand to-brand-hover px-3 text-[14px] font-bold tracking-wide text-white hover:brightness-110 focus-visible:outline-ink focus-visible:-outline-offset-2 sm:px-4"
           >
             <Sparkles size={17} aria-hidden /> AI
           </button>

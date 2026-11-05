@@ -128,7 +128,7 @@ export function EstimateFields({ variants, state, onChange, title }: { variants:
                   type="checkbox"
                   checked={state.addons.includes(i)}
                   onChange={(e) => set({ addons: e.target.checked ? [...state.addons, i] : state.addons.filter((x) => x !== i) })}
-                  className="mt-0.5 size-4 shrink-0 accent-[#D02E31]"
+                  className="mt-0.5 size-4 shrink-0 accent-brand"
                 />
                 <span>
                   {a.label} <span className="text-muted">{addonPrice(i)}</span>
@@ -233,7 +233,7 @@ function CalcDialog({ variants, title, onClose }: { variants: PriceVariant[]; ti
                   <textarea name="Комментарий" rows={2} maxLength={1000} placeholder="Что за изделие, где разместить логотип" className={`${field} resize-none`} />
                 </label>
                 <label className="flex items-start gap-2.5 text-[13px] sm:col-span-2">
-                  <input type="checkbox" required className="mt-0.5 size-4 shrink-0 accent-[#D02E31]" />
+                  <input type="checkbox" required className="mt-0.5 size-4 shrink-0 accent-brand" />
                   <span>
                     Согласен на обработку{" "}
                     <Link href="/personal-data-processing" target="_blank" className="text-brand underline hover:text-brand-hover">

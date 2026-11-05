@@ -52,7 +52,7 @@ function DeliveryInner({ profile }: { profile: Profile }) {
                 key={m}
                 className={`flex cursor-pointer items-start gap-3 rounded-[10px] border bg-white p-4 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand ${on ? "border-brand" : "border-line"}`}
               >
-                <input type="radio" name="d-method" checked={on} onChange={() => save({ method: m })} className="mt-0.5 size-4 shrink-0 accent-[#D02E31]" />
+                <input type="radio" name="d-method" checked={on} onChange={() => save({ method: m })} className="mt-0.5 size-4 shrink-0 accent-brand" />
                 <span>
                   <span className="block text-[15px] font-medium">{deliveryLabel[m]}</span>
                   <span className="mt-0.5 block text-[12px] leading-snug text-muted">{HINTS[m]}</span>

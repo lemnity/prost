@@ -3,13 +3,13 @@ import { MIN_ORDER } from "@/lib/cart/store";
 
 export const minOrderRatio = (total: number) => Math.max(0, Math.min(total / MIN_ORDER, 1));
 
-/** Цвет заливки по прогрессу; на тёмном фоне красный светлее для контраста. */
+/** Цвет заливки по прогрессу; на тёмном фоне коралл светлее для контраста. */
 function toneColor(total: number, onDark: boolean) {
   const r = minOrderRatio(total);
   if (r >= 1) return "#3BB273";
   if (r >= 0.8) return "#7BD389";
   if (r >= 0.5) return "#F5A524";
-  return onDark ? "#FF5A5F" : "#D02E31";
+  return onDark ? "#FF6B88" : "#D9365C";
 }
 
 /** Единый индикатор прогресса до минимального заказа. */

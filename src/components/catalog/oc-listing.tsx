@@ -105,12 +105,12 @@ export function OcListing({
         </div>
       </fieldset>
       <label className="flex items-center gap-2.5 text-[14px]">
-        <AutoSubmitCheckbox name="stock" value="1" defaultChecked={query.inStock} className="size-4 accent-[#D02E31]" />
+        <AutoSubmitCheckbox name="stock" value="1" defaultChecked={query.inStock} className="size-4 accent-brand" />
         Только в наличии
       </label>
       {facets && (facets.isNew > 0 || query.isNew) ? (
         <label className="-mt-2 flex items-center gap-2.5 text-[14px]">
-          <AutoSubmitCheckbox name="new" value="1" defaultChecked={query.isNew} className="size-4 accent-[#D02E31]" />
+          <AutoSubmitCheckbox name="new" value="1" defaultChecked={query.isNew} className="size-4 accent-brand" />
           Новинки <span className="tabular-nums text-muted">{facets.isNew}</span>
         </label>
       ) : null}
@@ -125,7 +125,7 @@ export function OcListing({
             if (!options.length) return null;
             const row = (t: (typeof options)[number]) => (
               <label key={t.id} className="flex items-center gap-2.5 py-1 text-[14px]">
-                <AutoSubmitCheckbox name={g.param} value={t.id} defaultChecked={chosen.includes(t.id)} className="size-4 shrink-0 accent-[#D02E31]" />
+                <AutoSubmitCheckbox name={g.param} value={t.id} defaultChecked={chosen.includes(t.id)} className="size-4 shrink-0 accent-brand" />
                 {"swatch" in t && t.swatch ? <span aria-hidden="true" className="size-3.5 shrink-0 rounded-full ring-1 ring-black/15" style={{ background: t.swatch }} /> : null}
                 <span className="min-w-0 flex-1 first-letter:uppercase">{t.label}</span>
                 <span className="tabular-nums text-[12px] text-muted">{counts.get(t.id) ?? 0}</span>

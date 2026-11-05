@@ -264,7 +264,7 @@ export function ContactsSection() {
                   type="checkbox"
                   name="Согласие"
                   required
-                  className="mt-0.5 size-4 shrink-0 accent-[#D02E31] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                  className="mt-0.5 size-4 shrink-0 accent-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                 />
                 <span>
                   Согласен на обработку{" "}
