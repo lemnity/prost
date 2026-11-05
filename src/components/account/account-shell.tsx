@@ -131,7 +131,7 @@ function ChatLink({ active }: { active: boolean }) {
     <Link
       href="/account/chat"
       aria-current={active ? "page" : undefined}
-      className={`flex items-center gap-2.5 rounded-[12px] bg-brand bg-chat-gradient p-2.5 text-white shadow-[0_4px_14px_rgba(208,46,49,0.28)] hover:brightness-105 ${
+      className={`flex items-center gap-2.5 rounded-[12px] bg-brand bg-chat-gradient p-2.5 text-white shadow-[0_4px_14px_rgba(217,54,92,0.28)] hover:brightness-105 ${
         active ? "ring-2 ring-inset ring-white/70" : ""
       }`}
     >
