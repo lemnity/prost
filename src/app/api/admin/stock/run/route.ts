@@ -3,8 +3,9 @@ import { requireAdmin } from "@/server/admin";
 import { fail, ok, readJson, sameOrigin } from "@/server/http";
 import { syncOasis, syncOasisCatalog, syncOasisSection } from "@/server/oasis";
 import { syncGifts, syncGiftsCatalog } from "@/server/gifts";
+import { syncHappyGifts, syncHappyGiftsCatalog } from "@/server/happygifts";
 
-type Kind = "oasis-stock" | "oasis-catalog" | "gifts-stock" | "gifts-catalog" | "section";
+type Kind = "oasis-stock" | "oasis-catalog" | "gifts-stock" | "gifts-catalog" | "happygifts-stock" | "happygifts-catalog" | "section";
 
 /**
  * Ручной запуск синхронизации из админки. Работа идёт в фоне (полный каталог — несколько минут, а nginx ждёт 60 с),
@@ -21,6 +22,8 @@ export async function POST(req: Request) {
     "oasis-catalog": syncOasisCatalog,
     "gifts-stock": syncGifts,
     "gifts-catalog": syncGiftsCatalog,
+    "happygifts-stock": syncHappyGifts,
+    "happygifts-catalog": syncHappyGiftsCatalog,
     section: category > 0 ? () => syncOasisSection(category) : null,
   };
   const job = body?.kind ? jobs[body.kind] : null;

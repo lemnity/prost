@@ -1,0 +1,8 @@
+[Unit]
+Description=ProStyle — полный каталог Happy Gifts (таймер)
+[Timer]
+OnCalendar=*-*-* 05:30
+RandomizedDelaySec=300
+Persistent=true
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,8 @@
+[Unit]
+Description=ProStyle — цены и остатки Happy Gifts (таймер; поставщик просит не чаще 4 раз в день)
+[Timer]
+OnCalendar=*-*-* 00,06,12,18:40:00
+RandomizedDelaySec=300
+Persistent=true
+[Install]
+WantedBy=timers.target

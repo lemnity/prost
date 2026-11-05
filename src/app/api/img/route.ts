@@ -4,9 +4,9 @@ import { IMAGE_WIDTHS } from "@/lib/image-widths";
 /**
  * Конвертер фото товаров в WebP: GET /api/img?w=<ширина>&src=<адрес фото склада>.
  * Ответ кэшируется nginx (proxy_cache «imgs»), так что каждое фото конвертируется один раз.
- * Источники — только склады: Oasis (s.a-5.ru) и gifts.ru (files.gifts.ru / наш прокси /gifts-img/).
+ * Источники — только склады: Oasis (s.a-5.ru), gifts.ru (files.gifts.ru / наш прокси /gifts-img/), Happy Gifts (happygifts.ru/catalog-images).
  */
-const ALLOWED = [/^https:\/\/s\.a-5\.ru\//, /^https:\/\/files\.gifts\.ru\/reviewer\//, /^https:\/\/prostyle\.gifts\/content\//];
+const ALLOWED = [/^https:\/\/s\.a-5\.ru\//, /^https:\/\/files\.gifts\.ru\/reviewer\//, /^https:\/\/prostyle\.gifts\/content\//, /^https:\/\/happygifts\.ru\/catalog-images\//];
 const MAX_BYTES = 15 * 1024 * 1024;
 
 sharp.concurrency(1); // слабый сервер: один поток libvips

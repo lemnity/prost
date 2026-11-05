@@ -1,0 +1,6 @@
+[Unit]
+Description=ProStyle — полный каталог Happy Gifts
+After=prostyle.service
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/prostyle-happygifts-catalog

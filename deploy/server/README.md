@@ -11,6 +11,8 @@
 | `systemd/prostyle-gifts-sync.{service,timer}` | `/etc/systemd/system/` | цены и остатки gifts.ru — каждый час в :20 |
 | `systemd/prostyle-oasis-catalog.{service,timer}` | `/etc/systemd/system/` | каталог Oasis целиком — 03:30 |
 | `systemd/prostyle-gifts-catalog.{service,timer}` | `/etc/systemd/system/` | каталог gifts.ru целиком — 04:30 |
+| `systemd/prostyle-happygifts-sync.{service,timer}` | `/etc/systemd/system/` | цены и остатки Happy Gifts — 00:40, 06:40, 12:40, 18:40 (поставщик просит не чаще 4 раз в день) |
+| `systemd/prostyle-happygifts-catalog.{service,timer}` | `/etc/systemd/system/` | каталог Happy Gifts целиком — 05:30 |
 | `bin/prostyle-*` | `/usr/local/bin/` | вызовы `POST /api/internal/oasis-sync` с токеном |
 | `cron/prostyle-backup` | `/etc/cron.daily/` | дамп базы и вложений в `/var/backups/prostyle`, шифруется age (закрытый ключ только у владельца), 14 дней |
 | `cron/prostyle-disk-guard` | `/etc/cron.hourly/` | диск > 90% — чистит кэш страниц Next.js |
@@ -28,4 +30,4 @@
 7. Linux-сборка sharp для конвертера фото в WebP: `cd /opt/prostyle && npm install --no-save --no-package-lock @img/sharp-linux-x64@0.35.5 @img/sharp-libvips-linux-x64@1.3.4`.
 8. Выложить сайт с рабочей машины: `scripts/deploy.sh`. Таблицы базы создадутся при первом запросе.
 9. Почта: SPF/DKIM/DMARC в DNS (reg.ru), PTR `82.146.52.154 → prostyle.agency` у хостинга.
-10. Склады: IP сервера — в белом списке кабинета gifts.ru; первая загрузка каталогов — кнопками в админке «Склад».
+10. Склады: IP сервера — в белом списке кабинета gifts.ru; для Happy Gifts — `HAPPYGIFTS_LOGIN` / `HAPPYGIFTS_PASSWORD` (логин и пароль их кабинета) в `.env`; первая загрузка каталогов — кнопками в админке «Склад».

@@ -279,6 +279,8 @@ export async function lastSync() {
     catalog: await one("oasis-catalog"),
     giftsStock: await one("gifts"),
     giftsCatalog: await one("gifts-catalog"),
+    happyStock: await one("happygifts"),
+    happyCatalog: await one("happygifts-catalog"),
     sections: (
       await query<Row & { source: string; started_at: Date; finished_at: Date | null; items: number; error: string | null; name: string | null }>(
         `SELECT l.source, l.started_at, l.finished_at, l.items, l.error, c.name FROM sync_log l

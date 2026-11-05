@@ -80,6 +80,8 @@ docs/                     документация (этот каталог), м
 | Фото | URL из API | публично `files.gifts.ru/reviewer/…` |
 | Код | `src/server/oasis.ts` | `src/server/gifts.ts` |
 
+Happy Gifts: `https://happygifts.ru/http/api.php` (`type=all` — каталог, `type=amount` — цены и остатки), Basic-авторизация `HAPPYGIFTS_LOGIN` / `HAPPYGIFTS_PASSWORD`, разделы — `src/server/happygifts-map.ts`, код — `src/server/happygifts.ts`.
+
 После загрузки каталога пересчитываются количества по разделам (модели, не строки) и метки фильтров (`src/server/facets.ts`).
 
 Большие загрузки (каталоги, разделы) идут **по очереди** (`heavy()` в `oasis.ts`), иначе блокируют друг друга. Блокировки MySQL (1213/1205) повторяются автоматически (`exec` в `db.ts`).
@@ -92,6 +94,8 @@ docs/                     документация (этот каталог), м
 | `prostyle-gifts-sync` | каждый час в :20 | цены и остатки gifts.ru |
 | `prostyle-oasis-catalog` | 03:30 | каталог Oasis целиком |
 | `prostyle-gifts-catalog` | 04:30 | каталог gifts.ru целиком |
+| `prostyle-happygifts-sync` | 00:40, 06:40, 12:40, 18:40 | цены и остатки Happy Gifts (чаще поставщик просит не запрашивать) |
+| `prostyle-happygifts-catalog` | 05:30 | каталог Happy Gifts целиком |
 
 Таймеры вызывают `POST /api/internal/oasis-sync[?supplier=gifts][&kind=catalog]` с заголовком `X-Sync-Token`. Админка запускает те же задачи в фоне через `/api/admin/stock/run`: nginx ждёт ответа всего 60 с.
 

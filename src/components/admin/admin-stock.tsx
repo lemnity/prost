@@ -15,11 +15,13 @@ type Status = {
   stock: Run;
   catalog: Run;
   giftsStock: Run;
+  happyStock: Run;
+  happyCatalog: Run;
   giftsCatalog: Run;
   sections: SectionRun[];
   bySupplier: Record<string, Counts>;
 };
-type Kind = "oasis-stock" | "oasis-catalog" | "gifts-stock" | "gifts-catalog" | "section";
+type Kind = "oasis-stock" | "oasis-catalog" | "gifts-stock" | "gifts-catalog" | "happygifts-stock" | "happygifts-catalog" | "section";
 type Cat = { id: number; parent: number | null; root: number | null; level: number; name: string; count: number };
 
 const PRODUCTS_ROOT = 2891;
@@ -52,7 +54,7 @@ export function AdminStock() {
   }, [load]);
 
   // Пока что-то обновляется — опрашиваем статус каждые 4 секунды.
-  const busy = !!s && [s.stock.last, s.catalog.last, s.giftsStock.last, s.giftsCatalog.last, ...s.sections].some(running);
+  const busy = !!s && [s.stock.last, s.catalog.last, s.giftsStock.last, s.giftsCatalog.last, s.happyStock.last, s.happyCatalog.last, ...s.sections].some(running);
   useEffect(() => {
     if (!busy) return;
     const id = setInterval(() => void load(), 4000);
@@ -173,6 +175,8 @@ export function AdminStock() {
         {runCard("Oasis — каталог целиком", "Автоматически каждую ночь в 03:30. Около 3 минут.", s.catalog, "oasis-catalog")}
         {runCard("gifts.ru — цены и остатки", "Автоматически каждый час в :20.", s.giftsStock, "gifts-stock", true)}
         {runCard("gifts.ru — каталог целиком", "Автоматически каждую ночь в 04:30. Около 3 минут.", s.giftsCatalog, "gifts-catalog")}
+        {runCard("Happy Gifts — цены и остатки", "Автоматически 4 раза в день (00:40, 06:40, 12:40, 18:40): чаще поставщик просит не запрашивать.", s.happyStock, "happygifts-stock", true)}
+        {runCard("Happy Gifts — каталог целиком", "Автоматически каждую ночь в 05:30. Около 2 минут.", s.happyCatalog, "happygifts-catalog")}
       </div>
       {msg ? <p role="status" className="text-[14px]">{msg}</p> : null}
     </div>
