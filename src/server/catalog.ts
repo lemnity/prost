@@ -162,6 +162,8 @@ async function withSwatches(rows: OcRow[], items: Product[]): Promise<Product[]>
         image: p.image, url: p.url, stock, ...(stock ? {} : { preorder: true }), color, swatch: swatchOf(color),
       }];
     });
+    // Сначала цвета в наличии, «под заказ» — в конце (порядок внутри групп сохраняется).
+    swatches.sort((a, b) => Number(b.stock > 0) - Number(a.stock > 0));
     return swatches.length > 1 ? { ...item, swatches } : item;
   });
 }
