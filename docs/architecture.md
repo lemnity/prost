@@ -10,7 +10,7 @@
 | Почта | nodemailer → локальный Postfix `127.0.0.1:25` + OpenDKIM (селектор `mail`) |
 | ИИ | RouterAI (OpenAI-совместимый API, `https://routerai.ru/api/v1`), модель `openai/gpt-6-luna` |
 | Погода | Open-Meteo (без ключа) |
-| Сервер | Ubuntu 24.04 (VPS FirstVDS, 82.146.52.154), nginx → node `127.0.0.1:3010`, systemd |
+| Сервер | Ubuntu 26.04 (VPS `129.101.95.222`, 3 ядра, 3,8 ГБ, 77 ГБ), nginx → node `127.0.0.1:3010`, systemd, MySQL 8.4 |
 
 > **Важно:** это Next 16 — API отличаются от старых версий. Перед кодом читать `node_modules/next/dist/docs/` (см. `AGENTS.md`).
 
@@ -147,5 +147,5 @@ Happy Gifts: `https://happygifts.ru/http/api.php` (`type=all` — каталог
 - **Сертификат** — certbot (webroot).
 - **Резервные копии:** `/etc/cron.daily/prostyle-backup` → `/var/backups/prostyle` (дамп базы и вложения, 14 дней). Шифруются открытым ключом age, закрытый — только на Mac владельца (`~/.config/prostyle/backup.agekey`).
 - **Страховка диска:** `/etc/cron.hourly/prostyle-disk-guard` чистит кэш страниц при заполнении диска больше 90%.
-- **Закрыто снаружи:** панель ISPmanager (1500/1501 слушают только 127.0.0.1, вход через SSH-туннель), FTP выключен, SSH только по ключу, `qemu-guest-agent` замаскирован.
+- **Закрыто снаружи:** файрвол `ufw` — открыты только 22, 80, 443; SSH только по ключу (`/etc/ssh/sshd_config.d/00-prostyle.conf`, в файлах хостера `50-cloud-init.conf` и `99-qemu.conf` вход по паролю тоже выключен); fail2ban для SSH; `qemu-guest-agent` замаскирован. Панели управления нет.
 - **Двоичные журналы MySQL отключены** (`disable_log_bin`): репликации нет.

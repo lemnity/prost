@@ -2,7 +2,7 @@
 # Деплой на prostyle.agency: сборка локально → rsync релиза → переключение ссылки → перезапуск службы.
 # Использование: scripts/deploy.sh   (нужен ключ ~/.ssh/prostyle_deploy)
 set -euo pipefail
-HOST="${DEPLOY_HOST:-root@82.146.52.154}"
+HOST="${DEPLOY_HOST:-root@129.101.95.222}"
 KEY="${DEPLOY_KEY:-$HOME/.ssh/prostyle_deploy}"
 SSH="ssh -i $KEY -o BatchMode=yes"
 REL="$(date +%Y%m%d-%H%M%S)"

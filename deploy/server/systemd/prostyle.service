@@ -8,7 +8,7 @@ User=prostyle
 Group=prostyle
 WorkingDirectory=/opt/prostyle/current
 EnvironmentFile=/opt/prostyle/.env
-Environment=NODE_OPTIONS=--max-old-space-size=320
+Environment=NODE_OPTIONS=--max-old-space-size=1024
 ExecStart=/usr/bin/node server.js
 Restart=always
 RestartSec=3
